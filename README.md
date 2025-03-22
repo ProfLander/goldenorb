@@ -8,7 +8,12 @@ Examples include detached reticle, fully-detached free aim, enhanced free look, 
 
 **Installation**
 
-Add to a vanilla MO2 preset alongside *Parallax Reflex Sights* and *Shader 3D Scopes*, placing *GoldenOrb* at the bottom.
+- Add to a vanilla MO2 preset alongside *Parallax Reflex Sights* and *Shader 3D Scopes*, placing *GoldenOrb* at the bottom.
+- Clear shader cache
+- Once in-game, open the console and execute `g_firepos 1` and `g_firepos_zoom 1` to enable muzzle-based hitscan trajectory
+  - If either command fails, your modded exes are out of date
+- To enable debug visualization, set `DRAW` to true in one of the `robodolg_*.script` modules
+- To switch between modules, modify the commented lines in `goldenorb_modifiers.script`. The three of primary interest are `offset_aim`, `free_aim`, and `body_cam`
 
 **Known Issues**
 - Various weapons need their positions updated for correct scoping behaviour
