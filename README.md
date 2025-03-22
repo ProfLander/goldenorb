@@ -4,7 +4,9 @@ In-development total camera and aiming overhaul for Anomaly.
 
 Uses modded exe functionality to add or extend composable features affecting the actor, arms, weapon, and camera.
 
-Examples include:
+The full mechanical span between immersive realism and arcadey shooter is under consideration; if it involves allowing the player a greater range of expression with regard to their actor's interaction with the game world, then it probably qualifies for inclusion.
+
+Possible Examples:
 - Detached reticle
 - Fully-detached free aim
 - Enhanced free look
