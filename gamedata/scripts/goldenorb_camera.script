@@ -1,0 +1,88 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Camera State
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+--- Imports
+
+-- Global imports to make the LSP happy
+local device = device
+local vector = vector
+
+-- Logging
+local log = goldenorb_logging.log
+
+--- Constants
+
+local DIST = 800
+
+--- State
+
+local cam_rot = vector()
+
+local prev_pos = nil
+local prev_rot = nil
+
+local delta_pos = vector()
+local delta_rot = vector()
+
+--- Implementation
+
+-- Rotation getter
+function get_camera_position()
+   return device().cam_pos
+end
+
+function get_camera_direction()
+   return device().cam_dir
+end
+
+function get_camera_rotation()
+   return cam_rot
+end
+
+-- Delta position getter
+function get_camera_delta_position()
+   return delta_pos
+end
+
+-- Delta rotation getter
+function get_camera_delta_rotation()
+   return delta_rot
+end
+
+-- Aim point getter
+function get_camera_aim_point()
+   log("get_camera_aim_point(%s)")
+   local dev = device()
+   return dev.cam_dir:mul(DIST):add(dev.cam_pos)
+end
+
+-- Update function
+function read_camera(state)
+   log("read_camera(%s)", state)
+   local dev = device()
+   local pos = dev.cam_pos
+   local dir = dev.cam_dir
+
+   cam_rot = vector():set(
+      math.atan2(dir.x, dir.z),
+      math.sin(dir.y),
+      0
+   )
+
+   prev_pos = prev_pos or pos
+   prev_rot = prev_rot or cam_rot
+
+   delta_pos = vector():set(pos):sub(prev_pos)
+   log("  delta_pos: %s", delta_pos)
+
+   delta_rot = vector():set(cam_rot):sub(prev_rot)
+   log("  delta_rot: %s", delta_rot)
+
+   prev_pos = pos
+   prev_rot = cam_rot
+
+   return state
+end

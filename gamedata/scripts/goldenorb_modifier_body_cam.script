@@ -1,0 +1,97 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Bodycam Camera Modifier
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+--- Imports
+
+-- Global imports to make the LSP happy
+local vector = vector
+
+-- Aim Point
+local get_actor_rotation = goldenorb_aim_point.get_actor_rotation
+
+--Math
+local deg = goldenorb_math.deg
+
+-- Logging
+local log = goldenorb_logging.log
+
+--- Constants
+
+BONE_ROOT = "root_stalker"
+
+-- Set of bones used to calculate camera transform
+BONES = {
+   bip01_head = {
+      vector():set(0.33, 0.33, 0.33),
+      vector():set(0.25, 0.1, 0.25),
+   },
+   bip01_neck = {
+      vector():set(0.33, 0.33, 0.33),
+      vector():set(0.15, 0.25, 0.25),
+   },
+   bip01_spine2 = {
+      vector():set(0.33, 0.33, 0.33),
+      vector():set(0.0, 0.25, 0.25),
+   },
+}
+
+--- Implementation
+
+function body_cam(state)
+   log("body_cam(%s)", state)
+
+   if not state.actor then
+      return state
+   end
+
+   for k,v in pairs(state.actor:list_bones()) do
+      printf("%s: %s", k, v)
+   end
+
+   local root_pos = state.actor:bone_position(BONE_ROOT)
+   log("root_pos: %s", root_pos)
+
+   local root_rot = state.actor:bone_direction(BONE_ROOT)
+   log("root_rot: %s", root_rot)
+
+   local pos = vector()
+   local rot = vector()
+   for bone,facs in pairs(BONES) do
+      local pos_fac = facs[1]
+      local rot_fac = facs[2]
+      pos:add(
+         state.actor:bone_position(bone)
+         :sub(root_pos)
+         :mul(pos_fac)
+      )
+      rot:add(
+         state.actor:bone_direction(bone)
+         :sub(root_rot)
+         :mul(rot_fac)
+      )
+   end
+
+   pos:add(root_pos)
+   rot:add(root_rot)
+
+   state.cam.enable = true
+   state.cam.pos = pos
+   state.cam.rot = vector():set(rot.x, rot.y, 0)
+   state.cam.affect_hud = true
+
+   if state.wpn and state.hud then
+      local actor_rot = get_actor_rotation(state.wpn)
+      state.hud.hands_orientation.x =
+         state.hud.hands_orientation.x
+         - deg(actor_rot.x)
+
+      state.hud.hands_orientation.y =
+         state.hud.hands_orientation.y
+         + deg(actor_rot.y)
+   end
+
+   return state
+end

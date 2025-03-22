@@ -1,0 +1,40 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Update Hooks
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+--- Imports
+
+-- Goldenorb
+
+local register_update_callback = goldenorb.register_update_callback
+
+-- Camera
+local read_camera = goldenorb_camera.read_camera
+
+-- Weapon
+local read_weapon = goldenorb_weapon.read_weapon
+
+-- Debug
+local reset_next_id = goldenorb_debug.reset_next_id
+
+-- Recoil
+local consume_weapon = goldenorb_recoil.consume_weapon
+
+-- Effects
+local run_modifiers = goldenorb_effects.run_modifiers
+
+-- Logging
+local log = goldenorb_logging.log
+
+--- Entrypoint
+
+function on_game_start()
+   log("update.on_game_start")
+   register_update_callback(reset_next_id)
+   register_update_callback(consume_weapon)
+   register_update_callback(read_camera)
+   register_update_callback(read_weapon)
+   register_update_callback(run_modifiers)
+end

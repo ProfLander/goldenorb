@@ -1,0 +1,56 @@
+----------------------------------------------------------------------------
+-- RoboDolg: Weapon Bones
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+--- Imports
+
+-- Global imports to make the LSP happy
+local RegisterScriptCallback = RegisterScriptCallback
+
+-- Log
+local log = goldenorb_logging.log
+
+-- Debug
+local CYAN = goldenorb_debug.CYAN
+local draw_bones = goldenorb_debug.draw_bones
+
+--- Constants
+
+DRAW = false
+POLY_SIZE = 0.005
+POLY_SIDES = 4
+LINE_LENGTH = 0.05
+COLOR = CYAN
+
+--- Implementation
+
+function draw_weapon_bones(state)
+   log("draw_weapon_bones(%s)", state)
+   
+    if not DRAW then
+        return state
+    end
+
+   if not state.wpn then
+      return state
+   end
+
+   draw_bones(
+      state.wpn,
+      true,
+      POLY_SIZE,
+      POLY_SIDES,
+      LINE_LENGTH,
+      COLOR
+   )
+end
+
+function on_game_start()
+   log("robodolg_weapon_bones.on_game_start")
+   RegisterScriptCallback(
+      "robodolg_on_draw",
+      draw_weapon_bones
+   )
+end

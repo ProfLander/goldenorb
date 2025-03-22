@@ -1,0 +1,76 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Hand Orientation
+----------------------------------------------------------------------------
+--
+-- Controls hand orientation
+-- Used for:
+-- Resetting config-customized orientation
+-- Applying ADS rotation offsets
+--
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+--- Imports
+
+-- Global imports to make the LSP happy
+
+local axr_main = axr_main
+
+local vector = vector
+local device = device
+
+-- Weapon
+local get_hud_number = goldenorb_weapon.get_hud_number
+
+-- Math
+local deg = goldenorb_math.deg
+
+-- Logging
+local log = goldenorb_logging.log
+
+--- State
+
+local zoom_fac = 0
+
+--- Implementation
+
+-- Apply HUD aim offset rotation with a lerp to account for ADS animation
+function apply_hud_offset_rot(state)
+   log("apply_hud_offset_rot(%s)", state)
+
+   if not state.wpn or not state.hud then
+      return state
+   end
+
+   local zoom_duration = get_hud_number(state.wpn, "zoom_rotate_time")
+   if zoom_duration == nil or
+      zoom_duration == 0
+   then
+      zoom_duration = 0.25
+   end
+   log("  zoom_duration: %s", zoom_duration)
+
+   -- Apply HUD offset rotation based on zoom state
+   local ofs = vector():set(
+      deg(state.hud.aim_hud_offset_rot.y),
+      deg(state.hud.aim_hud_offset_rot.x),
+      deg(state.hud.aim_hud_offset_rot.z)
+   )
+
+   local dt = (device().time_delta / 1000) / zoom_duration
+   log("  dt: %s", dt)
+   if not axr_main.weapon_is_zoomed then
+      dt = -dt
+   end
+   zoom_fac = zoom_fac + dt
+
+   zoom_fac = math.min(math.max(zoom_fac, 0), 1)
+
+   log("  zoom_fac: %s", zoom_fac)
+
+   state.hud.hands_orientation:add(ofs:mul(zoom_fac))
+
+   -- Done
+   return state
+end

@@ -1,0 +1,48 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Parameter Modifiers
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+--- Imports
+
+-- Global imports to make the LSP happy
+local vector = vector
+local time_global = time_global
+
+-- Effects
+local register_param_modifier = goldenorb_effects.register_param_modifier
+
+-- Log
+local log = goldenorb_logging.log
+
+--- Implementation
+
+-- Apply a 2D oscillation to hand orientation
+function animate_sin_cos(freq_x, freq_y, amp_x, amp_y)
+   return function(state)
+      log(
+         "animate_sin_cos(%s, %s, %s, %s)(%s)",
+         freq_x,
+         freq_y,
+         amp_x,
+         amp_y,
+         state
+      )
+
+      if not state.hud then
+         return state
+      end
+
+      local t = time_global()
+      state.hud.hands_orientation:add(
+         vector()
+         :set(
+            math.sin(t * freq_x) * amp_x,
+            math.cos(t * freq_y) * amp_y,
+            0
+         )
+      )
+      return state
+   end
+end

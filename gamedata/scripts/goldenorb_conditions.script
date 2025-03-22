@@ -1,0 +1,42 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Conditions
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+--- Imports
+
+-- Global imports to make the LSP happy
+local SYS_GetParam = SYS_GetParam
+local IsBolt = IsBolt
+
+--- Implementation
+
+function is_pda_active(actor)
+   return actor
+      and (actor:active_slot() == 8
+           or actor:active_slot() == 14)
+end
+
+function IsBinoc(sec)
+   return SYS_GetParam(0, sec, "ammo_class", "") == "ammo_binoc"
+       or SYS_GetParam(0, sec, "class", "") == "WP_BINOC"
+end
+
+function IsThrowable(wpn)
+   return IsBolt(wpn)
+      or SYS_GetParam(0, wpn:section(), "class", "") == "II_BOLT"
+end
+
+function is_drawing_weapon(wpn)
+   return wpn:get_state() == 1
+end
+
+function is_hiding_weapon(wpn)
+   return wpn:get_state() == 2
+end
+
+function is_reloading_weapon(wpn)
+   return wpn:get_state() == 7
+end
+

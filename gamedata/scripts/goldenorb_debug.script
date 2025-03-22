@@ -1,0 +1,213 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Debug Utilities
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+--- Imports
+
+-- Global imports to make the LSP happy
+local device = device
+local fcolor = fcolor
+local vector = vector
+local matrix = matrix
+local debug_render = debug_render
+local DBG_ScriptObject = DBG_ScriptObject
+
+-- Math
+local TAU = goldenorb_math.TAU
+local vector_lerp = goldenorb_math.vector_lerp
+local hpb_to_direction = goldenorb_math.hpb_to_direction
+
+-- Logging
+local log = goldenorb_logging.log
+
+--- Constants
+
+WHITE = vector():set(1, 1, 1)
+RED = vector():set(1, 0, 0)
+GREEN = vector():set(0, 1, 0)
+BLUE = vector():set(0, 0, 1)
+CYAN = vector():set(0, 1, 1)
+MAGENTA = vector():set(1, 0, 1)
+YELLOW = vector():set(1, 1, 0)
+
+--- State
+
+local next_id = 1
+
+--- Implementation
+
+function reset_next_id(state)
+   log("reset_next_id(%s)", state)
+   next_id = 1
+   return state
+end
+
+function get_id()
+   local id = next_id
+   next_id = next_id + 1
+   return id
+end
+
+function draw_sphere(pos, scale, color)
+   log("debug_sphere(%s, %s, %s)", pos, scale, color)
+
+   scale = scale or 0.1
+   color = color or vector():set(1, 1, 1)
+
+   local sphere = debug_render.add_object(
+      get_id(),
+      DBG_ScriptObject.sphere
+   ):cast_dbg_sphere()
+
+   sphere.visible = true
+   sphere.color = fcolor():set(
+      color.x,
+      color.y,
+      color.z,
+      1
+   )
+   sphere.matrix = matrix():mul(
+      matrix():translate(pos),
+      matrix():identity():scale(
+         scale,
+         scale,
+         scale
+      )
+   )
+end
+
+function draw_line(pa, pb, color)
+   log("draw_line(%s, %s, %s)", pa, pb, color)
+
+   color = color or vector():set(1, 1, 1)
+
+   local line = debug_render.add_object(
+      get_id(),
+      DBG_ScriptObject.line
+   ):cast_dbg_line()
+
+   line.point_a = pa
+   line.point_b = pb
+   line.color = fcolor():set(
+      color.x,
+      color.y,
+      color.z,
+      1
+   )
+end
+
+function billboard_vector(vec)
+   local dev = device()
+   return vector()
+      :set(dev.cam_right)
+      :mul(vec.x)
+      :add(
+         vector()
+         :set(dev.cam_top)
+         :mul(vec.y)
+      ):add(
+         vector()
+         :set(dev.cam_dir)
+         :mul(vec.z)
+      )
+end
+
+function draw_billboard_line(pos, a, b, color)
+   log("draw_billboard_line(%s, %s, %s)", pos, a, b, color)
+
+   assert(pos, "Invalid position")
+   assert(a, "Invalid line start")
+   assert(b, "Invalid line end")
+
+   draw_line(
+      billboard_vector(a):add(pos),
+      billboard_vector(b):add(pos),
+      color
+   )
+end
+
+function draw_billboard_cross(pos, extent, color)
+   log("draw_billboard_cross(%s, %s, %s)", pos, extent, color)
+   draw_billboard_line(
+      pos,
+      vector():set(-extent.x, 0, 0),
+      vector():set(extent.x, 0, 0),
+      color
+   )
+   draw_billboard_line(
+      pos,
+      vector():set(0, extent.y, 0),
+      vector():set(0, -extent.y, 0),
+      color
+   )
+end
+
+function draw_billboard_ngon(pos, rad, sides, color)
+   log("draw_billboard_ngon(%s, %s, %s, %s)", pos, rad, sides, color)
+   local last = nil
+   for i = 1,sides+1 do
+      local t = i / sides
+      local r = t * TAU
+      local v = vector():set(math.sin(r), math.cos(r), 0):mul(rad)
+      if last then
+         draw_billboard_line(pos, last, v, color)
+      end
+      last = v
+   end
+end
+
+function draw_crosshair(pos, cross_size, ring_size, ring_segs, color)
+   -- Cross
+   draw_billboard_cross(
+      pos,
+      vector():set(cross_size, cross_size, 0),
+      color
+   )
+
+   -- Diamond
+   draw_billboard_ngon(
+      pos,
+      ring_size,
+      ring_segs,
+      color
+   )
+end
+
+function draw_bones(obj, hud, poly_size, poly_sides, line_length, color)
+   log("draw_bones(%s)", obj)
+   local bones = obj:list_bones(hud)
+
+   for _,name in pairs(bones) do
+      local pos = obj:bone_position(name, hud)
+      draw_billboard_ngon(
+         pos,
+         poly_size,
+         poly_sides,
+         color
+      )
+
+      local dir = hpb_to_direction(obj:bone_direction(name, hud))
+
+      draw_line(
+         pos,
+         vector()
+         :set(pos)
+         :add(
+            vector()
+            :set(dir)
+            :mul(line_length)
+         ),
+         color
+      )
+   end
+end
+
+function draw_arrayed(f, start, finish, steps)
+   log("draw_arrayed(%s, %s, %s, %s)", f, start, finish, steps)
+   for i = 1,steps do
+      local pos = vector_lerp(start, finish, i / steps)
+      f(pos)
+   end
+end

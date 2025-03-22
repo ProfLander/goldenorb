@@ -1,0 +1,26 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Functional Lenses
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+-- Lens Metatable
+local Lens = {}
+
+-- Get from the given object using this lens
+function Lens:get(d)
+   return d[self[1]](d)
+end
+
+-- Set to the given object using this lens
+function Lens:set(d, v)
+   return d[self[2]](d, v)
+end
+
+-- Lens constructor
+function lens(get, set)
+   return setmetatable(
+      {get, set},
+      { __index = Lens }
+   )
+end

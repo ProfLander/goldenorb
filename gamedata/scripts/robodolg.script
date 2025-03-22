@@ -1,0 +1,38 @@
+----------------------------------------------------------------------------
+-- RoboDolg
+----------------------------------------------------------------------------
+-- 
+-- Vector HUD for Anomaly
+-- 
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+--- Imports
+
+-- Global imports to make the LSP happy
+local AddScriptCallback = AddScriptCallback
+local SendScriptCallback = SendScriptCallback
+
+-- Core
+local register_update_callback = goldenorb.register_update_callback
+
+-- Logging
+local log = goldenorb_logging.log
+
+--- Implementation
+
+function draw_robodolg(state)
+   log("draw_robodolg(state)", state)
+   SendScriptCallback("robodolg_on_draw", state)
+end
+
+function on_game_start()
+   log("robodolg.on_game_start")
+
+   -- Declare our draw callback
+   AddScriptCallback("robodolg_on_draw")
+
+   -- Register with GoldenOrb's update callback
+   register_update_callback(draw_robodolg)
+end

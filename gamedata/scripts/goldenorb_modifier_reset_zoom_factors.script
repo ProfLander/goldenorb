@@ -1,0 +1,28 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Zoom Factor Reset Modifier
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+--- Imports
+
+-- Log
+local log = goldenorb_logging.log
+
+--- Implementation
+
+-- Zero out the zoom factor components
+function reset_zoom_factors(state)
+   log("reset_zoom_factors(%s)", state)
+
+   if not state.hud then
+      log("  no HUD, returning.")
+      return state
+   end
+
+   state.hud.scope_zoom_factor = 0
+   state.hud.gl_zoom_factor = 0
+   state.hud.scope_zoom_factor_alt = 0
+
+   return state
+end

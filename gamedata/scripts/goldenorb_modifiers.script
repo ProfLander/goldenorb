@@ -1,0 +1,35 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Weapon HUD Parameter Modifiers
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+--- Imports
+
+-- Effects
+local register_modifier = goldenorb_effects.register_modifier
+
+-- Modifiers
+local body_cam = goldenorb_modifier_body_cam.body_cam
+local free_aim = goldenorb_modifier_free_aim.free_aim
+local offset_aim = goldenorb_modifier_offset_aim.offset_aim
+local offset_fire_point = goldenorb_modifier_offset_fire_point.offset_fire_point
+local reset_zoom_factors = goldenorb_modifier_reset_zoom_factors.reset_zoom_factors
+local reset_hands_orientation = goldenorb_modifier_reset_hands_orientation.reset_hands_orientation
+local apply_hud_offset_rot = goldenorb_modifier_hud_offset_rot.apply_hud_offset_rot
+
+-- Logging
+local log = goldenorb_logging.log
+
+--- Entrypoint
+
+function on_game_start()
+   log("modifiers.on_game_start")
+   --register_modifier(reset_hands_orientation)
+   register_modifier(reset_zoom_factors)
+   register_modifier(offset_fire_point)
+   register_modifier(apply_hud_offset_rot)
+   --register_modifier(body_cam)
+   register_modifier(free_aim)
+   --register_modifier(offset_aim)
+end

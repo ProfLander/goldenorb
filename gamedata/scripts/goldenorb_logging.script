@@ -1,0 +1,47 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Logging Utilities
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+--- Imports
+
+-- Global imports to make the LSP happy
+local printf = printf
+
+--- Constants
+
+OFF = 0
+ERROR = 1
+WARNING = 2
+INFO = 3
+DEBUG = 4
+TRACE = 5
+
+local LEVEL = OFF
+
+--- Implementation
+
+function log_impl(s, ...)
+   printf("GoldenOrb: " .. s, ...)
+end
+
+function log(...)
+   if LEVEL > OFF then
+      log_impl(...)
+   end
+end
+
+function log_level(level)
+   return function(...)
+      if LEVEL >= level then
+         log_impl(...)
+      end
+   end
+end
+
+err = log_level(ERROR)
+warn = log_level(WARNING)
+info = log_level(INFO)
+dbg = log_level(DEBUG)
+trace = log_level(TRACE)

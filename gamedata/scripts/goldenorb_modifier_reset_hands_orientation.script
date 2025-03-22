@@ -1,0 +1,29 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Hand Orientation Reset Modifier
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+--- Imports
+
+-- Global imports to make the LSP happy
+
+local vector = vector
+
+-- Effects
+local register_param_modifier = goldenorb_effects.register_param_modifier
+
+-- Logging
+local log = goldenorb_logging.log
+
+--- Implementation
+
+-- Remove any existing hand orientation
+function reset_hands_orientation(state)
+   log("reset_hands_orientation(%s)", state)
+   if state.hud then
+    state.hud.hands_orientation = vector()
+   end
+   return state
+end
+

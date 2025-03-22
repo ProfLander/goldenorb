@@ -1,0 +1,196 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Math Utilities
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+--- Imports
+
+--- Global imports to make the LSP happy
+local vector = vector
+local device = device
+
+--- Constants
+
+PI = 3.14159
+TAU = PI * 2
+RAD2DEG = 180 / PI
+DEG2RAD = PI / 180
+
+POS_X = vector():set(1, 0, 0)
+POS_Y = vector():set(0, 1, 0)
+POS_Z = vector():set(0, 0, 1)
+
+NEG_X = vector():set(-1, 0, 0)
+NEG_Y = vector():set(0, -1, 0)
+NEG_Z = vector():set(0, 0, -1)
+
+EPSILON = 0.00000001
+
+--- Implementation
+
+function sign(n)
+   if n > 0 then
+      return 1
+   elseif n < 0 then
+      return -1
+   else
+      return 0
+   end
+end
+
+function deg(f)
+   return f * RAD2DEG
+end
+
+function rad(f)
+   return f * DEG2RAD
+end
+
+function vector_lerp(a, b, t)
+   local delta = vector():set(b):sub(a)
+   return vector():set(a:add(delta:mul(t)))
+end
+
+function vector_rotate(v, k, theta)
+   if theta == 0
+   or theta == 1/0
+   or theta == 0/0
+   or theta == -0/0
+   or theta == -1/0
+   then
+      return v
+   end
+
+   local cos_theta = math.cos(theta)
+   local sin_theta = math.sin(theta)
+   
+   return vector()
+      :set(v)
+      :mul(cos_theta)
+      :add(vector_cross(k, v):mul(sin_theta))
+      :add(vector():set(k):mul(k:dotproduct(v)))
+      :mul(1 - cos_theta)
+end
+
+function vector_rotate_x(v, theta)
+   return vector_rotate(v, vector():set(1, 0, 0), theta)
+end
+
+function vector_rotate_y(v, theta)
+   return vector_rotate(v, vector():set(0, 1, 0), theta)
+end
+
+function vector_rotate_z(v, theta)
+   return vector_rotate(v, vector():set(0, 0, 1), theta)
+end
+
+function vector_xz(v)
+   return vector():set(v.x, 0, v.z)
+end
+
+--- Basis
+local Basis = {}
+
+function basis(x, y, z)
+   return setmetatable(
+      {
+         x = x or vector():set(POS_X),
+         y = y or vector():set(POS_Y),
+         z = z or vector():set(POS_Z),
+      },
+      {
+         __index = Basis
+      }
+   )
+end
+
+function Basis:normalize()
+   return basis(
+      self.x:normalize(),
+      self.y:normalize(),
+      self.z:normalize()
+   )
+end
+
+function Basis:rotate(k, theta)
+   if theta == 0/0 then
+      return self
+   end
+
+   if theta == 1/0 then
+      return self
+   end
+
+   if math.abs(theta) < EPSILON then
+      return self
+   end
+
+   return basis(
+      vector_rotate(self.x, k, theta),
+      vector_rotate(self.y, k, theta),
+      vector_rotate(self.z, k, theta)
+   ):normalize()
+end
+
+function Basis:rotate_hpb(hpb)
+   local out = basis(
+      vector():set(self.x),
+      vector():set(self.y),
+      vector():set(self.z)
+   )
+   out = out:rotate(out.y, -hpb.x)
+   out = out:rotate(out.x, -hpb.y)
+   out = out:rotate(out.z, -hpb.z)
+   return out
+end
+
+function Basis:rotate_x(theta)
+   return self:rotate(POS_X, theta)
+end
+
+function Basis:rotate_y(theta)
+   return self:rotate(POS_Y, theta)
+end
+
+function Basis:rotate_z(theta)
+   return self:rotate(POS_Z, theta)
+end
+
+function Basis:rotate_hpb(hpb)
+   local out = basis(
+      vector():set(self.x),
+      vector():set(self.y),
+      vector():set(self.z)
+   )
+   out = out:rotate(out.y, -hpb.x)
+   out = out:rotate(out.x, -hpb.y)
+   out = out:rotate(out.z, -hpb.z)
+   return out
+end
+
+-- Transform the given vector into basis-space
+function world_to_basis(basis, vec)
+   return vector():set(
+      vec:dotproduct(basis.x),
+      vec:dotproduct(basis.y),
+      vec:dotproduct(basis.z)
+   )
+end
+
+-- Fetch the camera's basis
+function camera_basis()
+   local dev = device()
+   return basis(
+      dev.cam_right,
+      dev.cam_top,
+      dev.cam_dir
+   )
+end
+
+-- Convert a Heading-Pitch-Bank rotation
+-- (such as those returned from bone_direction)
+-- into a direction vector
+function hpb_to_direction(hpb)
+   return basis():rotate_hpb(hpb).z
+end

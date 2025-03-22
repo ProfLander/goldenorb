@@ -1,0 +1,236 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Weapon Data
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+--- Imports
+
+-- Global imports to make the LSP happy
+local utils_xml = utils_xml
+
+local vector = vector
+local str_explode = str_explode
+local SYS_GetParam = SYS_GetParam
+
+-- Math
+local hpb_to_direction = goldenorb_math.hpb_to_direction
+
+-- Math
+local log = goldenorb_logging.log
+
+--- Constants
+
+-- Aim projection distance
+local DIST = 1000
+
+HUD_KEYS = {
+   hands_position = {0, 0},
+   hands_orientation = {1, 0},
+   aim_hud_offset_pos = {0, 1},
+   aim_hud_offset_rot = {1, 1},
+   gl_hud_offset_pos = {0, 2},
+   gl_hud_offset_rot = {1, 2},
+   aim_hud_offset_alt_pos = {0, 3},
+   aim_hud_offset_alt_rot = {1, 3},
+   lowered_hud_offset_pos = {0, 4},
+   lowered_hud_offset_rot = {1, 4},
+   fire_point = {0, 10},
+   fire_point2 = {0, 11},
+   fire_direction = {1, 10},
+   shell_point = {1, 11},
+   custom_ui_pos = {0, 20},
+   custom_ui_rot = {1, 20},
+   item_position = {0, 12},
+   item_orientation = {1, 12},
+}
+
+HUD_DEFAULTS = {
+   hands_position = vector(),
+   hands_orientation = vector(),
+   aim_hud_offset_pos = vector(),
+   aim_hud_offset_rot = vector(),
+   gl_hud_offset_pos = vector(),
+   gl_hud_offset_rot = vector(),
+   aim_hud_offset_alt_pos = vector(),
+   aim_hud_offset_alt_rot = vector(),
+   lowered_hud_offset_pos = vector(),
+   lowered_hud_offset_rot = vector(),
+   fire_point = vector(),
+   fire_point2 = vector(),
+   fire_direction = vector():set(0, 0, 1),
+   shell_point = vector(),
+   custom_ui_pos = vector(),
+   custom_ui_rot = vector(),
+   item_position = vector(),
+   item_orientation = vector(),
+}
+
+--- State
+
+local wpn_rot = vector()
+
+local prev_pos = nil
+local prev_rot = nil
+
+local delta_pos = vector()
+local delta_rot = vector()
+
+--- Implementation
+
+function get_hud_sec(wpn)
+   return wpn and SYS_GetParam(0, wpn:section(), "hud")
+end
+
+function get_hud_string(wpn, key)
+   --log("get_hud_string(%s, %s)", wpn, key)
+   local hud_sec = get_hud_sec(wpn)
+   return hud_sec and SYS_GetParam(0, get_hud_sec(wpn), key)
+end
+
+function get_hud_number(wpn, key)
+   --log("get_hud_number(%s, %s)", wpn, key)
+   local str = get_hud_string(wpn, key)
+   return str and tonumber(str) or 0
+end
+
+function get_hud_vector(wpn, key)
+   --log("get_hud_vector(%s)", wpn)
+   local val = utils_xml.is_widescreen()
+      and get_hud_string(wpn, key .. "_16x9")
+      or get_hud_string(wpn, key)
+
+   if val then
+      local c = str_explode(val, ",")
+      return vector():set(
+         tonumber(c[1]) or 0,
+         tonumber(c[2]) or 0,
+         tonumber(c[3]) or 0
+      )
+   else
+      return HUD_DEFAULTS[key]
+   end
+end
+
+function get_hud_params(wpn)
+   --log("get_hud_params(%s)", wpn)
+   local params = {}
+   for k,v in pairs(HUD_KEYS) do
+      if type(v) == "table" then
+         params[k] = get_hud_vector(wpn, k)
+      else
+         params[k] = get_hud_number(wpn, k)
+      end
+      --log("  %s: %s", k, params[k])
+   end
+   return params
+end
+
+function get_fire_bone_name(wpn)
+   return get_hud_string(wpn, "fire_bone")
+end
+
+function get_hud_bone_position(wpn, bone)
+   return vector():set(wpn:bone_position(bone, true))
+end
+
+function get_hud_bone_direction(wpn, bone)
+   return vector():set(wpn:bone_direction(bone, true))
+end
+
+function get_fire_bone_position(wpn)
+   return get_hud_bone_position(wpn, get_fire_bone_name(wpn))
+end
+
+function get_fire_bone_direction(wpn)
+   return hpb_to_direction(get_hud_bone_direction(wpn, get_fire_bone_name(wpn)))
+end
+
+function get_hands_position()
+   local actor = db.actor
+   if not actor then
+      log("WARNING: No actor")
+      return nil
+   end
+
+   return actor:bone_position("bip01", true)
+end
+
+function get_hands_rotation()
+   local actor = db.actor
+   if not actor then
+      log("WARNING: No actor")
+      return nil
+   end
+
+   return actor:bone_direction("bip01", true)
+end
+
+function get_hands_direction()
+   return hpb_to_direction(get_hands_rotation())
+end
+
+function get_hands_aim_point(wpn)
+   log("get_hands_aim_point(%s)", wpn)
+   return get_hands_position(wpn)
+      :add(
+         get_hands_direction(wpn)
+         :mul(DIST)
+      )
+end
+
+-- Delta position getter
+function get_weapon_delta_position()
+   return delta_pos
+end
+
+-- Rotation getter
+function get_weapon_rotation()
+   return wpn_rot
+end
+
+-- Delta rotation getter
+function get_weapon_delta_rotation()
+   return delta_rot
+end
+
+function get_weapon_aim_point(wpn)
+   log("get_weapon_aim_point(%s)", wpn)
+   return get_fire_bone_position(wpn)
+      :add(
+         get_fire_bone_direction(wpn)
+         :mul(DIST)
+      )
+end
+
+-- Update function
+function read_weapon(state)
+   log("read_weapon(%s)", state)
+
+   if not state.wpn then
+      return state
+   end
+
+   local pos = get_fire_bone_position(state.wpn)
+   local dir = get_fire_bone_direction(state.wpn)
+
+   wpn_rot = vector():set(
+      math.atan2(dir.x, dir.z),
+      math.sin(dir.y),
+      0
+   )
+
+   prev_pos = prev_pos or pos
+   prev_rot = prev_rot or wpn_rot
+
+   delta_pos = vector():set(pos):sub(prev_pos)
+   log("  delta_pos: %s", delta_pos)
+
+   delta_rot = vector():set(wpn_rot):sub(prev_rot)
+   log("  delta_rot: %s", delta_rot)
+
+   prev_pos = pos
+   prev_rot = wpn_rot
+
+   return state
+end

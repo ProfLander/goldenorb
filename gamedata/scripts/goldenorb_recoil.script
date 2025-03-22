@@ -1,0 +1,100 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Recoil
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+--- Imports
+
+-- Lens
+local lens = goldenorb_lens.lens
+
+-- Logging
+local log = goldenorb_logging.log
+
+--- Constants
+
+-- Lenses for interacting with weapon parameters
+local lenses = {
+   cam_relax_speed = lens(
+      "GetCamRelaxSpeed",
+      "SetCamRelaxSpeed"
+   ),
+   cam_dispersion = lens(
+      "GetCamDispersion",
+      "SetCamDispersion"
+   ),
+   cam_dispersion_inc = lens(
+      "GetCamDispersionInc",
+      "SetCamDispersionInc"
+   ),
+   cam_dispersion_frac = lens(
+      "GetCamDispersionFrac",
+      "SetCamDispersionFrac"
+   ),
+   zoom_cam_relax_speed = lens(
+      "GetZoomCamRelaxSpeed",
+      "SetZoomCamRelaxSpeed"
+   ),
+   zoom_cam_dispersion = lens(
+      "GetZoomCamDispersion",
+      "SetZoomCamDispersion"
+   ),
+   zoom_cam_dispersion_inc = lens(
+      "GetZoomCamDispersionInc",
+      "SetZoomCamDispersionInc"
+   ),
+   zoom_cam_dispersion_frac = lens(
+      "GetZoomCamDispersionFrac",
+      "SetZoomCamDispersionFrac"
+   ),
+}
+
+--- State
+
+-- Weapon data cache
+local wpn_cache = {}
+
+--- Implementation
+
+-- Cache a weapon's HUD data before setting it all to 0
+function consume_weapon(state)
+   log("consume_weapon(%s)", state)
+
+   if not state.wpn then
+      return state
+   end
+
+   -- Fetch the weapon's section
+   local sec = state.wpn:section()
+   log("  section(%s)", sec)
+
+   -- Return with a warning if it's not valid
+   if not sec then
+      log("  WARNING: Invalid weapon section")
+      return
+   end
+
+   -- Return if it's already set
+   if wpn_cache[sec] then
+      log("  %s is already cached, returning.", sec)
+      return
+   end
+
+   -- Fetch existing cache data
+   wpn_cache[sec] = {}
+
+   -- Cast our weapon to a CWeapon
+   local weapon = state.wpn:cast_Weapon()
+
+   if not weapon then
+      log("  WARNING: Invalid weapon")
+      return
+   end
+
+   -- Iterate over our parameter lenses
+   for k,l in pairs(lenses) do
+      wpn_cache[sec][k] = l:get(weapon)
+      l:set(weapon, 0)
+   end
+end

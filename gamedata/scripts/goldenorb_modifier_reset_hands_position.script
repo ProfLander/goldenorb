@@ -1,0 +1,26 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Hands Position Reset Modifier
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+--- Imports
+
+-- Global imports to make the LSP happy
+local vector = vector
+
+-- Log
+local log = goldenorb_logging.log
+
+--- Implementation
+
+-- Zero out the position component
+function reset_hands_position(state)
+   log("reset_hands_position(%s)", state)
+
+   if state.hud then
+      state.hud.hands_position = vector()
+   end
+
+   return state
+end

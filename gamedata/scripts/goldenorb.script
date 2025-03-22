@@ -1,0 +1,81 @@
+----------------------------------------------------------------------------
+-- GoldenOrb
+----------------------------------------------------------------------------
+-- Decoupled aiming reticle for Anomaly.
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+--- Imports
+
+-- Global imports to make the LSP happy
+local db = db
+local hud_adjust = hud_adjust
+local actor_menu = actor_menu
+
+local printf = printf
+local AddUniqueCall = AddUniqueCall
+
+-- Conditions
+local should_update_actor = goldenorb_conditions.should_update_actor
+local should_update_weapon = goldenorb_conditions.should_update_weapon
+
+-- Logging
+local log = goldenorb_logging.log
+
+--- Implementation
+
+--- Update Callback
+
+function update_callback(wpn)
+end
+
+function register_update_callback(f)
+   log("register_update_callback(%s)", f)
+   local old_update_callback = update_callback
+   update_callback = function(wpn)
+      old_update_callback(wpn)
+      f(wpn)
+   end
+end
+
+-- Update handler implementation
+function goldenorb_update_impl()
+   log("goldenorb_update()")
+
+   -- Activate HUD adjustment
+   hud_adjust.enabled(true)
+
+   local actor = db.actor
+   local wpn = actor and actor:active_item()
+   local state = {
+      actor = actor,
+      wpn = wpn,
+   }
+
+   -- Invoke callback
+   update_callback(state)
+end
+
+-- Top-level update handler
+-- Performs error handling
+function goldenorb_update()
+   local status, err = pcall(goldenorb_update_impl)
+   if not status then
+      local msg = string.format(
+            "GoldenOrb Error: %s",
+            err
+         )
+      printf(msg)
+      actor_menu.set_msg(1, msg, 10000)
+   end
+end
+
+--- Entrypoint
+
+function on_game_start()
+   -- We use AddUniqueCall here instead of registering with actor_on_update
+   -- to make sure our updates are in sync with device().cam_*
+   --AddUniqueCall(goldenorb_update)
+   RegisterScriptCallback("actor_on_update", goldenorb_update)
+end

@@ -1,0 +1,146 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Side-Effects
+----------------------------------------------------------------------------
+-- Dirty filthy nasty useful imperative functions.
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+--- Imports
+
+-- Global imports to make the LSP happy
+local db = db
+local hud_adjust = hud_adjust
+local level = level
+
+-- Level
+local set_cam_custom_position_direction = level.set_cam_custom_position_direction
+local remove_cam_custom_position_direction = level.remove_cam_custom_position_direction
+
+-- Weapon
+local HUD_KEYS = goldenorb_weapon.HUD_KEYS
+local get_hud_params = goldenorb_weapon.get_hud_params
+
+-- Log
+local log = goldenorb_logging.log
+
+--- State
+
+local cam_custom = false
+
+function modifier(state)
+   return state
+end
+
+function register_modifier(f)
+   log("register_modifier(%s)", f)
+   local old_modifier = modifier
+   modifier = function(state)
+      log("  modifier(%s)", state)
+      return f(old_modifier(state))
+   end
+end
+
+--- Implementation
+
+function set_hud_vector(key, val)
+   log("set_hud_vector(%s, %s)", key, val)
+   local keys = HUD_KEYS[key]
+   log("  keys: %s", keys)
+   hud_adjust.set_vector(
+      keys[1], keys[2],
+      val.x, val.y, val.z
+   )
+end
+
+function set_hud_number(wpn, key, val)
+   log("set_hud_number(%s, %s)", key, val)
+   hud_adjust.set_value(key, val)
+end
+
+function set_hud_value(key, value)
+   if type(value) == "number" then
+      set_hud_number(key, value)
+   elseif type(value) == "userdata" then
+      set_hud_vector(key, value)
+   else
+      assert(nil, "Invalid HUD data for key %s: %s", key, value)
+   end
+end
+
+function set_hud_params(params)
+   for k,v in pairs(params) do
+      log("Setting HUD value %s to %s", k, v)
+      set_hud_value(k, v)
+   end
+end
+
+function table_to_string(val)
+   log("table_to_string(%s)", val)
+
+   if type(val) == "userdata" then
+      return string.format("[%s:%s:%s]", val.x, val.y, val.z)
+   elseif type(val) ~= "table" then
+      return string.format("%s", val)
+   end
+
+   local out = ""
+   for k,v in pairs(val) do
+      out = string.format("%s: %s\n", k, table_to_string(v))
+   end
+   return out
+end
+
+function run_modifiers(state)
+   log("run_modifiers(%s)", state)
+
+   state.hud = state.wpn and get_hud_params(state.wpn)
+   log("  hud: %s", table_to_string(state.hud))
+
+   state.cam = {
+      enable = false,
+      pos = vector(),
+      rot = vector(),
+      smoothing = -1,
+      show_hud = true,
+      affect_hud = true,
+   }
+   log("  cam: %s", table_to_string(state.cam))
+
+   log("  state:", table_to_string(state))
+   log("  invoking callback...", wpn)
+   state = modifier(state)
+   log("  result:", table_to_string(state))
+
+   -- Apply HUD parameters
+   if state.hud then
+      log("  Applying HUD parameters...")
+      set_hud_params(state.hud)
+      log("  Done.")
+   end
+
+   -- Apply camera state
+   if state.cam.enable then
+      log("  Applying camera state:")
+      log("    pos: %s", state.cam.pos)
+      log("    rot: %s", state.cam.rot)
+      log("    smoothing: %s", state.cam.smoothing)
+      log("    show_hud: %s", state.cam.show_hud)
+      log("    affect_hud: %s", state.cam.affect_hud)
+
+      set_cam_custom_position_direction(
+         state.cam.pos,
+         state.cam.rot,
+         state.cam.smoothing,
+         state.cam.show_hud,
+         state.cam.affect_hud
+      )
+      cam_custom = true
+   elseif cam_custom then
+      log("  Resetting camera state.")
+      remove_cam_custom_position_direction()
+      cam_custom = false
+   end
+
+   log("  Done.")
+end
