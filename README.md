@@ -4,7 +4,17 @@ In-development total camera and aiming overhaul for Anomaly.
 
 Uses modded exe functionality to add or extend composable features affecting the actor, arms, weapon, and camera.
 
-Examples include detached reticle, fully-detached free aim, enhanced free look, GoldenEye / Perfect Dark style auto aim, variable lean and crouch, physical recoil, customizable camera inertia, true bodycam effects, and inverse kinematic weapon positioning, umong myriad other possibilities.
+Examples include:
+- Detached reticle
+- Fully-detached free aim
+- Enhanced free look
+- GoldenEye / Perfect Dark style auto aim
+- Variable lean and crouch
+- Physical recoil
+- Customizable camera inertia
+- True bodycam effects
+- Inverse kinematic weapon positioning
+- And myriad other possibilities
 
 **Installation**
 
@@ -24,4 +34,4 @@ Examples include detached reticle, fully-detached free aim, enhanced free look, 
 - ADS zoom is not correctly overridden until the second map load.
 
 **Plan Document**
-See [goldenorb.org](goldenorb.org) for planned features and overall progress.
+See [goldenorb.org](goldenorb.org) for overall progress and planned features.
