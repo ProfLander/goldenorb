@@ -6,7 +6,11 @@
 
 -- Imports
 
----@module 'goldenorb_logging'
+--- Level
+local set_cam_custom_position_direction = level.set_cam_custom_position_direction
+local remove_cam_custom_position_direction = level.remove_cam_custom_position_direction
+
+--- Logging
 local log = goldenorb_logging.log
 
 -- Constants
@@ -14,6 +18,8 @@ local log = goldenorb_logging.log
 local DIST = 800
 
 -- State
+
+local cam_custom = false
 
 local cam_rot = vector()
 
@@ -55,6 +61,19 @@ function get_camera_aim_point()
    return dev.cam_dir:mul(DIST):add(dev.cam_pos)
 end
 
+--- Inject default camera parameters into the state
+function inject_camera(state)
+   state.cam = {
+      enable = false,
+      pos = vector(),
+      rot = vector(),
+      smoothing = -1,
+      show_hud = true,
+      affect_hud = true,
+   }
+   return state
+end
+
 --- Update function
 function read_camera(state)
    log("read_camera(%s)", state)
@@ -81,4 +100,33 @@ function read_camera(state)
    prev_rot = cam_rot
 
    return state
+end
+
+function apply_camera(state)
+   -- Apply camera state
+   if not state.cam then
+      return
+   end
+
+   if state.cam.enable then
+      log("  Applying camera state:")
+      log("    pos: %s", state.cam.pos)
+      log("    rot: %s", state.cam.rot)
+      log("    smoothing: %s", state.cam.smoothing)
+      log("    show_hud: %s", state.cam.show_hud)
+      log("    affect_hud: %s", state.cam.affect_hud)
+
+      set_cam_custom_position_direction(
+         state.cam.pos,
+         state.cam.rot,
+         state.cam.smoothing,
+         state.cam.show_hud,
+         state.cam.affect_hud
+      )
+      cam_custom = true
+   elseif cam_custom then
+      log("  Resetting camera state.")
+      remove_cam_custom_position_direction()
+      cam_custom = false
+   end
 end

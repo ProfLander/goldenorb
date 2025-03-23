@@ -9,7 +9,7 @@
 --- Math
 local hpb_to_direction = goldenorb_math.hpb_to_direction
 
---- Math
+--- Logging
 local log = goldenorb_logging.log
 
 -- Constants
@@ -196,6 +196,26 @@ function get_weapon_aim_point(wpn)
       )
 end
 
+
+--- Inject the actor's weapon into the given state
+function inject_weapon(state)
+   if not state.actor then
+      return state
+   end
+
+   state.wpn = state.actor:active_item()
+   return state
+end
+
+--- Inject the weapon's HUD parameters into the given state
+function inject_weapon_hud(state)
+   if not state.wpn then
+      return state
+   end
+   state.hud = get_hud_params(state.wpn)
+   return state
+end
+
 --- Update function
 function read_weapon(state)
    log("read_weapon(%s)", state)
@@ -224,6 +244,53 @@ function read_weapon(state)
 
    prev_pos = pos
    prev_rot = wpn_rot
+
+   return state
+end
+
+-- Implementation
+
+function set_hud_vector(key, val)
+   log("set_hud_vector(%s, %s)", key, val)
+   local keys = HUD_KEYS[key]
+   log("  keys: %s", keys)
+   hud_adjust.set_vector(
+      keys[1], keys[2],
+      val.x, val.y, val.z
+   )
+end
+
+function set_hud_number(key, val)
+   log("set_hud_number(%s, %s)", key, val)
+   hud_adjust.set_value(key, val)
+end
+
+function set_hud_value(key, value)
+   if type(value) == "number" then
+      set_hud_number(key, value)
+   elseif type(value) == "userdata" then
+      set_hud_vector(key, value)
+   else
+      assert(nil, "Invalid HUD data for key %s: %s", key, value)
+   end
+end
+
+function set_hud_params(params)
+   for k,v in pairs(params) do
+      log("Setting HUD value %s to %s", k, v)
+      set_hud_value(k, v)
+   end
+end
+
+
+function apply_weapon_hud(state)
+   if not state.hud then
+      return state
+   end
+
+   log("  Applying HUD parameters...")
+   set_hud_params(state.hud)
+   log("  Done.")
 
    return state
 end

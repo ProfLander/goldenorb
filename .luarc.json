@@ -53,7 +53,8 @@
 
         "IsBolt",
 
-        "goldenorb",
+        "goldenorb_main",
+        "goldenorb_impure",
         "goldenorb_aim_point",
         "goldenorb_camera",
         "goldenorb_conditions",

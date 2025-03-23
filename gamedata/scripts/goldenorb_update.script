@@ -10,11 +10,20 @@
 
 local register_update_callback = goldenorb_main.register_update_callback
 
---- Camera
-local read_camera = goldenorb_camera.read_camera
+--- Impure
+local inject_actor = goldenorb_impure.inject_actor
+local set_hud_adjust = goldenorb_impure.set_hud_adjust
 
 --- Weapon
+local inject_weapon = goldenorb_weapon.inject_weapon
+local inject_weapon_hud = goldenorb_weapon.inject_weapon_hud
 local read_weapon = goldenorb_weapon.read_weapon
+local apply_weapon_hud = goldenorb_weapon.apply_weapon_hud
+
+--- Camera
+local inject_camera = goldenorb_camera.inject_camera
+local read_camera = goldenorb_camera.read_camera
+local apply_camera = goldenorb_camera.apply_camera
 
 --- Debug
 local reset_next_id = goldenorb_debug.reset_next_id
@@ -22,8 +31,14 @@ local reset_next_id = goldenorb_debug.reset_next_id
 --- Recoil
 local consume_weapon = goldenorb_recoil.consume_weapon
 
---- Effects
-local run_modifiers = goldenorb_effects.run_modifiers
+--- Modifiers
+local body_cam = goldenorb_modifier_body_cam.body_cam
+local free_aim = goldenorb_modifier_free_aim.free_aim
+local offset_aim = goldenorb_modifier_offset_aim.offset_aim
+local offset_fire_point = goldenorb_modifier_offset_fire_point.offset_fire_point
+local reset_zoom_factors = goldenorb_modifier_reset_zoom_factors.reset_zoom_factors
+local reset_hands_orientation = goldenorb_modifier_reset_hands_orientation.reset_hands_orientation
+local apply_hud_offset_rot = goldenorb_modifier_hud_offset_rot.apply_hud_offset_rot
 
 --- Logging
 local log = goldenorb_logging.log
@@ -32,9 +47,22 @@ local log = goldenorb_logging.log
 
 function on_game_start()
    log("update.on_game_start")
+   register_update_callback(inject_actor)
+   register_update_callback(inject_weapon)
+   register_update_callback(inject_weapon_hud)
+   register_update_callback(inject_camera)
    register_update_callback(reset_next_id)
    register_update_callback(consume_weapon)
    register_update_callback(read_camera)
    register_update_callback(read_weapon)
-   register_update_callback(run_modifiers)
+   register_update_callback(set_hud_adjust(true))
+   register_update_callback(reset_hands_orientation)
+   register_update_callback(reset_zoom_factors)
+   register_update_callback(offset_fire_point)
+   register_update_callback(apply_hud_offset_rot)
+   register_update_callback(body_cam)
+   register_update_callback(free_aim)
+   register_update_callback(offset_aim)
+   register_update_callback(apply_weapon_hud)
+   register_update_callback(apply_camera)
 end

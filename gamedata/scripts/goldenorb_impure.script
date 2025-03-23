@@ -1,0 +1,23 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Impure Actions
+----------------------------------------------------------------------------
+-- Covers any action that reads or writes state outside of GoldenOrb.
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+--- Inject the actor into the given state
+function inject_actor(state)
+   state.actor = db.actor
+   return state
+end
+
+--- Set HUD adjustment
+---@param enabled boolean
+---@return fun(state: any): any
+function set_hud_adjust(enabled)
+   return function (state)
+      hud_adjust.enabled(enabled)
+      return state
+   end
+end

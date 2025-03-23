@@ -20,14 +20,14 @@ function update_callback(state)
 end
 
 --- Add f to the stateful update callback
----@param f fun(wpn: userdata): nil
+---@param f fun(state: any): nil
 ---@return nil
 function register_update_callback(f)
    log("register_update_callback(%s)", f)
    local old_update_callback = update_callback
-   update_callback = function(wpn)
-      old_update_callback(wpn)
-      f(wpn)
+   update_callback = function(state)
+      old_update_callback(state)
+      f(state)
    end
 end
 
@@ -35,19 +35,7 @@ end
 ---@return nil
 function goldenorb_update_impl()
    log("goldenorb_update()")
-
-   -- Activate HUD adjustment
-   hud_adjust.enabled(true)
-
-   local actor = db.actor
-   local wpn = actor and actor:active_item()
-   local state = {
-      actor = actor,
-      wpn = wpn,
-   }
-
-   -- Invoke callback
-   update_callback(state)
+   update_callback({})
 end
 
 --- Top-level update handler
