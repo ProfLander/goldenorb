@@ -5,15 +5,24 @@ Total camera and aiming overhaul for Anomaly.
 * Design Document
 ** Mod Compatibility
 *** Fundamental
-**** Parallax Reflex Sights
-**** Shader 3D Scopes
+Will technically function without these, but with reduced functionality.
 
-*** Repositions
+**** Parallax Reflex Sights
+- Necessary for proper sight rendering when off-center
+
+**** Shader 3D Scopes
+- Necessary for proper scope rendering when off-center
+
+*** Supported
+
+*** Partially Supported
 **** Private's Gun Reposition
 https://www.moddb.com/mods/stalker-anomaly/addons/privates-gun-reposition-aka-pgr
 - Baked-in zoom FOV
 - Works nicely when overridden
 
+
+*** Unsupported
 **** Position and View 2.1
 https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
 - Incompatible by default
@@ -24,10 +33,16 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
 **** EFT Reposition
 - Testing required
 
-*** Reanimations
-**** Gunslinger
+**** Gunslinger Animations
 - Baked-in zoom FOV
   - Need to re-test
+
+*** Incompatible
+**** Weapon Cover Tilt
+- Uses the same exclusive `hud_adjust` interface
+**** Alternate Weapon Recoil
+- WCT-based, from Anomaly Discord
+  - A major inspiration in concert with Parallax Reflex Sights
 
 ** Features
 - [ ] Reimplement recoil via decouple aim point
@@ -40,6 +55,14 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
         - Position relative to shooter's center of mass for horizontal component
   - Alternately, just turn regular recoil back on and let mods handle it
     - Likely possible now aiming is properly integrated with the HUD skeleton
+- [ ] Accurate ballistics
+  - Currently, bullets still fly from the camera after having their trajectory calculated based on the weapon's muzzle
+  - HUD parameters have a 'fire point' that is often set to zero; implies that the origin could potentially be changed to account for shooting around corners
+  - If my suspicions are correct, setting this to the position of the barrel bone each frame should result in the desired behaviour
+- [ ] Weapon inverse kinematics
+  - For aiming around cover in appropriate situations
+    - Functionally dependent on accurate ballistics
+  - Reticle offset is negligible due to far plane projection, so the gun can move around and roll freely about the barrel without affecting aim
 - [ ] Player Inertia
   - Can implement a spring-damper system driven by position delta and use it to drive a camera offset
     - Potential to drive it via the third-person skeleton as an offset
