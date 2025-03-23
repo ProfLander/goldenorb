@@ -10,8 +10,8 @@
 local log = goldenorb_logging.log
 
 --- Debug
-local GREEN = goldenorb_debug.GREEN
-local draw_bones = goldenorb_debug.draw_bones
+local GREEN = robodolg_shapes.GREEN
+local draw_bones = robodolg_shapes.draw_bones
 
 -- Constants
 

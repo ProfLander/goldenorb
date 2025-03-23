@@ -18,18 +18,18 @@ local get_fire_bone_position = goldenorb_weapon.get_fire_bone_position
 local get_camera_aim_point = goldenorb_camera.get_camera_aim_point
 
 --- Debug
-local RED = goldenorb_debug.RED
-local CYAN = goldenorb_debug.CYAN
-local YELLOW = goldenorb_debug.YELLOW
-local draw_line = goldenorb_debug.draw_line
-local draw_billboard_ngon = goldenorb_debug.draw_billboard_ngon
+local RED = robodolg_shapes.RED
+local CYAN = robodolg_shapes.CYAN
+local YELLOW = robodolg_shapes.YELLOW
+local draw_line = robodolg_shapes.draw_line
+local draw_billboard_ngon = robodolg_shapes.draw_billboard_ngon
 
 --- Log
 local log = goldenorb_logging.log
 
 -- Constants
 
-DRAW = false
+DRAW = true
 
 -- Implementation
 

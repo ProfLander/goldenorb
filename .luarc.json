@@ -59,7 +59,6 @@
         "goldenorb_aim_point",
         "goldenorb_camera",
         "goldenorb_conditions",
-        "goldenorb_debug",
         "goldenorb_effects",
         "goldenorb_lens",
         "goldenorb_logging",
@@ -84,5 +83,6 @@
         "robodolg_weapon_aim_point",
         "robodolg_weapon_bones",
         "goldenorb_action",
+        "robodolg_shapes",
     ],
 }

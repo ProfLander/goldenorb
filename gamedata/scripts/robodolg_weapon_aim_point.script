@@ -10,15 +10,15 @@
 local get_weapon_aim_point = goldenorb_weapon.get_weapon_aim_point
 
 --- Debug
-local RED = goldenorb_debug.RED
-local draw_crosshair = goldenorb_debug.draw_crosshair
+local RED = robodolg_shapes.RED
+local draw_crosshair = robodolg_shapes.draw_crosshair
 
 --- Logging
 local log = goldenorb_logging.log
 
 -- Constants
 
-DRAW = false
+DRAW = true
 CROSS_SIZE = 30
 RING_SIZE = 20
 RING_SEGS = 8

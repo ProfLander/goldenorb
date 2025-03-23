@@ -10,24 +10,35 @@
 
 -- Imports
 
+--- RoboDolg Shapes
+local reset = robodolg_shapes.reset
+
 --- Logging
 local log = goldenorb_logging.log
 
+-- State
+
+--- Cache of state from actor update
+local cache = nil
+
 -- Implementation
 
-local cache = nil
+--- Intercept the state and cache it for later
 function cache_state(state)
    cache = state
    return state
 end
 
+--- Use the cached stated to draw robodolg modules
 function draw_robodolg()
    log("draw_robodolg()")
    if cache then
+      reset()
       SendScriptCallback("robodolg_on_draw", cache)
    end
 end
 
+--- Entrypoint
 function on_game_start()
    log("robodolg.on_game_start")
 
@@ -36,5 +47,8 @@ function on_game_start()
 
    -- Register with GoldenOrb's update callback
    goldenorb_main.ACTOR_ON_UPDATE:add_call(cache_state)
+
+   -- Register a unique level call
+   -- so we can draw in sync with the debug renderer
    AddUniqueCall(draw_robodolg)
 end

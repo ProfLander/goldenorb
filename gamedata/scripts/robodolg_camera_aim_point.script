@@ -10,15 +10,15 @@
 get_camera_aim_point = goldenorb_camera.get_camera_aim_point
 
 --- Debug
-local BLUE = goldenorb_debug.BLUE
-local draw_crosshair = goldenorb_debug.draw_crosshair
+local BLUE = robodolg_shapes.BLUE
+local draw_crosshair = robodolg_shapes.draw_crosshair
 
 --- Logging
 local log = goldenorb_logging.log
 
 -- Constants
 
-DRAW = false
+DRAW = true
 CROSS_SIZE = 30
 RING_SIZE = 20
 RING_SEGS = 8

@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------------
--- GoldenOrb: Debug Utilities
+-- RoboDolg: Shape Functions
 ----------------------------------------------------------------------------
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
@@ -27,11 +27,20 @@ YELLOW = vector():set(1, 1, 0)
 -- State
 
 local next_id = 1
+local shapes_pool = {}
+local shapes_used = {}
 
 -- Implementation
 
-function reset_next_id(state)
-   log("reset_next_id(%s)", state)
+function reset(state)
+   log("reset(%s)", state)
+   for k,used in pairs(shapes_used) do
+      while #used > 0 do
+         local shape = table.remove(used, #used)
+         shape.visible = false
+         table.insert(shapes_pool[k], shape)
+      end
+   end
    next_id = 1
    return state
 end
@@ -42,24 +51,54 @@ function get_id()
    return id
 end
 
+function allocate_shape_storage(ty)
+   log("allocate_shape_storage(%s)", ty)
+
+   if not shapes_pool[ty] then
+      shapes_pool[ty] = {}
+   end
+
+   if not shapes_used[ty] then
+      shapes_used[ty] = {}
+   end
+end
+
+function get_shape(ty)
+   log("get_shape(%s)", ty)
+
+   allocate_shape_storage(ty)
+
+   local pool = shapes_pool[ty]
+   log("  pool: %s", pool)
+
+   local used = shapes_used[ty]
+   log("  used: %s", used)
+
+   local shape = nil
+   if #pool > 0 then
+      log("  Pooled shape available")
+      shape = table.remove(pool, #pool)
+   else
+      log("  Allocating new shape")
+      shape = debug_render.add_object(
+         get_id(),
+         ty
+      )
+   end
+   log("  shape: %s", shape)
+   table.insert(used, shape)
+   shape.visible = true
+   return shape
+end
+
 function draw_sphere(pos, scale, color)
    log("debug_sphere(%s, %s, %s)", pos, scale, color)
 
    scale = scale or 0.1
    color = color or vector():set(1, 1, 1)
 
-   local sphere = debug_render.add_object(
-      get_id(),
-      DBG_ScriptObject.sphere
-   ):cast_dbg_sphere()
+   local sphere = get_shape(DBG_ScriptObject.sphere):cast_dbg_sphere()
 
-   sphere.visible = true
-   sphere.color = fcolor():set(
-      color.x,
-      color.y,
-      color.z,
-      1
-   )
    sphere.matrix = matrix():mul(
       matrix():translate(pos),
       matrix():identity():scale(
@@ -68,6 +107,12 @@ function draw_sphere(pos, scale, color)
          scale
       )
    )
+   sphere.color = fcolor():set(
+      color.x,
+      color.y,
+      color.z,
+      1
+   )
 end
 
 function draw_line(pa, pb, color)
@@ -75,10 +120,7 @@ function draw_line(pa, pb, color)
 
    color = color or vector():set(1, 1, 1)
 
-   local line = debug_render.add_object(
-      get_id(),
-      DBG_ScriptObject.line
-   ):cast_dbg_line()
+   local line = get_shape(DBG_ScriptObject.line):cast_dbg_line()
 
    line.point_a = pa
    line.point_b = pb
@@ -202,8 +244,4 @@ function draw_arrayed(f, start, finish, steps)
       local pos = vector_lerp(start, finish, i / steps)
       f(pos)
    end
-end
-
-function on_game_start()
-   goldenorb_main.ACTOR_ON_UPDATE:add_call(reset_next_id)
 end
