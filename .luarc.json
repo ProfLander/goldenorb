@@ -82,5 +82,6 @@
         "robodolg_player_bones",
         "robodolg_weapon_aim_point",
         "robodolg_weapon_bones",
+        "goldenorb_action",
     ],
 }

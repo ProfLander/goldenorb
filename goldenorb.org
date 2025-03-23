@@ -103,14 +103,7 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
 
 ** TODO
 *** Core
-- [ ] Formalize module structure
-  - Should ideally be separable into sub-mods
-    - Core
-    - Free Aim
-    - Offset Aim
-    - Bodycam
-    - etc.
-- [ ] Further generalize execution model
+- [-] Further generalize execution model
   - Standardize around monadic state
     - Don't use an explicit state monad; just pass state and keep it pure
       - Will need to refactor various getter methods to avoid using globals
@@ -120,6 +113,13 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
   - Ergo, will need a condlist interface since the problem space is way too big for MCM
 - [ ] MCM Key Bindings
   - Dedicated look modifier for switching between modesets
+- [ ] Formalize module structure
+  - Should ideally be separable into sub-mods
+    - Core
+    - Free Aim
+    - Offset Aim
+    - Bodycam
+    - etc.
     
 *** Hands
 - [ ] Rotate origin around eye when scoped

@@ -13,11 +13,7 @@ function inject_actor(state)
 end
 
 --- Set HUD adjustment
----@param enabled boolean
----@return fun(state: any): any
-function set_hud_adjust(enabled)
-   return function (state)
-      hud_adjust.enabled(enabled)
-      return state
-   end
+function hud_adjust_enable(state)
+   hud_adjust.enabled(true)
+   return state
 end

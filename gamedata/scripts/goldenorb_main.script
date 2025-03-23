@@ -8,49 +8,23 @@
 
 -- Imports
 
-local log = goldenorb_logging.log
+--- Action
+local action = goldenorb_action.action
+
+-- Constants
+
+--- Actor update action
+ACTOR_ON_UPDATE = action()
 
 -- Implementation
 
---- Stateful update callback
----@param state table
+--- Error handler
+---@param e string
 ---@return nil
----@diagnostic disable-next-line: unused-local
-function update_callback(state)
-end
-
---- Add f to the stateful update callback
----@param f fun(state: any): nil
----@return nil
-function register_update_callback(f)
-   log("register_update_callback(%s)", f)
-   local old_update_callback = update_callback
-   update_callback = function(state)
-      old_update_callback(state)
-      f(state)
-   end
-end
-
---- Update handler implementation
----@return nil
-function goldenorb_update_impl()
-   log("goldenorb_update()")
-   update_callback({})
-end
-
---- Top-level update handler
---- Performs error handling
----@return nil
-function goldenorb_update()
-   local status, err = pcall(goldenorb_update_impl)
-   if not status then
-      local msg = string.format(
-            "GoldenOrb Error: %s",
-            err
-         )
-      printf(msg)
-      actor_menu.set_msg(1, msg, 10000)
-   end
+function handle_error(e)
+   local msg = string.format("GoldenOrb: ERROR: %s", e)
+   printf(msg)
+   actor_menu.set_msg(1, msg, 10000)
 end
 
 --- Entrypoint
@@ -59,5 +33,8 @@ function on_game_start()
    -- We use AddUniqueCall here instead of registering with actor_on_update
    -- to make sure our updates are in sync with device().cam_*
    --AddUniqueCall(goldenorb_update)
-   RegisterScriptCallback("actor_on_update", goldenorb_update)
+   RegisterScriptCallback(
+      "actor_on_update",
+      ACTOR_ON_UPDATE:prun_deferred(handle_error, {})
+   )
 end

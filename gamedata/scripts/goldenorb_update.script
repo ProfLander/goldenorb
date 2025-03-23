@@ -8,11 +8,11 @@
 
 --- Goldenorb
 
-local register_update_callback = goldenorb_main.register_update_callback
+local ACTOR_ON_UPDATE = goldenorb_main.ACTOR_ON_UPDATE
 
 --- Impure
 local inject_actor = goldenorb_impure.inject_actor
-local set_hud_adjust = goldenorb_impure.set_hud_adjust
+local hud_adjust_enable = goldenorb_impure.hud_adjust_enable
 
 --- Weapon
 local inject_weapon = goldenorb_weapon.inject_weapon
@@ -47,22 +47,23 @@ local log = goldenorb_logging.log
 
 function on_game_start()
    log("update.on_game_start")
-   register_update_callback(inject_actor)
-   register_update_callback(inject_weapon)
-   register_update_callback(inject_weapon_hud)
-   register_update_callback(inject_camera)
-   register_update_callback(reset_next_id)
-   register_update_callback(consume_weapon)
-   register_update_callback(read_camera)
-   register_update_callback(read_weapon)
-   register_update_callback(set_hud_adjust(true))
-   register_update_callback(reset_hands_orientation)
-   register_update_callback(reset_zoom_factors)
-   register_update_callback(offset_fire_point)
-   register_update_callback(apply_hud_offset_rot)
-   register_update_callback(body_cam)
-   register_update_callback(free_aim)
-   register_update_callback(offset_aim)
-   register_update_callback(apply_weapon_hud)
-   register_update_callback(apply_camera)
+   ACTOR_ON_UPDATE
+      :add_call(inject_actor)
+      :add_call(inject_weapon)
+      :add_call(inject_weapon_hud)
+      :add_call(inject_camera)
+      :add_call(reset_next_id)
+      :add_call(consume_weapon)
+      :add_call(read_camera)
+      :add_call(read_weapon)
+      :add_call(hud_adjust_enable)
+      :add_call(reset_hands_orientation)
+      :add_call(reset_zoom_factors)
+      :add_call(offset_fire_point)
+      :add_call(apply_hud_offset_rot)
+      :add_call(body_cam)
+      :add_call(free_aim)
+      :add_call(offset_aim)
+      :add_call(apply_weapon_hud)
+      :add_call(apply_camera)
 end

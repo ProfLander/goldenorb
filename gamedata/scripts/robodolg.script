@@ -11,7 +11,7 @@
 -- Imports
 
 --- Core
-local register_update_callback = goldenorb_main.register_update_callback
+local ACTOR_ON_UPDATE = goldenorb_main.ACTOR_ON_UPDATE
 
 --- Logging
 local log = goldenorb_logging.log
@@ -30,5 +30,5 @@ function on_game_start()
    AddScriptCallback("robodolg_on_draw")
 
    -- Register with GoldenOrb's update callback
-   register_update_callback(draw_robodolg)
+   ACTOR_ON_UPDATE:add_call(draw_robodolg)
 end

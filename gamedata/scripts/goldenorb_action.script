@@ -1,0 +1,120 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Action
+----------------------------------------------------------------------------
+-- Object-oriented function scheduling.
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+--- Action metatable
+local Action = {}
+
+--- Action constructor
+function action()
+   return setmetatable(
+      {
+         calls = {},
+         rules = {},
+      },
+      { __index = Action }
+   )
+end
+
+function Action:add_call(f)
+   table.insert(self.calls, f)
+   return self
+end
+
+function Action:add_rule(fa, fb)
+   assert(fa ~= fb, "Cannot constrain an action to run relative to itself")
+   table.insert(self.rules, {fa, fb})
+   return self
+end
+
+--- Run FA before FB
+function Action:before(...)
+   local args = {...}
+   local prev = table.remove(args, 1)
+   self:add_call(prev)
+   for _,arg in ipairs(args) do
+      assert(prev ~= arg, "Cannot run an action before itself")
+      self:add_rule(prev, arg)
+      prev = arg
+   end
+   return self
+end
+
+--- Run FB after FA
+function Action:after(...)
+   local args = {...}
+   local last = table.remove(args, #args)
+   local prev = table.remove(args, 1)
+   for _,arg in ipairs(args) do
+      assert(prev ~= arg, "Cannot run an action after itself")
+      self:add_rule(prev, arg)
+      prev = arg
+   end
+   self:add_rule(prev, last)
+   self:add_call(last)
+   return self
+end
+
+--- Run the action with the given parameter and return its result
+function Action:run(p)
+   local called = {}
+   local count = 0
+   local prev_count = count
+   local acc = p
+   while count < #self.calls do
+      for _,call in ipairs(self.calls) do
+         if called[call] then
+            goto next_call
+         end
+
+         for _,rule in ipairs(self.rules) do
+            -- If the rule doen't mention the call, skip it
+            if rule[2] ~= call then
+               goto next_rule
+            end
+
+            -- If the call is the target of the rule
+            -- and its dependency is not met, skip it
+            if not called[rule[1]] then
+               goto next_call
+            end
+
+            ::next_rule::
+         end
+
+         -- If all rules pass, call the function
+         acc = call(acc)
+         called[call] = true
+         prev_count = count
+         count = count + 1
+
+         ::next_call::
+      end
+      assert(prev_count ~= count, "Unsolvable dependency graph")
+   end
+   return acc
+end
+
+function Action:prun(e, p)
+   local status, res = pcall(self.run, self, p)
+   if not status then
+      return e(res)
+   end
+   return res
+end
+
+function Action:run_deferred(pa)
+   return function(pb)
+      return self:run(pa or pb)
+   end
+end
+
+function Action:prun_deferred(e, pa)
+   return function(pb)
+      return self:prun(e, pa or pb)
+   end
+end
