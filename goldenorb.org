@@ -38,14 +38,16 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
   - Need to re-test
 
 *** Incompatible
-**** Weapon Cover Tilt
-- Uses the same exclusive `hud_adjust` interface
-**** Alternate Weapon Recoil
+**** Mods that use ~hud_adjust~
+***** Weapon Cover Tilt
+***** Alternate Weapon Recoil
 - WCT-based, from Anomaly Discord
   - A major inspiration in concert with Parallax Reflex Sights
+**** Mods that use ~set_cam_custom_position_rotation~
+***** ???
 
 ** Features
-- [ ] Reimplement recoil via decouple aim point
+- [ ] Reimplement recoil via decoupled aim point
   - Can use the consumed values to inform a custom treatment
     - Can add an additional recoil transform to the HUD model and aggregate it from composable property animations (i.e. add one per shot, auto-cleanup finished)
     - Can use physical weapon properties to calculate kick direction and force
@@ -55,10 +57,6 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
         - Position relative to shooter's center of mass for horizontal component
   - Alternately, just turn regular recoil back on and let mods handle it
     - Likely possible now aiming is properly integrated with the HUD skeleton
-- [ ] Accurate ballistics
-  - Currently, bullets still fly from the camera after having their trajectory calculated based on the weapon's muzzle
-  - HUD parameters have a 'fire point' that is often set to zero; implies that the origin could potentially be changed to account for shooting around corners
-  - If my suspicions are correct, setting this to the position of the barrel bone each frame should result in the desired behaviour
 - [ ] Weapon inverse kinematics
   - For aiming around cover in appropriate situations
     - Functionally dependent on accurate ballistics
@@ -92,12 +90,26 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
   - Allow gun to follow aim
 
 
+** Features (Nonviable)
+- [X] Accurate ballistics
+  - Currently, bullets still fly from the camera after having their trajectory calculated based on the weapon's muzzle
+  - HUD parameters have a 'fire point' that is often set to zero; implies that the origin could potentially be changed to account for shooting around corners
+  - If my suspicions are correct, setting this to the position of the barrel bone each frame should result in the desired behaviour
+  - *NOTE:* Tested, and this only affects the cosmetic muzzle flash.
+
 ** DONE
 - [X] Fix 3DSS distortion when displayed off-center
   - Will likely need to reverse-engineer unless LVutner comes through with info
 
 ** TODO
 *** Core
+- [ ] Formalize module structure
+  - Should ideally be separable into sub-mods
+    - Core
+    - Free Aim
+    - Offset Aim
+    - Bodycam
+    - etc.
 - [ ] Further generalize execution model
   - Standardize around monadic state
     - Don't use an explicit state monad; just pass state and keep it pure
