@@ -19,6 +19,7 @@ local log = goldenorb_logging.log
 
 -- Constants
 
+RUN = false
 LIMIT_YAW = PI / 32
 LIMIT_PITCH = PI / 40
 
@@ -31,6 +32,10 @@ local pitch = 0
 
 function offset_aim(state)
    log("offset_aim()")
+
+   if not RUN then
+      return state
+   end
 
    if not state.wpn then
       log("No weapon in state, returning...")

@@ -17,6 +17,7 @@ local log = goldenorb_logging.log
 
 -- Constants
 
+RUN = false
 BONE_ROOT = "root_stalker"
 
 --- Set of bones used to calculate camera transform
@@ -39,6 +40,10 @@ BONES = {
 
 function body_cam(state)
    log("body_cam(%s)", state)
+
+   if not RUN then
+      return state
+   end
 
    if not state.actor then
       return state
