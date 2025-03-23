@@ -4,21 +4,14 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
---- Imports
+-- Imports
 
--- Global imports to make the LSP happy
-local vector = vector
-local time_global = time_global
-
--- Effects
-local register_param_modifier = goldenorb_effects.register_param_modifier
-
--- Log
+--- Log
 local log = goldenorb_logging.log
 
---- Implementation
+-- Implementation
 
--- Apply a 2D oscillation to hand orientation
+--- Apply a 2D oscillation to hand orientation
 function animate_sin_cos(freq_x, freq_y, amp_x, amp_y)
    return function(state)
       log(

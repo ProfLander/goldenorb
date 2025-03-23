@@ -8,25 +8,18 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
---- Imports
+-- Imports
 
--- Global imports to make the LSP happy
-local db = db
-local vector = vector
-local vector_cross = vector_cross
-
--- Camera
+---@module 'goldenorb_camera'
 local get_camera_aim_point = goldenorb_camera.get_camera_aim_point
 
--- Weapon
-local get_fire_bone_position = goldenorb_weapon.get_fire_bone_position
-local get_fire_bone_direction = goldenorb_weapon.get_fire_bone_direction
+---@module 'goldenorb_weapon'
 local get_hands_position = goldenorb_weapon.get_hands_position
 
--- Logging
+---@module 'goldenorb_logging'
 local log = goldenorb_logging.log
 
---- Implementation
+-- Implementation
 
 function get_actor_rotation(wpn)
    log("get_actor_rotation")
@@ -39,7 +32,7 @@ function get_actor_rotation(wpn)
 
    local actor_pos = actor:position()
    log("  actor_pos: %s", actor_pos)
-   
+
    local actor_dir = actor:direction()
    log("  actor_dir: %s", actor_dir)
 

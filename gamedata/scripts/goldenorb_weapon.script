@@ -4,24 +4,17 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
---- Imports
+-- Imports
 
--- Global imports to make the LSP happy
-local utils_xml = utils_xml
-
-local vector = vector
-local str_explode = str_explode
-local SYS_GetParam = SYS_GetParam
-
--- Math
+--- Math
 local hpb_to_direction = goldenorb_math.hpb_to_direction
 
--- Math
+--- Math
 local log = goldenorb_logging.log
 
---- Constants
+-- Constants
 
--- Aim projection distance
+--- Aim projection distance
 local DIST = 1000
 
 HUD_KEYS = {
@@ -66,7 +59,7 @@ HUD_DEFAULTS = {
    item_orientation = vector(),
 }
 
---- State
+-- State
 
 local wpn_rot = vector()
 
@@ -76,7 +69,7 @@ local prev_rot = nil
 local delta_pos = vector()
 local delta_rot = vector()
 
---- Implementation
+-- Implementation
 
 function get_hud_sec(wpn)
    return wpn and SYS_GetParam(0, wpn:section(), "hud")
@@ -170,26 +163,26 @@ function get_hands_direction()
    return hpb_to_direction(get_hands_rotation())
 end
 
-function get_hands_aim_point(wpn)
-   log("get_hands_aim_point(%s)", wpn)
-   return get_hands_position(wpn)
+function get_hands_aim_point()
+   log("get_hands_aim_point()")
+   return get_hands_position()
       :add(
-         get_hands_direction(wpn)
+         get_hands_direction()
          :mul(DIST)
       )
 end
 
--- Delta position getter
+--- Delta position getter
 function get_weapon_delta_position()
    return delta_pos
 end
 
--- Rotation getter
+--- Rotation getter
 function get_weapon_rotation()
    return wpn_rot
 end
 
--- Delta rotation getter
+--- Delta rotation getter
 function get_weapon_delta_rotation()
    return delta_rot
 end
@@ -203,7 +196,7 @@ function get_weapon_aim_point(wpn)
       )
 end
 
--- Update function
+--- Update function
 function read_weapon(state)
    log("read_weapon(%s)", state)
 

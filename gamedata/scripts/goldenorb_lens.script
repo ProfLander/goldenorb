@@ -4,20 +4,20 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
--- Lens Metatable
+--- Lens Metatable
 local Lens = {}
 
--- Get from the given object using this lens
+--- Get from the given object using this lens
 function Lens:get(d)
    return d[self[1]](d)
 end
 
--- Set to the given object using this lens
+--- Set to the given object using this lens
 function Lens:set(d, v)
    return d[self[2]](d, v)
 end
 
--- Lens constructor
+--- Lens constructor
 function lens(get, set)
    return setmetatable(
       {get, set},

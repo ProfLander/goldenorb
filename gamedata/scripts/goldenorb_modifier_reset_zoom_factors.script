@@ -4,14 +4,9 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
---- Imports
+-- Implementation
 
--- Log
-local log = goldenorb_logging.log
-
---- Implementation
-
--- Zero out the zoom factor components
+--- Zero out the zoom factor components
 function reset_zoom_factors(state)
    log("reset_zoom_factors(%s)", state)
 

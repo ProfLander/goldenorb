@@ -4,27 +4,27 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
---- Imports
+-- Imports
 
--- Global imports to make the LSP happy
-local vector = vector
+--- Math
+local EPSILON = goldenorb_math.EPSILON
 
--- Log
+--- Log
 local log = goldenorb_logging.log
 
---- Constants
+-- Constants
 
-local EPSILON = 0.00001
+local OFFSET = vector():set(0, 0, EPSILON)
 
---- Implementation
+-- Implementation
 
--- Offset fire point slightly to prevent self-intersection
+--- Offset fire point slightly to prevent self-intersection
 function offset_fire_point(state)
    log("offset_fire_point(%s)", state)
 
    if state.hud then
-      state.hud.fire_point:add(vector():set(0, 0, EPSILON))
-      state.hud.fire_point2:add(vector():set(0, 0, EPSILON))
+      state.hud.fire_point:add(OFFSET)
+      state.hud.fire_point2:add(OFFSET)
    end
 
    return state

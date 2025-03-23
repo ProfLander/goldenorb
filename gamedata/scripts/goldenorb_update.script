@@ -4,31 +4,31 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
---- Imports
+-- Imports
 
--- Goldenorb
+--- Goldenorb
 
 local register_update_callback = goldenorb.register_update_callback
 
--- Camera
+--- Camera
 local read_camera = goldenorb_camera.read_camera
 
--- Weapon
+--- Weapon
 local read_weapon = goldenorb_weapon.read_weapon
 
--- Debug
+--- Debug
 local reset_next_id = goldenorb_debug.reset_next_id
 
--- Recoil
+--- Recoil
 local consume_weapon = goldenorb_recoil.consume_weapon
 
--- Effects
+--- Effects
 local run_modifiers = goldenorb_effects.run_modifiers
 
--- Logging
+--- Logging
 local log = goldenorb_logging.log
 
---- Entrypoint
+-- Entrypoint
 
 function on_game_start()
    log("update.on_game_start")

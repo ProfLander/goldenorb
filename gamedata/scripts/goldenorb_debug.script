@@ -4,25 +4,17 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
---- Imports
+-- Imports
 
--- Global imports to make the LSP happy
-local device = device
-local fcolor = fcolor
-local vector = vector
-local matrix = matrix
-local debug_render = debug_render
-local DBG_ScriptObject = DBG_ScriptObject
-
--- Math
+---@module 'goldenorb_math'
 local TAU = goldenorb_math.TAU
 local vector_lerp = goldenorb_math.vector_lerp
 local hpb_to_direction = goldenorb_math.hpb_to_direction
 
--- Logging
+---@module 'goldenorb_logging'
 local log = goldenorb_logging.log
 
---- Constants
+-- Constants
 
 WHITE = vector():set(1, 1, 1)
 RED = vector():set(1, 0, 0)
@@ -32,11 +24,11 @@ CYAN = vector():set(0, 1, 1)
 MAGENTA = vector():set(1, 0, 1)
 YELLOW = vector():set(1, 1, 0)
 
---- State
+-- State
 
 local next_id = 1
 
---- Implementation
+-- Implementation
 
 function reset_next_id(state)
    log("reset_next_id(%s)", state)

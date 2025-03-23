@@ -4,21 +4,14 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
---- Imports
+-- Imports
 
--- Global imports to make the LSP happy
-
-local vector = vector
-
--- Effects
-local register_param_modifier = goldenorb_effects.register_param_modifier
-
--- Logging
+--- Logging
 local log = goldenorb_logging.log
 
---- Implementation
+-- Implementation
 
--- Remove any existing hand orientation
+--- Remove any existing hand orientation
 function reset_hands_orientation(state)
    log("reset_hands_orientation(%s)", state)
    if state.hud then

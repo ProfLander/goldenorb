@@ -4,20 +4,16 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
---- Imports
+-- Imports
 
--- Global imports to make the LSP happy
-local device = device
-local vector = vector
-
--- Logging
+---@module 'goldenorb_logging'
 local log = goldenorb_logging.log
 
---- Constants
+-- Constants
 
 local DIST = 800
 
---- State
+-- State
 
 local cam_rot = vector()
 
@@ -27,9 +23,9 @@ local prev_rot = nil
 local delta_pos = vector()
 local delta_rot = vector()
 
---- Implementation
+-- Implementation
 
--- Rotation getter
+--- Rotation getter
 function get_camera_position()
    return device().cam_pos
 end
@@ -42,24 +38,24 @@ function get_camera_rotation()
    return cam_rot
 end
 
--- Delta position getter
+--- Delta position getter
 function get_camera_delta_position()
    return delta_pos
 end
 
--- Delta rotation getter
+--- Delta rotation getter
 function get_camera_delta_rotation()
    return delta_rot
 end
 
--- Aim point getter
+--- Aim point getter
 function get_camera_aim_point()
    log("get_camera_aim_point(%s)")
    local dev = device()
    return dev.cam_dir:mul(DIST):add(dev.cam_pos)
 end
 
--- Update function
+--- Update function
 function read_camera(state)
    log("read_camera(%s)", state)
    local dev = device()

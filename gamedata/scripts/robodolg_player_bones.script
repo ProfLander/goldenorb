@@ -4,19 +4,16 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
---- Imports
+-- Imports
 
--- Global imports to make the LSP happy
-local RegisterScriptCallback = RegisterScriptCallback
-
--- Log
+--- Log
 local log = goldenorb_logging.log
 
--- Debug
+--- Debug
 local GREEN = goldenorb_debug.GREEN
 local draw_bones = goldenorb_debug.draw_bones
 
---- Constants
+-- Constants
 
 DRAW = false
 HUD = true
@@ -25,7 +22,7 @@ POLY_SIDES = 4
 LINE_LENGTH = 0.05
 COLOR = GREEN
 
---- Implementation
+-- Implementation
 
 function draw_player_bones(state)
    if not DRAW then

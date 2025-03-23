@@ -4,21 +4,19 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
---- Imports
+-- Imports
 
-local RegisterScriptCallback = RegisterScriptCallback
-
--- Aim Point
+--- Aim Point
 get_camera_aim_point = goldenorb_camera.get_camera_aim_point
 
--- Debug
+--- Debug
 local BLUE = goldenorb_debug.BLUE
 local draw_crosshair = goldenorb_debug.draw_crosshair
 
--- Logging
+--- Logging
 local log = goldenorb_logging.log
 
---- Constants
+-- Constants
 
 DRAW = false
 CROSS_SIZE = 30
@@ -26,14 +24,14 @@ RING_SIZE = 20
 RING_SEGS = 8
 COLOR = BLUE
 
---- Implementation
+-- Implementation
 
 function draw_camera_aim_point(state)
    log("draw_camera_aim_point(%s)", state)
-   
-    if not DRAW then
-        return state
-    end
+
+   if not DRAW then
+       return state
+   end
 
    -- Aim Point
    draw_crosshair(
@@ -45,7 +43,7 @@ function draw_camera_aim_point(state)
    )
 end
 
---- Entrypoint
+-- Entrypoint
 
 function on_game_start()
    log("robodolg_camera_aim_point.on_game_start")

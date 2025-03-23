@@ -4,41 +4,34 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
---- Imports
+-- Imports
 
--- Global imports to make the LSP happy
-local db = db
-local vector = vector
-local vector_cross = vector_cross
-
--- Math
+--- Math
 local PI = goldenorb_math.PI
 local sign = goldenorb_math.sign
-local vector_rotate_x = goldenorb_math.vector_rotate_x
 local vector_rotate_y = goldenorb_math.vector_rotate_y
 
--- Camera
+--- Camera
 local get_hands_direction = goldenorb_weapon.get_hands_direction
 
--- Logging
+--- Logging
 local log = goldenorb_logging.log
 
---- Constants
+-- Constants
 
-local EYE_HEIGHT = 1.671 --1.6585
+EYE_HEIGHT = 1.671 --1.6585
 
-local LIMIT = vector():set(
+LIMIT = vector():set(
    PI / 4, -- PI / 8,
    PI / 8, -- PI / 12,
    0
 )
 
---- State
+-- State
 
 local cam_rot = vector()
 
---- Implementation
-
+-- Implementation
 
 function free_aim(state)
    log("free_aim(%s)", state)

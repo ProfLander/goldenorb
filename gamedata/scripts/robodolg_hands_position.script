@@ -4,29 +4,25 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
---- Imports
+-- Imports
 
--- Global imports to make the LSP happy
-local RegisterScriptCallback = RegisterScriptCallback
-
--- Weapon
+--- Weapon
 local get_hands_position = goldenorb_weapon.get_hands_position
 
--- Debug
+--- Debug
 local GREEN = goldenorb_debug.GREEN
-local billboard_vector = goldenorb_debug.billboard_vector
 local draw_billboard_ngon = goldenorb_debug.draw_billboard_ngon
 
--- Log
+--- Log
 local log = goldenorb_logging.log
 
---- Constants
+-- Constants
 
 local SIZE = 0.005
 local SIDES = 8
 local COLOR = GREEN
 
---- Implementation
+-- Implementation
 
 function draw_hands_position(state)
    log("draw_hands_position(%s)", state)

@@ -4,42 +4,42 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
---- Imports
+-- Imports
 
--- Math
+--- Math
 local hpb_to_direction = goldenorb_math.hpb_to_direction
 
--- Weapon
+--- Weapon
 local get_hands_aim_point = goldenorb_weapon.get_hands_aim_point
 local get_weapon_aim_point = goldenorb_weapon.get_weapon_aim_point
 local get_fire_bone_position = goldenorb_weapon.get_fire_bone_position
 
--- Camera
+--- Camera
 local get_camera_aim_point = goldenorb_camera.get_camera_aim_point
 
--- Debug
+--- Debug
 local RED = goldenorb_debug.RED
 local CYAN = goldenorb_debug.CYAN
 local YELLOW = goldenorb_debug.YELLOW
 local draw_line = goldenorb_debug.draw_line
 local draw_billboard_ngon = goldenorb_debug.draw_billboard_ngon
 
--- Log
+--- Log
 local log = goldenorb_logging.log
 
---- Constants
+-- Constants
 
 DRAW = false
 
---- Implementation
+-- Implementation
 
--- Offset fire point slightly to prevent self-intersection
+--- Offset fire point slightly to prevent self-intersection
 function draw_aim_rig(state)
    log("draw_weapon_ik(%s)", state)
-   
-    if not DRAW then
-        return state
-    end
+
+   if not DRAW then
+       return state
+   end
 
    local cam_aim = get_camera_aim_point()
 

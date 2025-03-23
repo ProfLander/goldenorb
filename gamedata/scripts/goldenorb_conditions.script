@@ -4,13 +4,7 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
---- Imports
-
--- Global imports to make the LSP happy
-local SYS_GetParam = SYS_GetParam
-local IsBolt = IsBolt
-
---- Implementation
+-- Implementation
 
 function is_pda_active(actor)
    return actor

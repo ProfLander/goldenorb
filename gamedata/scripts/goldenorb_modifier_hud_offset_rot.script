@@ -11,31 +11,26 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
---- Imports
+-- Imports
 
--- Global imports to make the LSP happy
-
-local axr_main = axr_main
-
-local vector = vector
-local device = device
-
--- Weapon
+--- Weapon
 local get_hud_number = goldenorb_weapon.get_hud_number
 
--- Math
+--- Math
 local deg = goldenorb_math.deg
 
--- Logging
+--- Logging
 local log = goldenorb_logging.log
 
---- State
+-- State
 
 local zoom_fac = 0
 
---- Implementation
+-- Implementation
 
--- Apply HUD aim offset rotation with a lerp to account for ADS animation
+--- Apply HUD aim offset rotation with a lerp to account for ADS animation
+---@param state table
+---@return table
 function apply_hud_offset_rot(state)
    log("apply_hud_offset_rot(%s)", state)
 

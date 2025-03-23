@@ -4,53 +4,49 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
---- Imports
+-- Imports
 
--- Global imports to make the LSP happy
-local db = db
-local vector = vector
-
--- Data
+--- Data
 local get_camera_delta_rotation = goldenorb_camera.get_camera_delta_rotation
 
--- Math
+--- Math
 local PI = goldenorb_math.PI
 
 local deg = goldenorb_math.deg
 
--- Logging
+--- Logging
 local log = goldenorb_logging.log
 
---- Constants
+-- Constants
 
 LIMIT_YAW = PI / 32
 LIMIT_PITCH = PI / 40
 
---- State
+-- State
 
 local yaw = 0
 local pitch = 0
 
---- Implementation
+-- Implementation
 
 function offset_aim(state)
-   printf("offset_aim()")
+   log("offset_aim()")
 
    if not state.wpn then
-      printf("No weapon in state, returning...")
+      log("No weapon in state, returning...")
       return state
    end
 
    local delta_rot = get_camera_delta_rotation()
-   printf("  delta_rot: %s", delta_rot)
+   log("  delta_rot: %s", delta_rot)
 
    yaw = math.max(math.min(yaw - delta_rot.x, LIMIT_YAW), -LIMIT_YAW)
    pitch = math.max(math.min(pitch + delta_rot.y, LIMIT_PITCH), -LIMIT_PITCH)
-   printf("  yaw: %s", yaw)
-   printf("  pitch: %s", pitch)
+   log("  yaw: %s", yaw)
+   log("  pitch: %s", pitch)
 
    if state.hud then
-      printf("Setting hands orientation")
+      log("Setting hands orientation")
       state.hud.hands_orientation = state.hud.hands_orientation
          :add(vector():set(deg(yaw), deg(pitch), 0))
    end

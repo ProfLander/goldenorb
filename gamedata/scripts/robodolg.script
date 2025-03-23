@@ -8,19 +8,15 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
---- Imports
+-- Imports
 
--- Global imports to make the LSP happy
-local AddScriptCallback = AddScriptCallback
-local SendScriptCallback = SendScriptCallback
-
--- Core
+--- Core
 local register_update_callback = goldenorb.register_update_callback
 
--- Logging
+--- Logging
 local log = goldenorb_logging.log
 
---- Implementation
+-- Implementation
 
 function draw_robodolg(state)
    log("draw_robodolg(state)", state)

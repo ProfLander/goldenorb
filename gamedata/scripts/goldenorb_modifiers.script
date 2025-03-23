@@ -4,12 +4,12 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
---- Imports
+-- Imports
 
--- Effects
+--- Effects
 local register_modifier = goldenorb_effects.register_modifier
 
--- Modifiers
+--- Modifiers
 local body_cam = goldenorb_modifier_body_cam.body_cam
 local free_aim = goldenorb_modifier_free_aim.free_aim
 local offset_aim = goldenorb_modifier_offset_aim.offset_aim
@@ -18,10 +18,10 @@ local reset_zoom_factors = goldenorb_modifier_reset_zoom_factors.reset_zoom_fact
 local reset_hands_orientation = goldenorb_modifier_reset_hands_orientation.reset_hands_orientation
 local apply_hud_offset_rot = goldenorb_modifier_hud_offset_rot.apply_hud_offset_rot
 
--- Logging
+--- Logging
 local log = goldenorb_logging.log
 
---- Entrypoint
+-- Entrypoint
 
 function on_game_start()
    log("modifiers.on_game_start")

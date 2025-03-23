@@ -4,22 +4,19 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
---- Imports
+-- Imports
 
--- Global imports to make the LSP happy
-local RegisterScriptCallback = RegisterScriptCallback
-
--- Weapon
+--- Weapon
 local get_weapon_aim_point = goldenorb_weapon.get_weapon_aim_point
 
--- Debug
+--- Debug
 local RED = goldenorb_debug.RED
 local draw_crosshair = goldenorb_debug.draw_crosshair
 
--- Logging
+--- Logging
 local log = goldenorb_logging.log
 
---- Constants
+-- Constants
 
 DRAW = false
 CROSS_SIZE = 30
@@ -27,11 +24,11 @@ RING_SIZE = 20
 RING_SEGS = 8
 COLOR = RED
 
---- Implementation
+-- Implementation
 
 function draw_weapon_aim_point(state)
    log("draw_weapon_aim_point(%s)", state)
-   
+
    if not DRAW then
       return state
    end
@@ -54,10 +51,9 @@ function draw_weapon_aim_point(state)
    )
 end
 
---- Entrypoint
+-- Entrypoint
 
 function on_game_start()
    log("robodolg_crosshair.on_game_start")
    RegisterScriptCallback("robodolg_on_draw", draw_weapon_aim_point)
 end
-

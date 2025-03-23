@@ -4,17 +4,17 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
---- Imports
+-- Imports
 
--- Lens
+--- Lens
 local lens = goldenorb_lens.lens
 
--- Logging
+--- Logging
 local log = goldenorb_logging.log
 
---- Constants
+-- Constants
 
--- Lenses for interacting with weapon parameters
+--- Lenses for interacting with weapon parameters
 local lenses = {
    cam_relax_speed = lens(
       "GetCamRelaxSpeed",
@@ -50,14 +50,14 @@ local lenses = {
    ),
 }
 
---- State
+-- State
 
--- Weapon data cache
+--- Weapon data cache
 local wpn_cache = {}
 
---- Implementation
+-- Implementation
 
--- Cache a weapon's HUD data before setting it all to 0
+--- Cache a weapon's HUD data before setting it all to 0
 function consume_weapon(state)
    log("consume_weapon(%s)", state)
 

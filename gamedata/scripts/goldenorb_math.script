@@ -4,13 +4,9 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
---- Imports
+-- Imports
 
---- Global imports to make the LSP happy
-local vector = vector
-local device = device
-
---- Constants
+-- Constants
 
 PI = 3.14159
 TAU = PI * 2
@@ -27,7 +23,7 @@ NEG_Z = vector():set(0, 0, -1)
 
 EPSILON = 0.00000001
 
---- Implementation
+-- Implementation
 
 function sign(n)
    if n > 0 then
@@ -64,7 +60,7 @@ function vector_rotate(v, k, theta)
 
    local cos_theta = math.cos(theta)
    local sin_theta = math.sin(theta)
-   
+
    return vector()
       :set(v)
       :mul(cos_theta)
@@ -89,7 +85,7 @@ function vector_xz(v)
    return vector():set(v.x, 0, v.z)
 end
 
---- Basis
+--- Basis metatable
 local Basis = {}
 
 function basis(x, y, z)
@@ -133,18 +129,6 @@ function Basis:rotate(k, theta)
    ):normalize()
 end
 
-function Basis:rotate_hpb(hpb)
-   local out = basis(
-      vector():set(self.x),
-      vector():set(self.y),
-      vector():set(self.z)
-   )
-   out = out:rotate(out.y, -hpb.x)
-   out = out:rotate(out.x, -hpb.y)
-   out = out:rotate(out.z, -hpb.z)
-   return out
-end
-
 function Basis:rotate_x(theta)
    return self:rotate(POS_X, theta)
 end
@@ -169,7 +153,7 @@ function Basis:rotate_hpb(hpb)
    return out
 end
 
--- Transform the given vector into basis-space
+--- Transform the given vector into basis-space
 function world_to_basis(basis, vec)
    return vector():set(
       vec:dotproduct(basis.x),
@@ -178,7 +162,7 @@ function world_to_basis(basis, vec)
    )
 end
 
--- Fetch the camera's basis
+--- Fetch the camera's basis
 function camera_basis()
    local dev = device()
    return basis(
@@ -188,9 +172,9 @@ function camera_basis()
    )
 end
 
--- Convert a Heading-Pitch-Bank rotation
--- (such as those returned from bone_direction)
--- into a direction vector
+--- Convert a Heading-Pitch-Bank rotation
+--- (such as those returned from bone_direction)
+--- into a direction vector
 function hpb_to_direction(hpb)
    return basis():rotate_hpb(hpb).z
 end

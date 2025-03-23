@@ -4,25 +4,22 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
---- Imports
+-- Imports
 
--- Global imports to make the LSP happy
-local vector = vector
-
--- Aim Point
+--- Aim Point
 local get_actor_rotation = goldenorb_aim_point.get_actor_rotation
 
---Math
+---Math
 local deg = goldenorb_math.deg
 
--- Logging
+--- Logging
 local log = goldenorb_logging.log
 
---- Constants
+-- Constants
 
 BONE_ROOT = "root_stalker"
 
--- Set of bones used to calculate camera transform
+--- Set of bones used to calculate camera transform
 BONES = {
    bip01_head = {
       vector():set(0.33, 0.33, 0.33),
@@ -38,7 +35,7 @@ BONES = {
    },
 }
 
---- Implementation
+-- Implementation
 
 function body_cam(state)
    log("body_cam(%s)", state)

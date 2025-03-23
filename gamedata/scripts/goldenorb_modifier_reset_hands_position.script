@@ -4,17 +4,14 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
---- Imports
+-- Imports
 
--- Global imports to make the LSP happy
-local vector = vector
-
--- Log
+--- Log
 local log = goldenorb_logging.log
 
---- Implementation
+-- Implementation
 
--- Zero out the position component
+--- Zero out the position component
 function reset_hands_position(state)
    log("reset_hands_position(%s)", state)
 

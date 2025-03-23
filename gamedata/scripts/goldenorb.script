@@ -6,30 +6,22 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
---- Imports
+-- Imports
 
--- Global imports to make the LSP happy
-local db = db
-local hud_adjust = hud_adjust
-local actor_menu = actor_menu
-
-local printf = printf
-local AddUniqueCall = AddUniqueCall
-
--- Conditions
-local should_update_actor = goldenorb_conditions.should_update_actor
-local should_update_weapon = goldenorb_conditions.should_update_weapon
-
--- Logging
 local log = goldenorb_logging.log
 
---- Implementation
+-- Implementation
 
---- Update Callback
-
-function update_callback(wpn)
+--- Stateful update callback
+---@param state table
+---@return nil
+---@diagnostic disable-next-line: unused-local
+function update_callback(state)
 end
 
+--- Add f to the stateful update callback
+---@param f fun(wpn: userdata): nil
+---@return nil
 function register_update_callback(f)
    log("register_update_callback(%s)", f)
    local old_update_callback = update_callback
@@ -39,7 +31,8 @@ function register_update_callback(f)
    end
 end
 
--- Update handler implementation
+--- Update handler implementation
+---@return nil
 function goldenorb_update_impl()
    log("goldenorb_update()")
 
@@ -57,8 +50,9 @@ function goldenorb_update_impl()
    update_callback(state)
 end
 
--- Top-level update handler
--- Performs error handling
+--- Top-level update handler
+--- Performs error handling
+---@return nil
 function goldenorb_update()
    local status, err = pcall(goldenorb_update_impl)
    if not status then
@@ -72,7 +66,7 @@ function goldenorb_update()
 end
 
 --- Entrypoint
-
+---@return nil
 function on_game_start()
    -- We use AddUniqueCall here instead of registering with actor_on_update
    -- to make sure our updates are in sync with device().cam_*
