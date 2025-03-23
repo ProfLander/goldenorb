@@ -6,11 +6,14 @@
 
 -- Imports
 
---- Aim Point
-local get_actor_rotation = goldenorb_aim_point.get_actor_rotation
-
 ---Math
 local deg = goldenorb_math.deg
+
+--- Camera
+local get_camera_aim_point = goldenorb_camera.get_camera_aim_point
+
+--- Weapon
+local get_hands_position = goldenorb_weapon.get_hands_position
 
 --- Logging
 local log = goldenorb_logging.log
@@ -37,6 +40,51 @@ BONES = {
 }
 
 -- Implementation
+
+function get_actor_rotation(wpn)
+   log("get_actor_rotation")
+   local actor = db.actor
+
+   log("  actor: %s", actor)
+
+   local cam_aim = get_camera_aim_point(wpn)
+   log("  cam_aim: %s", cam_aim)
+
+   local actor_pos = actor:position()
+   log("  actor_pos: %s", actor_pos)
+
+   local actor_dir = actor:direction()
+   log("  actor_dir: %s", actor_dir)
+
+   local actor_aim = vector()
+      :set(actor:position())
+      :add(actor:direction():mul(800))
+   log("  actor_aim: %s", cam_aim)
+
+   local hands_pos = get_hands_position()
+   log("  hands_pos: %s", hands_pos)
+
+   local cam_loc = cam_aim:sub(hands_pos):normalize()
+   log("  cam_loc: %s", cam_loc)
+
+   local actor_loc = actor_aim:sub(hands_pos):normalize()
+   log("  actor_loc: %s", actor_loc)
+
+   local pitch = math.sin(cam_loc.y - actor_loc.y)
+   log("  pitch: %s", pitch)
+
+   cam_loc.y = 0
+   actor_loc.y = 0
+
+   local yaw = math.atan2(
+      vector_cross(cam_loc, actor_loc)
+      :dotproduct(vector():set(0, 1, 0)),
+      cam_loc:dotproduct(actor_loc)
+   )
+   log("  yaw: %s", yaw)
+
+   return vector():set(yaw, pitch, 0)
+end
 
 function body_cam(state)
    log("body_cam(%s)", state)
