@@ -11,7 +11,7 @@
 -- Imports
 
 --- Core
-local register_update_callback = goldenorb.register_update_callback
+local register_update_callback = goldenorb_main.register_update_callback
 
 --- Logging
 local log = goldenorb_logging.log

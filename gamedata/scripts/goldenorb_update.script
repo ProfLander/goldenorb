@@ -8,7 +8,7 @@
 
 --- Goldenorb
 
-local register_update_callback = goldenorb.register_update_callback
+local register_update_callback = goldenorb_main.register_update_callback
 
 --- Camera
 local read_camera = goldenorb_camera.read_camera
