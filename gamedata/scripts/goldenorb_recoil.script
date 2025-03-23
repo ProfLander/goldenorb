@@ -72,13 +72,13 @@ function consume_weapon(state)
    -- Return with a warning if it's not valid
    if not sec then
       log("  WARNING: Invalid weapon section")
-      return
+      return state
    end
 
    -- Return if it's already set
    if wpn_cache[sec] then
       log("  %s is already cached, returning.", sec)
-      return
+      return state
    end
 
    -- Fetch existing cache data
@@ -89,7 +89,7 @@ function consume_weapon(state)
 
    if not weapon then
       log("  WARNING: Invalid weapon")
-      return
+      return state
    end
 
    -- Iterate over our parameter lenses
@@ -97,4 +97,6 @@ function consume_weapon(state)
       wpn_cache[sec][k] = l:get(weapon)
       l:set(weapon, 0)
    end
+
+   return state
 end
