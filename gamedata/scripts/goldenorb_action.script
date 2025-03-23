@@ -21,20 +21,30 @@ function action()
       {
          calls = {},
          rules = {},
+         schedule = nil,
       },
       { __index = Action }
    )
 end
 
+function Action:invalidate()
+   log("Action:invalidate()")
+   self.schedule = nil
+end
+
 function Action:add_call(f)
+   log("Action:add_call(%s)", f)
+   self:invalidate()
    table.insert(self.calls, f)
    return self
 end
 
 function Action:add_rule(fa, fb)
+   log("Action:add_rule(%s, %s)", fa, fb)
    assert(fa, "Invalid rule LHS")
    assert(fb, "Invalid rule RHS")
    assert(fa ~= fb, "Cannot constrain a call to run relative to itself")
+   self:invalidate()
    table.insert(self.rules, {fa, fb})
    return self
 end
@@ -42,14 +52,18 @@ end
 --- Run FA before FB
 function Action:before(...)
    local args = {...}
+   log("Action:before(%s)", #args)
+
    local first = table.remove(args, 1)
    assert(first, "Invalid first call")
    self:add_call(first)
+
    for i,arg in ipairs(args) do
       assert(arg, "Invalid call at index %s")
       assert(first ~= arg, "Cannot run a call before itself")
       self:add_rule(first, arg)
    end
+
    return self
 end
 
@@ -71,14 +85,16 @@ function Action:after(...)
    return self
 end
 
---- Run the action with the given parameter and return its result
-function Action:run(p)
-   log("Action:run(%s)", p)
-   local called = {}
-   local count = 0
-   local acc = p
+function Action:build()
+   log("Action:build()")
+
+   self.schedule = {}
+
    log("  calls: %s", #self.calls)
    log("  rules: %s", #self.rules)
+
+   local called = {}
+   local count = 0
    while count < #self.calls do
       --log("  count: %s", count)
       for _,call in ipairs(self.calls) do
@@ -112,7 +128,7 @@ function Action:run(p)
          --log("  pass")
 
          -- If all rules pass, call the function
-         acc = call(acc)
+         table.insert(self.schedule, call)
          called[call] = true
          count = count + 1
          goto next_iter
@@ -124,9 +140,27 @@ function Action:run(p)
 
       ::next_iter::
    end
+
+   return self
+end
+
+--- Run the action with the given parameter and return its result
+function Action:run(p)
+   log("Action:run(%s)", p)
+
+   if not self.schedule then
+      self:build()
+   end
+
+   local acc = p
+   for _,f in ipairs(self.schedule) do
+      acc = f(acc)
+   end
    return acc
 end
 
+--- Run the action with the given error handler and parameter,
+--- and return its result
 function Action:prun(e, p)
    log("Action:prun(%s, %s)", e, p)
    local status, res = pcall(self.run, self, p)
@@ -136,12 +170,16 @@ function Action:prun(e, p)
    return res
 end
 
+--- Produce a function to run the action,
+--- optionally overriding its input
 function Action:run_deferred(pa)
    return function(pb)
       return self:run(pa or pb)
    end
 end
 
+--- Produce a function to prun the action,
+--- optionally overriding its input
 function Action:prun_deferred(e, pa)
    return function(pb)
       return self:prun(e, pa or pb)
