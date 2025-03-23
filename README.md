@@ -4,17 +4,22 @@ In-development total camera and aiming overhaul for Anomaly.
 
 Uses modded exe functionality to add or extend composable features affecting the actor, arms, weapon, and camera.
 
-The full mechanical span between immersive realism and arcadey shooter is under consideration; if it involves allowing the player a greater range of expression with regard to their actor's interaction with the game world, then it probably qualifies for inclusion.
+Featurewise, the full mechanical span between immersive realism and arcadey shooter is under consideration; if it involves allowing the player a greater range of expression or reaction with regard to interaction with the game world, then it probably qualifies for inclusion.
 
-Possible Examples:
+Implemented:
 - Detached reticle
+
+In Progress:
 - Fully-detached free aim
-- Enhanced free look
+- True bodycam effects
+
+Future:
+- Expanded reticle constraint forces
+- Physical recoil
 - GoldenEye / Perfect Dark style auto aim
 - Variable lean and crouch
-- Physical recoil
-- Customizable camera inertia
-- True bodycam effects
+- Enhanced free look
+- Custom camera inertia
 - Inverse kinematic weapon positioning
 - And myriad other possibilities
 
