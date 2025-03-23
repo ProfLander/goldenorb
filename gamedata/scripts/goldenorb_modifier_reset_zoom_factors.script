@@ -4,6 +4,11 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
+-- Imports
+
+--- Logging
+local log = goldenorb_logging.log
+
 -- Implementation
 
 --- Zero out the zoom factor components
