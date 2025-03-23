@@ -35,7 +35,7 @@ function draw_hands_aim_point(state)
 
    local aim_point = get_hands_aim_point()
    if not aim_point then
-      return
+      return state
    end
 
    draw_crosshair(
@@ -45,6 +45,8 @@ function draw_hands_aim_point(state)
       RING_SEGS,
       COLOR
    )
+
+   return state
 end
 
 -- Entrypoint

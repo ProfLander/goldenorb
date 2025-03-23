@@ -6,6 +6,9 @@
 
 -- Imports
 
+--- HUD offset rotation
+local apply_hud_offset_rot = goldenorb_modifier_hud_offset_rot.apply_hud_offset_rot
+
 --- Data
 local get_camera_delta_rotation = goldenorb_camera.get_camera_delta_rotation
 
@@ -31,7 +34,7 @@ local pitch = 0
 -- Implementation
 
 function offset_aim(state)
-   log("offset_aim()")
+   log("offset_aim(%s)", state)
 
    if not RUN then
       return state
@@ -57,4 +60,9 @@ function offset_aim(state)
    end
 
    return state
+end
+
+function on_game_start()
+   goldenorb_main.ACTOR_ON_UPDATE
+      :after(apply_hud_offset_rot, offset_aim)
 end

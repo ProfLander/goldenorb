@@ -14,6 +14,7 @@
 -- Imports
 
 --- Weapon
+local reset_hands_orientation = goldenorb_modifier_reset_hands_orientation.reset_hands_orientation
 local get_hud_number = goldenorb_weapon.get_hud_number
 
 --- Math
@@ -68,4 +69,9 @@ function apply_hud_offset_rot(state)
 
    -- Done
    return state
+end
+
+function on_game_start()
+   goldenorb_main.ACTOR_ON_UPDATE
+      :after(reset_hands_orientation, apply_hud_offset_rot)
 end

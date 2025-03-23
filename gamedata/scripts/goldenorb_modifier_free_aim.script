@@ -6,6 +6,9 @@
 
 -- Imports
 
+--- HUD offset rotation
+local apply_hud_offset_rot = goldenorb_modifier_hud_offset_rot.apply_hud_offset_rot
+
 --- Math
 local PI = goldenorb_math.PI
 local sign = goldenorb_math.sign
@@ -42,11 +45,7 @@ function free_aim(state)
       return state
    end
 
-   if not state.actor then
-      return state
-   end
-
-   if not state.wpn then
+   if not state.actor or not state.wpn then
       return state
    end
 
@@ -95,4 +94,9 @@ function free_aim(state)
    end
 
    return state
+end
+
+function on_game_start()
+   goldenorb_main.ACTOR_ON_UPDATE
+      :after(apply_hud_offset_rot, free_aim)
 end

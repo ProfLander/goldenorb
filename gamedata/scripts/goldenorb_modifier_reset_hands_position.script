@@ -6,8 +6,15 @@
 
 -- Imports
 
---- Log
+--- Weapon
+local inject_weapon_hud = goldenorb_weapon.inject_weapon_hud
+
+--- Logging
 local log = goldenorb_logging.log
+
+-- Constants
+
+RUN = false
 
 -- Implementation
 
@@ -15,9 +22,20 @@ local log = goldenorb_logging.log
 function reset_hands_position(state)
    log("reset_hands_position(%s)", state)
 
-   if state.hud then
-      state.hud.hands_position = vector()
+   if not RUN then
+      return state
    end
 
+   if not state.hud then
+      return state
+   end
+
+   state.hud.hands_position = vector()
+
    return state
+end
+
+function on_game_start()
+   goldenorb_main.ACTOR_ON_UPDATE
+      :after(inject_weapon_hud, reset_hands_position)
 end

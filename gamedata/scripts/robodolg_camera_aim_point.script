@@ -41,6 +41,8 @@ function draw_camera_aim_point(state)
       RING_SEGS,
       COLOR
    )
+
+   return state
 end
 
 -- Entrypoint

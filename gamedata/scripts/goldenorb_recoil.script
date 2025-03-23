@@ -6,6 +6,9 @@
 
 -- Imports
 
+--- Weapon
+local inject_weapon = goldenorb_weapon.inject_weapon
+
 --- Lens
 local lens = goldenorb_lens.lens
 
@@ -99,4 +102,8 @@ function consume_weapon(state)
    end
 
    return state
+end
+
+function on_game_start()
+   goldenorb_main.ACTOR_ON_UPDATE:after(inject_weapon, consume_weapon)
 end

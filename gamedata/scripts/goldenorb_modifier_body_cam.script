@@ -6,7 +6,10 @@
 
 -- Imports
 
----Math
+--- HUD offset rotation
+local apply_hud_offset_rot = goldenorb_modifier_hud_offset_rot.apply_hud_offset_rot
+
+--- Math
 local deg = goldenorb_math.deg
 
 --- Camera
@@ -144,4 +147,9 @@ function body_cam(state)
    end
 
    return state
+end
+
+function on_game_start()
+   goldenorb_main.ACTOR_ON_UPDATE
+      :after(apply_hud_offset_rot, body_cam)
 end

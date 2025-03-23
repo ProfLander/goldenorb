@@ -6,6 +6,8 @@
 
 -- Imports
 
+local inject_actor = goldenorb_impure.inject_actor
+
 --- Math
 local hpb_to_direction = goldenorb_math.hpb_to_direction
 
@@ -58,16 +60,6 @@ HUD_DEFAULTS = {
    item_position = vector(),
    item_orientation = vector(),
 }
-
--- State
-
-local wpn_rot = vector()
-
-local prev_pos = nil
-local prev_rot = nil
-
-local delta_pos = vector()
-local delta_rot = vector()
 
 -- Implementation
 
@@ -172,21 +164,7 @@ function get_hands_aim_point()
       )
 end
 
---- Delta position getter
-function get_weapon_delta_position()
-   return delta_pos
-end
-
---- Rotation getter
-function get_weapon_rotation()
-   return wpn_rot
-end
-
---- Delta rotation getter
-function get_weapon_delta_rotation()
-   return delta_rot
-end
-
+--- Weapon aim point getter
 function get_weapon_aim_point(wpn)
    log("get_weapon_aim_point(%s)", wpn)
    return get_fire_bone_position(wpn)
@@ -196,54 +174,28 @@ function get_weapon_aim_point(wpn)
       )
 end
 
-
 --- Inject the actor's weapon into the given state
 function inject_weapon(state)
+   log("inject_weapon(%s)", state)
+
    if not state.actor then
       return state
    end
 
    state.wpn = state.actor:active_item()
+
    return state
 end
 
 --- Inject the weapon's HUD parameters into the given state
 function inject_weapon_hud(state)
+   log("inject_weapon_hud(%s)", state)
+
    if not state.wpn then
       return state
    end
+
    state.hud = get_hud_params(state.wpn)
-   return state
-end
-
---- Update function
-function read_weapon(state)
-   log("read_weapon(%s)", state)
-
-   if not state.wpn then
-      return state
-   end
-
-   local pos = get_fire_bone_position(state.wpn)
-   local dir = get_fire_bone_direction(state.wpn)
-
-   wpn_rot = vector():set(
-      math.atan2(dir.x, dir.z),
-      math.sin(dir.y),
-      0
-   )
-
-   prev_pos = prev_pos or pos
-   prev_rot = prev_rot or wpn_rot
-
-   delta_pos = vector():set(pos):sub(prev_pos)
-   log("  delta_pos: %s", delta_pos)
-
-   delta_rot = vector():set(wpn_rot):sub(prev_rot)
-   log("  delta_rot: %s", delta_rot)
-
-   prev_pos = pos
-   prev_rot = wpn_rot
 
    return state
 end
@@ -284,6 +236,8 @@ end
 
 
 function apply_weapon_hud(state)
+   log("apply_weapon_hud(%s)", state)
+
    if not state.hud then
       return state
    end
@@ -293,4 +247,10 @@ function apply_weapon_hud(state)
    log("  Done.")
 
    return state
+end
+
+function on_game_start()
+   goldenorb_main.ACTOR_ON_UPDATE
+      :after(inject_actor, inject_weapon)
+      :after(inject_weapon, inject_weapon_hud)
 end

@@ -6,6 +6,9 @@
 
 -- Imports
 
+--- Weapon
+local inject_weapon_hud = goldenorb_weapon.inject_weapon_hud
+
 --- Math
 local EPSILON = goldenorb_math.EPSILON
 
@@ -22,10 +25,17 @@ local OFFSET = vector():set(0, 0, EPSILON)
 function offset_fire_point(state)
    log("offset_fire_point(%s)", state)
 
-   if state.hud then
-      state.hud.fire_point:add(OFFSET)
-      state.hud.fire_point2:add(OFFSET)
+   if not state.hud then
+      return state
    end
 
+   state.hud.fire_point:add(OFFSET)
+   state.hud.fire_point2:add(OFFSET)
+
    return state
+end
+
+function on_game_start()
+   goldenorb_main.ACTOR_ON_UPDATE
+      :after(inject_weapon_hud, offset_fire_point)
 end

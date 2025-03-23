@@ -26,7 +26,7 @@ COLOR = GREEN
 
 function draw_player_bones(state)
    if not DRAW then
-      return
+      return state
    end
 
    log("draw_player_bones(%s)", state)
@@ -38,6 +38,8 @@ function draw_player_bones(state)
       LINE_LENGTH,
       COLOR
    )
+
+   return state
 end
 
 function on_game_start()

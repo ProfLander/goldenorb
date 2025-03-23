@@ -39,7 +39,7 @@ function draw_weapon_aim_point(state)
 
    local aim_point = get_weapon_aim_point(state.wpn)
    if not aim_point then
-      return
+      return state
    end
 
    draw_crosshair(
@@ -49,6 +49,8 @@ function draw_weapon_aim_point(state)
       RING_SEGS,
       COLOR
    )
+
+   return state
 end
 
 -- Entrypoint

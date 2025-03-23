@@ -42,6 +42,8 @@ function draw_weapon_bones(state)
       LINE_LENGTH,
       COLOR
    )
+
+   return state
 end
 
 function on_game_start()

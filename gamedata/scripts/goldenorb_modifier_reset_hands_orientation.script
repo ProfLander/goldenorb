@@ -6,6 +6,9 @@
 
 -- Imports
 
+--- Weapon
+local inject_weapon_hud = goldenorb_weapon.inject_weapon_hud
+
 --- Logging
 local log = goldenorb_logging.log
 
@@ -30,3 +33,7 @@ function reset_hands_orientation(state)
    return state
 end
 
+function on_game_start()
+   goldenorb_main.ACTOR_ON_UPDATE
+      :after(inject_weapon_hud, reset_hands_orientation)
+end

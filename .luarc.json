@@ -1,6 +1,6 @@
 {
     "runtime": {
-        "version": "Lua 5.1",
+        "version": "Lua 5.2",
         "path": [
             "?.script",
             "?/?.script",
@@ -47,6 +47,7 @@
         "SendScriptCallback",
         "AddScriptCallback",
         "RegisterScriptCallback",
+        "AddUniqueCall",
 
         "DBG_ScriptObject",
         "SYS_GetParam",

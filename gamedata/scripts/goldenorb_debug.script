@@ -203,3 +203,7 @@ function draw_arrayed(f, start, finish, steps)
       f(pos)
    end
 end
+
+function on_game_start()
+   goldenorb_main.ACTOR_ON_UPDATE:add_call(reset_next_id)
+end

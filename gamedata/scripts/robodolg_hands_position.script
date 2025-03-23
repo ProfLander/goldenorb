@@ -29,7 +29,7 @@ function draw_hands_position(state)
 
    local hands_position = get_hands_position()
    if not hands_position then
-      return
+      return state
    end
 
    draw_billboard_ngon(
@@ -38,6 +38,8 @@ function draw_hands_position(state)
       SIDES,
       COLOR
    )
+
+   return state
 end
 
 function on_game_start()

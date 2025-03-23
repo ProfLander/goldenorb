@@ -11,33 +11,18 @@
 local ACTOR_ON_UPDATE = goldenorb_main.ACTOR_ON_UPDATE
 
 --- Impure
-local inject_actor = goldenorb_impure.inject_actor
 local hud_adjust_enable = goldenorb_impure.hud_adjust_enable
 
 --- Weapon
-local inject_weapon = goldenorb_weapon.inject_weapon
-local inject_weapon_hud = goldenorb_weapon.inject_weapon_hud
-local read_weapon = goldenorb_weapon.read_weapon
 local apply_weapon_hud = goldenorb_weapon.apply_weapon_hud
 
 --- Camera
-local inject_camera = goldenorb_camera.inject_camera
-local read_camera = goldenorb_camera.read_camera
 local apply_camera = goldenorb_camera.apply_camera
-
---- Debug
-local reset_next_id = goldenorb_debug.reset_next_id
-
---- Recoil
-local consume_weapon = goldenorb_recoil.consume_weapon
 
 --- Modifiers
 local body_cam = goldenorb_modifier_body_cam.body_cam
 local free_aim = goldenorb_modifier_free_aim.free_aim
 local offset_aim = goldenorb_modifier_offset_aim.offset_aim
-local offset_fire_point = goldenorb_modifier_offset_fire_point.offset_fire_point
-local reset_zoom_factors = goldenorb_modifier_reset_zoom_factors.reset_zoom_factors
-local reset_hands_orientation = goldenorb_modifier_reset_hands_orientation.reset_hands_orientation
 local apply_hud_offset_rot = goldenorb_modifier_hud_offset_rot.apply_hud_offset_rot
 
 --- Logging
@@ -48,22 +33,8 @@ local log = goldenorb_logging.log
 function on_game_start()
    log("update.on_game_start")
    ACTOR_ON_UPDATE
-      :add_call(inject_actor)
-      :add_call(inject_weapon)
-      :add_call(inject_weapon_hud)
-      :add_call(inject_camera)
-      :add_call(reset_next_id)
-      :add_call(consume_weapon)
-      :add_call(read_camera)
-      :add_call(read_weapon)
-      :add_call(hud_adjust_enable)
-      :add_call(reset_hands_orientation)
-      :add_call(reset_zoom_factors)
-      :add_call(offset_fire_point)
-      :add_call(apply_hud_offset_rot)
-      :add_call(body_cam)
-      :add_call(free_aim)
-      :add_call(offset_aim)
-      :add_call(apply_weapon_hud)
-      :add_call(apply_camera)
+      -- Finalize
+      :after(apply_hud_offset_rot, body_cam, free_aim, offset_aim, hud_adjust_enable)
+      :after(hud_adjust_enable, apply_weapon_hud)
+      :after(apply_weapon_hud, apply_camera)
 end

@@ -10,17 +10,22 @@
 
 -- Imports
 
---- Core
-local ACTOR_ON_UPDATE = goldenorb_main.ACTOR_ON_UPDATE
-
 --- Logging
 local log = goldenorb_logging.log
 
 -- Implementation
 
-function draw_robodolg(state)
-   log("draw_robodolg(state)", state)
-   SendScriptCallback("robodolg_on_draw", state)
+local cache = nil
+function cache_state(state)
+   cache = state
+   return state
+end
+
+function draw_robodolg()
+   log("draw_robodolg()")
+   if cache then
+      SendScriptCallback("robodolg_on_draw", cache)
+   end
 end
 
 function on_game_start()
@@ -30,5 +35,6 @@ function on_game_start()
    AddScriptCallback("robodolg_on_draw")
 
    -- Register with GoldenOrb's update callback
-   ACTOR_ON_UPDATE:add_call(draw_robodolg)
+   goldenorb_main.ACTOR_ON_UPDATE:add_call(cache_state)
+   AddUniqueCall(draw_robodolg)
 end

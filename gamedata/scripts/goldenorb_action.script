@@ -6,6 +6,12 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
+-- Imports
+
+local log = goldenorb_logging.log
+
+-- Implementation
+
 --- Action metatable
 local Action = {}
 
@@ -26,7 +32,9 @@ function Action:add_call(f)
 end
 
 function Action:add_rule(fa, fb)
-   assert(fa ~= fb, "Cannot constrain an action to run relative to itself")
+   assert(fa, "Invalid rule LHS")
+   assert(fb, "Invalid rule RHS")
+   assert(fa ~= fb, "Cannot constrain a call to run relative to itself")
    table.insert(self.rules, {fa, fb})
    return self
 end
@@ -34,12 +42,13 @@ end
 --- Run FA before FB
 function Action:before(...)
    local args = {...}
-   local prev = table.remove(args, 1)
-   self:add_call(prev)
-   for _,arg in ipairs(args) do
-      assert(prev ~= arg, "Cannot run an action before itself")
-      self:add_rule(prev, arg)
-      prev = arg
+   local first = table.remove(args, 1)
+   assert(first, "Invalid first call")
+   self:add_call(first)
+   for i,arg in ipairs(args) do
+      assert(arg, "Invalid call at index %s")
+      assert(first ~= arg, "Cannot run a call before itself")
+      self:add_rule(first, arg)
    end
    return self
 end
@@ -47,59 +56,79 @@ end
 --- Run FB after FA
 function Action:after(...)
    local args = {...}
+   log("Action:after(%s)", #args)
+
    local last = table.remove(args, #args)
-   local prev = table.remove(args, 1)
-   for _,arg in ipairs(args) do
-      assert(prev ~= arg, "Cannot run an action after itself")
-      self:add_rule(prev, arg)
-      prev = arg
+   assert(last, "Invalid last action")
+
+   for i,arg in ipairs(args) do
+      assert(arg, string.format("Invalid call at index %s", i))
+      assert(arg ~= last, "Cannot run a call after itself")
+      self:add_rule(arg, last)
    end
-   self:add_rule(prev, last)
+
    self:add_call(last)
    return self
 end
 
 --- Run the action with the given parameter and return its result
 function Action:run(p)
+   log("Action:run(%s)", p)
    local called = {}
    local count = 0
-   local prev_count = count
    local acc = p
+   log("  calls: %s", #self.calls)
+   log("  rules: %s", #self.rules)
    while count < #self.calls do
+      --log("  count: %s", count)
       for _,call in ipairs(self.calls) do
+         --log("  call: %s", call)
          if called[call] then
+            -- log("    already called")
             goto next_call
          end
 
          for _,rule in ipairs(self.rules) do
+            --log("    rule: %s -> %s", rule[1], rule[2])
+
             -- If the rule doen't mention the call, skip it
             if rule[2] ~= call then
+               --log("      not relevant")
                goto next_rule
             end
 
             -- If the call is the target of the rule
             -- and its dependency is not met, skip it
             if not called[rule[1]] then
+               --log("      not satisfied")
                goto next_call
             end
+
+            --log("      pass")
 
             ::next_rule::
          end
 
+         --log("  pass")
+
          -- If all rules pass, call the function
          acc = call(acc)
          called[call] = true
-         prev_count = count
          count = count + 1
+         goto next_iter
 
          ::next_call::
       end
-      assert(prev_count ~= count, "Unsolvable dependency graph")
+
+      assert(nil, "Unsolvable dependency graph")
+
+      ::next_iter::
    end
    return acc
 end
 
 function Action:prun(e, p)
+   log("Action:prun(%s, %s)", e, p)
    local status, res = pcall(self.run, self, p)
    if not status then
       return e(res)

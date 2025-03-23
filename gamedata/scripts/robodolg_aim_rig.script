@@ -75,6 +75,8 @@ function draw_aim_rig(state)
       draw_billboard_ngon(pos, 0.5, 8, vector():set(0, 1, 0))
       draw_line(pos, vector():set(pos):add(dir:mul(1000)), vector():set(0, 1, 0))
    end
+
+   return state
 end
 
 function on_game_start()
