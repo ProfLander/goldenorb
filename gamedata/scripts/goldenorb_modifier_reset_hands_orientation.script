@@ -9,14 +9,24 @@
 --- Logging
 local log = goldenorb_logging.log
 
+-- Constants
+
+local RUN = false
+
 -- Implementation
 
 --- Remove any existing hand orientation
 function reset_hands_orientation(state)
    log("reset_hands_orientation(%s)", state)
-   if state.hud then
-    state.hud.hands_orientation = vector()
+
+   if not RUN then
+      return state
    end
+
+   if state.hud then
+      state.hud.hands_orientation = vector()
+   end
+
    return state
 end
 

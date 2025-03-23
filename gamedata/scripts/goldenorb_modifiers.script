@@ -25,7 +25,7 @@ local log = goldenorb_logging.log
 
 function on_game_start()
    log("modifiers.on_game_start")
-   --register_modifier(reset_hands_orientation)
+   register_modifier(reset_hands_orientation)
    register_modifier(reset_zoom_factors)
    register_modifier(offset_fire_point)
    register_modifier(apply_hud_offset_rot)
