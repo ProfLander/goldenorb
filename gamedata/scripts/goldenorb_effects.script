@@ -48,7 +48,7 @@ function set_hud_vector(key, val)
    )
 end
 
-function set_hud_number(wpn, key, val)
+function set_hud_number(key, val)
    log("set_hud_number(%s, %s)", key, val)
    hud_adjust.set_value(key, val)
 end
@@ -103,7 +103,7 @@ function run_modifiers(state)
    log("  cam: %s", table_to_string(state.cam))
 
    log("  state:", table_to_string(state))
-   log("  invoking callback...", wpn)
+   log("  invoking callback...")
    state = modifier(state)
    log("  result:", table_to_string(state))
 
