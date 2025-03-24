@@ -7,7 +7,7 @@
 -- Imports
 
 --- HUD offset rotation
-local apply_hud_offset_rot = goldenorb_modifier_hud_offset_rot.apply_hud_offset_rot
+local apply_hud_offset_rot = goldenorb_mod_hud_offset_rot.apply_hud_offset_rot
 
 --- Math
 local deg = goldenorb_math.deg
@@ -18,13 +18,20 @@ local get_camera_aim_point = goldenorb_camera.get_camera_aim_point
 --- Weapon
 local get_hands_position = goldenorb_weapon.get_hands_position
 
+--- MCM Builder
+local Checkbox = mcm_builder.Checkbox
+
 --- Logging
 local log = goldenorb_logging.log
 
 -- Constants
 
-RUN = false
 BONE_ROOT = "root_stalker"
+
+-- State
+
+page = goldenorb_mcm.tree:page("bodycam")
+local enabled = page:setting(Checkbox.new("enabled"))
 
 --- Set of bones used to calculate camera transform
 BONES = {
@@ -92,7 +99,7 @@ end
 function body_cam(state)
    log("body_cam(%s)", state)
 
-   if not RUN then
+   if not enabled:get() then
       return state
    end
 

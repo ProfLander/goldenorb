@@ -7,7 +7,7 @@
 -- Imports
 
 --- HUD offset rotation
-local apply_hud_offset_rot = goldenorb_modifier_hud_offset_rot.apply_hud_offset_rot
+local apply_hud_offset_rot = goldenorb_mod_hud_offset_rot.apply_hud_offset_rot
 
 --- Data
 local get_camera_delta_rotation = goldenorb_camera.get_camera_delta_rotation
@@ -17,16 +17,21 @@ local PI = goldenorb_math.PI
 
 local deg = goldenorb_math.deg
 
+--- MCM Builder
+local Checkbox = mcm_builder.Checkbox
+
 --- Logging
 local log = goldenorb_logging.log
 
 -- Constants
 
-RUN = false
 LIMIT_YAW = PI / 32
 LIMIT_PITCH = PI / 40
 
 -- State
+
+page = goldenorb_mcm.tree:page("offset_aim")
+local enabled = page:setting(Checkbox.new("enabled"))
 
 local yaw = 0
 local pitch = 0
@@ -36,7 +41,7 @@ local pitch = 0
 function offset_aim(state)
    log("offset_aim(%s)", state)
 
-   if not RUN then
+   if not enabled:get() then
       return state
    end
 

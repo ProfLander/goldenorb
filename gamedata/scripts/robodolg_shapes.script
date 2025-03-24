@@ -41,7 +41,6 @@ function reset(state)
          table.insert(shapes_pool[k], shape)
       end
    end
-   next_id = 1
    return state
 end
 

@@ -17,27 +17,30 @@ local get_fire_bone_position = goldenorb_weapon.get_fire_bone_position
 --- Camera
 local get_camera_aim_point = goldenorb_camera.get_camera_aim_point
 
---- Debug
+--- Shapes
 local RED = robodolg_shapes.RED
 local CYAN = robodolg_shapes.CYAN
 local YELLOW = robodolg_shapes.YELLOW
 local draw_line = robodolg_shapes.draw_line
 local draw_billboard_ngon = robodolg_shapes.draw_billboard_ngon
 
+--- MCM Builder
+local Checkbox = mcm_builder.Checkbox
+
 --- Log
 local log = goldenorb_logging.log
 
--- Constants
+-- State
 
-DRAW = true
+local should_draw = robodolg_mcm.page:setting(Checkbox.new("draw_aim_rig"))
 
 -- Implementation
 
 --- Offset fire point slightly to prevent self-intersection
-function draw_aim_rig(state)
+function draw(state)
    log("draw_weapon_ik(%s)", state)
 
-   if not DRAW then
+   if not should_draw:get() then
        return state
    end
 
@@ -83,6 +86,6 @@ function on_game_start()
    log("robodolg_weapon_ik.on_game_start")
    RegisterScriptCallback(
       "robodolg_on_draw",
-      draw_aim_rig
+      draw
    )
 end

@@ -10,6 +10,9 @@
 
 -- Imports
 
+--- MCM Builder
+local Checkbox = mcm_builder.Checkbox
+
 --- RoboDolg Shapes
 local reset = robodolg_shapes.reset
 
@@ -17,6 +20,9 @@ local reset = robodolg_shapes.reset
 local log = goldenorb_logging.log
 
 -- State
+
+page = goldenorb_mcm.tree:page("robodolg")
+local enabled = page:setting(Checkbox.new("enabled"))
 
 --- Cache of state from actor update
 local cache = nil
@@ -32,8 +38,13 @@ end
 --- Use the cached stated to draw robodolg modules
 function draw_robodolg()
    log("draw_robodolg()")
+   reset()
+
+   if not enabled:get() then
+      return
+   end
+
    if cache then
-      reset()
       SendScriptCallback("robodolg_on_draw", cache)
    end
 end

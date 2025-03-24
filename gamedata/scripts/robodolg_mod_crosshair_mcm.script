@@ -1,0 +1,90 @@
+----------------------------------------------------------------------------
+-- RoboDolg: Crosshair
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+-- Imports
+
+--- Aim Point
+local get_camera_aim_point = goldenorb_camera.get_camera_aim_point
+local get_hands_aim_point = goldenorb_weapon.get_hands_aim_point
+local get_weapon_aim_point = goldenorb_weapon.get_weapon_aim_point
+
+--- Shapes
+local RED = robodolg_shapes.RED
+local GREEN = robodolg_shapes.GREEN
+local BLUE = robodolg_shapes.BLUE
+local draw_crosshair = robodolg_shapes.draw_crosshair
+
+--- MCM Builder
+local Checkbox = mcm_builder.Checkbox
+
+--- Logging
+local log = goldenorb_logging.log
+
+-- Constants
+
+CROSS_SIZE = 30
+RING_SIZE = 20
+RING_SEGS = 8
+COLOR_CAMERA = BLUE
+COLOR_HANDS = GREEN
+COLOR_WEAPON = RED
+
+-- State
+
+local should_draw = robodolg_mcm.page:setting(Checkbox.new("draw_crosshair"))
+
+-- Implementation
+
+function draw(state)
+   log("draw_crosshair(%s)", state)
+
+   if not should_draw:get() then
+       return state
+   end
+
+   if not state.wpn then
+      return state
+   end
+
+   -- Camera
+   draw_crosshair(
+      get_camera_aim_point(),
+      CROSS_SIZE,
+      RING_SIZE,
+      RING_SEGS,
+      COLOR_CAMERA
+   )
+
+   -- Hands
+   draw_crosshair(
+      get_hands_aim_point(),
+      CROSS_SIZE,
+      RING_SIZE,
+      RING_SEGS,
+      COLOR_HANDS
+   )
+
+   -- Weapon
+   draw_crosshair(
+      get_weapon_aim_point(state.wpn),
+      CROSS_SIZE,
+      RING_SIZE,
+      RING_SEGS,
+      COLOR_WEAPON
+   )
+
+   return state
+end
+
+-- Entrypoint
+
+function on_game_start()
+   log("robodolg_crosshair.on_game_start")
+   RegisterScriptCallback(
+      "robodolg_on_draw",
+      draw
+   )
+end

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<string_table>
+    <!-- Mod Name -->
+    <string id="ui_mcm_menu_goldenorb">
+        <text>GoldenOrb</text>
+    </string>
+    
+    <!-- Free Aim -->
+    <string id="ui_mcm_menu_free_aim">
+        <text>Free Aim</text>
+    </string>
+
+    <!-- Offset Aim -->
+    <string id="ui_mcm_menu_offset_aim">
+        <text>Offset Aim</text>
+    </string>
+
+    <!-- Bodycam -->
+    <string id="ui_mcm_menu_bodycam">
+        <text>Bodycam</text>
+    </string>
+
+    <!-- RoboDolg -->
+    <string id="ui_mcm_menu_robodolg">
+        <text>RoboDolg</text>
+    </string>
+</string_table>

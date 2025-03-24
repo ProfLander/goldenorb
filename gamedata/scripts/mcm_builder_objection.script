@@ -1,0 +1,106 @@
+-- MCM Builder: Objection!
+
+-- Imports
+
+local Tree = mcm_builder.Tree
+local Page = mcm_builder.Page
+
+-- Implementation
+
+--- Extend Tree with a smart page constructor
+Tree.page = function(self, id)
+   local page = Page.new(id)
+   self:add_page(page)
+   page.tree_id = self.id
+   return page
+end
+
+--- Extend Page with a smart setting constructor
+Page.setting = function(self, setting)
+   self:add(setting)
+   setting.tree_id = self.tree_id
+   setting.page_id = self.id
+   return setting
+end
+
+--- Define a container for generalized MCM getters and setters
+local AbstractLens = {
+   key = function(self)
+      return self.tree_id .. "/" .. self.page_id .. "/" .. self.id
+   end,
+
+   get = function(self)
+      return ui_mcm and ui_mcm.get(self:key())
+   end,
+
+   set = function(self, v)
+      return ui_mcm and ui_mcm.set(self:key(), v)
+   end,
+}
+
+--- Extend valued controls with our new methods
+copy_table(mcm_builder.Checkbox, AbstractLens)
+copy_table(mcm_builder.List, AbstractLens)
+copy_table(mcm_builder.InputField, AbstractLens)
+copy_table(mcm_builder.RadioBox, AbstractLens)
+copy_table(mcm_builder.Trackbar, AbstractLens)
+copy_table(mcm_builder.KeybindBox, AbstractLens)
+
+--- Modify the build function to operate by value
+--- so our original interface objects don't get destroyed
+Tree.build = function(self)
+   -- Create a copy of our table minus OOP features and builder data
+   local out = {}
+   copy_table(out, self)
+   out._subtree = nil
+
+   -- Recurse on table children
+   for _, v in pairs(self) do
+      if type(v) == "table" then
+         Tree.build(v)
+      end
+   end
+
+   -- Done
+   return out
+end
+
+--[[
+This lets MCM builder primitives act as object-oriented
+cross-module interfaces to their respective settings,
+allowing definition and access to be localized to
+in scripts where they're most relevant,
+rather than a single monolithic MCM sin-bin.
+
+The one annoying caveat with cross-module (aside from the usual load order woes)
+is having to name any script that creates MCM controls with *_mcm.script,
+since they otherwise don't get loaded until gameplay-time.
+
+For example:
+
+-- Would likely live in my_mod_mcm.script
+local tree = Tree.new("TotallyTubular")
+
+-- Each subsystem would fetch my_mod_mcm.tree and create a page
+local page = tree:page("Stuff")
+
+-- Then add settings that also act as first-class getters,
+-- and can themselves be spread across scripts for
+-- sufficiently complex codebases.
+local gubbin = page:setting(Checkbox.new("Gubbin"))
+
+-- Easy peasy runtime code
+function actor_on_update()
+   printf("Gubbin from MCM: %s", gubbin:get())
+end
+
+function on_game_start()
+   RegisterScriptCallback("actor_on_update", actor_on_update)
+end
+
+-- Trivial MCM entrypoint
+function on_mcm_load()
+   return tree:build()
+end
+--]]
+

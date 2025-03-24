@@ -14,7 +14,7 @@
 -- Imports
 
 --- Weapon
-local reset_hands_orientation = goldenorb_modifier_reset_hands_orientation.reset_hands_orientation
+local reset_hands_orientation = goldenorb_mod_reset_hands_orientation.reset_hands_orientation
 local get_hud_number = goldenorb_weapon.get_hud_number
 
 --- Math

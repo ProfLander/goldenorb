@@ -7,7 +7,7 @@
 -- Imports
 
 --- HUD offset rotation
-local apply_hud_offset_rot = goldenorb_modifier_hud_offset_rot.apply_hud_offset_rot
+local apply_hud_offset_rot = goldenorb_mod_hud_offset_rot.apply_hud_offset_rot
 
 --- Math
 local PI = goldenorb_math.PI
@@ -17,12 +17,13 @@ local vector_rotate_y = goldenorb_math.vector_rotate_y
 --- Camera
 local get_hands_direction = goldenorb_weapon.get_hands_direction
 
+--- MCM Builder
+local Checkbox = mcm_builder.Checkbox
+
 --- Logging
 local log = goldenorb_logging.log
 
 -- Constants
-
-RUN = true
 
 EYE_HEIGHT = 1.671 --1.6585
 
@@ -34,6 +35,9 @@ LIMIT = vector():set(
 
 -- State
 
+page = goldenorb_mcm.tree:page("free_aim")
+local enabled = page:setting(Checkbox.new("enabled"))
+
 local cam_rot = vector()
 
 -- Implementation
@@ -41,7 +45,7 @@ local cam_rot = vector()
 function free_aim(state)
    log("free_aim(%s)", state)
 
-   if not RUN then
+   if not enabled:get() then
       return state
    end
 

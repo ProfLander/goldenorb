@@ -20,10 +20,10 @@ local apply_weapon_hud = goldenorb_weapon.apply_weapon_hud
 local apply_camera = goldenorb_camera.apply_camera
 
 --- Modifiers
-local body_cam = goldenorb_modifier_body_cam.body_cam
-local free_aim = goldenorb_modifier_free_aim.free_aim
-local offset_aim = goldenorb_modifier_offset_aim.offset_aim
-local apply_hud_offset_rot = goldenorb_modifier_hud_offset_rot.apply_hud_offset_rot
+local body_cam = goldenorb_mod_body_cam_mcm.body_cam
+local free_aim = goldenorb_mod_free_aim_mcm.free_aim
+local offset_aim = goldenorb_mod_offset_aim_mcm.offset_aim
+local apply_hud_offset_rot = goldenorb_mod_hud_offset_rot.apply_hud_offset_rot
 
 --- Logging
 local log = goldenorb_logging.log
@@ -34,7 +34,13 @@ function on_game_start()
    log("update.on_game_start")
    ACTOR_ON_UPDATE
       -- Finalize
-      :after(apply_hud_offset_rot, body_cam, free_aim, offset_aim, hud_adjust_enable)
+      :after(
+         apply_hud_offset_rot,
+         body_cam,
+         free_aim,
+         offset_aim,
+         hud_adjust_enable
+      )
       :after(hud_adjust_enable, apply_weapon_hud)
       :after(apply_weapon_hud, apply_camera)
 end
