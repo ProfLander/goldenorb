@@ -28,7 +28,7 @@ end
 --- If passed directly back to MCM, this will cause it to
 --- attach the resulting tree to an existing one with the given ID
 --- instead of creating a new root menu entry.
-Tree.collection = function(collection)
+Tree.collection = function(self, collection)
    assert(type(collection) == "string", "MCM Builder: no collection given")
    self.collection = collection
    return self
