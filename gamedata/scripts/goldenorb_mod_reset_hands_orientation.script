@@ -14,7 +14,7 @@ local log = goldenorb_logging.log
 
 -- Constants
 
-local RUN = false
+local RUN = true
 
 -- Implementation
 
