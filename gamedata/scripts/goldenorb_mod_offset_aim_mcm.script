@@ -68,8 +68,8 @@ function offset_aim(state)
 
    yaw = math.max(math.min(yaw - deg(delta_rot.x), lx), -lx)
    pitch = math.max(math.min(pitch + deg(delta_rot.y), ly), -ly)
-   printf("  yaw: %s", yaw)
-   printf("  pitch: %s", pitch)
+   log("  yaw: %s", yaw)
+   log("  pitch: %s", pitch)
 
    if state.hud then
       log("Setting hands orientation")
