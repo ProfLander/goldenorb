@@ -13,28 +13,36 @@ local apply_hud_offset_rot = goldenorb_mod_hud_offset_rot.apply_hud_offset_rot
 local get_camera_delta_rotation = goldenorb_camera.get_camera_delta_rotation
 
 --- Math
-local PI = goldenorb_math.PI
-
 local deg = goldenorb_math.deg
 
 --- MCM Builder
 local ImageWithText = mcm_builder.ImageWithText
 local Checkbox = mcm_builder.Checkbox
+local Trackbar = mcm_builder.Trackbar
 
 --- Logging
 local log = goldenorb_logging.log
-
--- Constants
-
-LIMIT_YAW = PI / 32
-LIMIT_PITCH = PI / 40
 
 -- State
 
 page = goldenorb_mcm.tree:pages("offset_aim")
 
-page:settings(ImageWithText.new("offset_aim_title"):text("offset_aim"))
-local enabled = page:settings(Checkbox.new("enabled"):default(false))
+page:settings(
+   ImageWithText.new("offset_aim_title")
+    :text("offset_aim")
+)
+
+local enabled, limit_yaw, limit_pitch = page:settings(
+    Checkbox.new("enabled"):default(false),
+    Trackbar.new("horizontal_limit")
+      :default(6)
+      :increment(0.05)
+      :minmax(0, 90),
+    Trackbar.new("vertical_limit")
+      :default(4.5)
+      :increment(0.05)
+      :minmax(0, 90)
+)
 
 local yaw = 0
 local pitch = 0
@@ -56,15 +64,17 @@ function offset_aim(state)
    local delta_rot = get_camera_delta_rotation()
    log("  delta_rot: %s", delta_rot)
 
-   yaw = math.max(math.min(yaw - delta_rot.x, LIMIT_YAW), -LIMIT_YAW)
-   pitch = math.max(math.min(pitch + delta_rot.y, LIMIT_PITCH), -LIMIT_PITCH)
-   log("  yaw: %s", yaw)
-   log("  pitch: %s", pitch)
+   local lx, ly = limit_yaw:get(), limit_pitch:get()
+
+   yaw = math.max(math.min(yaw - deg(delta_rot.x), lx), -lx)
+   pitch = math.max(math.min(pitch + deg(delta_rot.y), ly), -ly)
+   printf("  yaw: %s", yaw)
+   printf("  pitch: %s", pitch)
 
    if state.hud then
       log("Setting hands orientation")
       state.hud.hands_orientation = state.hud.hands_orientation
-         :add(vector():set(deg(yaw), deg(pitch), 0))
+         :add(vector():set(yaw, pitch, 0))
    end
 
    return state

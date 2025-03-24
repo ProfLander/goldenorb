@@ -10,7 +10,7 @@
 local apply_hud_offset_rot = goldenorb_mod_hud_offset_rot.apply_hud_offset_rot
 
 --- Math
-local PI = goldenorb_math.PI
+local rad = goldenorb_math.rad
 local sign = goldenorb_math.sign
 local vector_rotate_y = goldenorb_math.vector_rotate_y
 
@@ -20,25 +20,32 @@ local get_hands_direction = goldenorb_weapon.get_hands_direction
 --- MCM Builder
 local ImageWithText = mcm_builder.ImageWithText
 local Checkbox = mcm_builder.Checkbox
+local Trackbar = mcm_builder.Trackbar
 
 --- Logging
 local log = goldenorb_logging.log
-
--- Constants
-
-EYE_HEIGHT = 1.671 --1.6585
-
-LIMIT = vector():set(
-   PI / 4, -- PI / 8,
-   PI / 8, -- PI / 12,
-   0
-)
 
 -- State
 
 page = goldenorb_mcm.tree:pages("free_aim")
 page:settings(ImageWithText.new("free_aim_title"):text("free_aim"))
-local enabled = page:settings(Checkbox.new("enabled"):default(true))
+local enabled, eye_height, limit_yaw, limit_pitch =
+   page:settings(
+      Checkbox.new("enabled")
+         :default(true),
+      Trackbar.new("eye_height")
+         :default(1.671)
+         :increment(0.001)
+         :minmax(1, 2),
+      Trackbar.new("horizontal_limit")
+         :default(45)
+         :increment(0.05)
+         :minmax(0, 90),
+      Trackbar.new("vertical_limit")
+         :default(22.5)
+         :increment(0.05)
+         :minmax(0, 90)
+   )
 
 local cam_rot = vector()
 
@@ -56,7 +63,9 @@ function free_aim(state)
    end
 
    log("  cam_rot: %s", cam_rot)
-   log("  limit: %s", LIMIT)
+
+   local lx, ly = rad(limit_yaw:get()), rad(limit_pitch:get())
+   log("  lx: %s, ly: %s", lx, ly)
 
    local hands_dir = get_hands_direction():normalize()
    log("  hands_dir: %s", hands_dir)
@@ -64,9 +73,9 @@ function free_aim(state)
    local delta_pitch = math.asin(hands_dir.y) - cam_rot.x
    log("  delta_pitch: %s", delta_pitch)
 
-   if math.abs(delta_pitch) > LIMIT.y then
+   if math.abs(delta_pitch) > ly then
       log("  pitch moved beyond limit")
-      cam_rot.x = cam_rot.x + (math.abs(delta_pitch) - LIMIT.y) * sign(delta_pitch)
+      cam_rot.x = cam_rot.x + (math.abs(delta_pitch) - ly) * sign(delta_pitch)
    end
 
 
@@ -81,15 +90,16 @@ function free_aim(state)
    )
    log("  delta_yaw: %s", delta_yaw)
 
-   if math.abs(delta_yaw) > LIMIT.x then
+   if math.abs(delta_yaw) > lx then
       log("  yaw moved beyond limit")
-      cam_rot.y = cam_rot.y + (math.abs(delta_yaw) - LIMIT.x) * sign(delta_yaw)
+      cam_rot.y = cam_rot.y + (math.abs(delta_yaw) - lx) * sign(delta_yaw)
    end
 
    log("  cam_rot: %s", cam_rot)
 
    state.cam.enable = true
-   state.cam.pos = state.actor:position():add(vector():set(0, EYE_HEIGHT, 0))
+   state.cam.pos = state.actor:position()
+      :add(vector():set(0, eye_height:get(), 0))
    state.cam.rot = vector():set(-cam_rot.y, cam_rot.x, 0)
    state.cam.affect_hud = false
 
