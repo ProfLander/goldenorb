@@ -93,6 +93,7 @@ end
 function draw_sphere(pos, scale, color)
    log("debug_sphere(%s, %s, %s)", pos, scale, color)
 
+   assert(pos, "Invalid position")
    scale = scale or 0.1
    color = color or vector():set(1, 1, 1)
 
@@ -117,6 +118,8 @@ end
 function draw_line(pa, pb, color)
    log("draw_line(%s, %s, %s)", pa, pb, color)
 
+   assert(pa, "Invalid line start")
+   assert(pa, "Invalid line end")
    color = color or vector():set(1, 1, 1)
 
    local line = get_shape(DBG_ScriptObject.line):cast_dbg_line()

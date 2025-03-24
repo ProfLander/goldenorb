@@ -4,10 +4,7 @@ local mcm_builder_objection = mcm_builder_objection
 -- Create the mod's tree
 tree = mcm_builder.Tree.new("goldenorb")
 
-printf("Goldenorb MCM load: %s", tree)
-
 -- Build it on load
 function on_mcm_load()
-   printf("Goldenorb MCM build: %s", tree)
    return tree:build()
 end

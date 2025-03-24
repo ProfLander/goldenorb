@@ -10,7 +10,11 @@
 local CYAN = robodolg_shapes.CYAN
 local draw_bones = robodolg_shapes.draw_bones
 
+--- RoboDolg
+local mcm_tree = robodolg_mcm.tree
+
 --- MCM Builder
+local ImageWithText = mcm_builder.ImageWithText
 local Checkbox = mcm_builder.Checkbox
 
 --- Log
@@ -25,7 +29,13 @@ COLOR = CYAN
 
 -- State
 
-local should_draw = robodolg_mcm.page:setting(Checkbox.new("draw_weapon_bones"))
+local page = mcm_tree:pages("weapon_bones")
+
+page:settings(ImageWithText.new("weapon_bones_title"):text("weapon_bones"))
+
+local should_draw = page:settings(
+   Checkbox.new("draw_weapon_bones"):default(true)
+)
 
 -- Implementation
 

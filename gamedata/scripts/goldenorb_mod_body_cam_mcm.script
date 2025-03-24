@@ -19,6 +19,7 @@ local get_camera_aim_point = goldenorb_camera.get_camera_aim_point
 local get_hands_position = goldenorb_weapon.get_hands_position
 
 --- MCM Builder
+local ImageWithText = mcm_builder.ImageWithText
 local Checkbox = mcm_builder.Checkbox
 
 --- Logging
@@ -30,8 +31,9 @@ BONE_ROOT = "root_stalker"
 
 -- State
 
-page = goldenorb_mcm.tree:page("bodycam")
-local enabled = page:setting(Checkbox.new("enabled"))
+page = goldenorb_mcm.tree:pages("bodycam")
+page:settings(ImageWithText.new("body_cam_title"):text("body_cam"))
+local enabled = page:settings(Checkbox.new("enabled"):default(false))
 
 --- Set of bones used to calculate camera transform
 BONES = {

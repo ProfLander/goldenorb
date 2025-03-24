@@ -18,6 +18,7 @@ local vector_rotate_y = goldenorb_math.vector_rotate_y
 local get_hands_direction = goldenorb_weapon.get_hands_direction
 
 --- MCM Builder
+local ImageWithText = mcm_builder.ImageWithText
 local Checkbox = mcm_builder.Checkbox
 
 --- Logging
@@ -35,8 +36,9 @@ LIMIT = vector():set(
 
 -- State
 
-page = goldenorb_mcm.tree:page("free_aim")
-local enabled = page:setting(Checkbox.new("enabled"))
+page = goldenorb_mcm.tree:pages("free_aim")
+page:settings(ImageWithText.new("free_aim_title"):text("free_aim"))
+local enabled = page:settings(Checkbox.new("enabled"):default(true))
 
 local cam_rot = vector()
 

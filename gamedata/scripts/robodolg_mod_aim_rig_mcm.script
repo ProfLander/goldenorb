@@ -24,7 +24,11 @@ local YELLOW = robodolg_shapes.YELLOW
 local draw_line = robodolg_shapes.draw_line
 local draw_billboard_ngon = robodolg_shapes.draw_billboard_ngon
 
+--- RoboDolg
+local mcm_tree = robodolg_mcm.tree
+
 --- MCM Builder
+local ImageWithText = mcm_builder.ImageWithText
 local Checkbox = mcm_builder.Checkbox
 
 --- Log
@@ -32,7 +36,13 @@ local log = goldenorb_logging.log
 
 -- State
 
-local should_draw = robodolg_mcm.page:setting(Checkbox.new("draw_aim_rig"))
+local page = mcm_tree:pages("aim_rig")
+
+page:settings(ImageWithText.new("aim_rig_title"):text("aim_rig"))
+
+local should_draw = page:settings(
+   Checkbox.new("draw_aim_rig"):default(true)
+)
 
 -- Implementation
 

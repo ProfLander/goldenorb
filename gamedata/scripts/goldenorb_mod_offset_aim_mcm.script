@@ -18,6 +18,7 @@ local PI = goldenorb_math.PI
 local deg = goldenorb_math.deg
 
 --- MCM Builder
+local ImageWithText = mcm_builder.ImageWithText
 local Checkbox = mcm_builder.Checkbox
 
 --- Logging
@@ -30,8 +31,10 @@ LIMIT_PITCH = PI / 40
 
 -- State
 
-page = goldenorb_mcm.tree:page("offset_aim")
-local enabled = page:setting(Checkbox.new("enabled"))
+page = goldenorb_mcm.tree:pages("offset_aim")
+
+page:settings(ImageWithText.new("offset_aim_title"):text("offset_aim"))
+local enabled = page:settings(Checkbox.new("enabled"):default(false))
 
 local yaw = 0
 local pitch = 0

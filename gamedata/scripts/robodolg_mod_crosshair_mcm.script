@@ -18,23 +18,45 @@ local BLUE = robodolg_shapes.BLUE
 local draw_crosshair = robodolg_shapes.draw_crosshair
 
 --- MCM Builder
+local ImageWithText = mcm_builder.ImageWithText
 local Checkbox = mcm_builder.Checkbox
+local Trackbar = mcm_builder.Trackbar
+
+--- Robodolg
+local mcm_tree = robodolg_mcm.tree
 
 --- Logging
 local log = goldenorb_logging.log
 
 -- Constants
 
-CROSS_SIZE = 30
-RING_SIZE = 20
-RING_SEGS = 8
 COLOR_CAMERA = BLUE
 COLOR_HANDS = GREEN
 COLOR_WEAPON = RED
 
 -- State
 
-local should_draw = robodolg_mcm.page:setting(Checkbox.new("draw_crosshair"))
+local page = mcm_tree:pages("crosshair")
+
+page:settings(ImageWithText.new("crosshair_title"):text("crosshair"))
+
+local should_draw, cross_size, ring_size, ring_segs =
+   page:settings(
+      Checkbox.new("draw_crosshair")
+         :default(true),
+      Trackbar.new("cross_size")
+         :increment(1)
+         :default(30)
+         :minmax(1, 60),
+      Trackbar.new("ring_size")
+         :increment(1)
+         :default(20)
+         :minmax(1, 60),
+      Trackbar.new("ring_segments")
+         :increment(1)
+         :default(8)
+         :minmax(3, 64)
+   )
 
 -- Implementation
 
@@ -49,30 +71,34 @@ function draw(state)
       return state
    end
 
+   local size_cross = cross_size:get()
+   local size_ring = ring_size:get()
+   local segs_ring = ring_segs:get()
+
    -- Camera
    draw_crosshair(
       get_camera_aim_point(),
-      CROSS_SIZE,
-      RING_SIZE,
-      RING_SEGS,
+      size_cross,
+      size_ring,
+      segs_ring,
       COLOR_CAMERA
    )
 
    -- Hands
    draw_crosshair(
       get_hands_aim_point(),
-      CROSS_SIZE,
-      RING_SIZE,
-      RING_SEGS,
+      size_cross,
+      size_ring,
+      segs_ring,
       COLOR_HANDS
    )
 
    -- Weapon
    draw_crosshair(
       get_weapon_aim_point(state.wpn),
-      CROSS_SIZE,
-      RING_SIZE,
-      RING_SEGS,
+      size_cross,
+      size_ring,
+      segs_ring,
       COLOR_WEAPON
    )
 

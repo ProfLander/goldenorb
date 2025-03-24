@@ -13,7 +13,11 @@ local draw_bones = robodolg_shapes.draw_bones
 --- Log
 local log = goldenorb_logging.log
 
+--- RoboDolg
+local mcm_tree = robodolg_mcm.tree
+
 --- MCM Builder
+local ImageWithText = mcm_builder.ImageWithText
 local Checkbox = mcm_builder.Checkbox
 
 -- Constants
@@ -26,7 +30,13 @@ COLOR = GREEN
 
 -- State
 
-local should_draw = robodolg_mcm.page:setting(Checkbox.new("draw_player_bones"))
+local page = mcm_tree:pages("player_bones")
+
+page:settings(ImageWithText.new("player_bones_title"):text("player_bones"))
+
+local should_draw = page:settings(
+   Checkbox.new("draw_player_bones"):default(false)
+)
 
 -- Implementation
 

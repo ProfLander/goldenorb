@@ -11,6 +11,7 @@
 -- Imports
 
 --- MCM Builder
+local ImageWithText = mcm_builder.ImageWithText
 local Checkbox = mcm_builder.Checkbox
 
 --- RoboDolg Shapes
@@ -21,8 +22,16 @@ local log = goldenorb_logging.log
 
 -- State
 
-page = goldenorb_mcm.tree:page("robodolg")
-local enabled = page:setting(Checkbox.new("enabled"))
+tree = goldenorb_mcm.tree:subtrees("robodolg")
+
+local page = tree:pages("core")
+
+page:settings(
+   ImageWithText.new("robodolg_title"):text("robodolg")
+)
+local enabled = page:settings(
+   Checkbox.new("enabled"):default(true)
+)
 
 --- Cache of state from actor update
 local cache = nil

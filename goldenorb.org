@@ -98,14 +98,23 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
 ** DONE
 - [X] Fix 3DSS distortion when displayed off-center
   - Will likely need to reverse-engineer unless LVutner comes through with info
-
-** TODO
-*** Core
 - [X] Further generalize execution model
   - Standardize around monadic state
     - Don't use an explicit state monad; just pass state and keep it pure
       - Will need to refactor various getter methods to avoid using globals
   - Allows the update callback / modifier distinction to be erased
+- [X] Extensible MCM interface
+  - [X] Develop workflow for defining MCM tables across scripts
+  - [X] Extend MCM Builder primitives to act as lenses into MCM
+  - [X] Implement proper subtree support
+  - [X] Implement extensible fallback functionality for ~get~
+- [X] Investigate adding compositional MCM syntax to the builder
+  - If `on_mcm_load` multi-returns table + string values, MCM will add the table to the top-level item with the given name instead of creating a new one
+    - Potential for further decoupling, as this allows tree roots to be composed without passing around parent references
+  - *NOTE:* Done, implemented as ~collection~ param on ~Tree~
+
+** TODO
+*** Core
 - [ ] Formalize dependency graph branch / join points
   - ex. Need singular 'before modifiers' / 'after modifiers' points instead of having to explicitly name everything 
 - [ ] Tie module state to character state
