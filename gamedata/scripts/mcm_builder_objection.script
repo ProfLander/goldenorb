@@ -102,13 +102,27 @@ local AbstractLens = {
    end,
 
    get = function(self, d)
-      return ui_mcm and ui_mcm.get(self:key())
-          or d and d(self.path)
-          or self.def
+      local out = nil
+
+      if ui_mcm then
+         out = ui_mcm.get(self:key())
+      end
+
+      if out == nil and d then
+         out = d(self.path)
+      end
+
+      if out == nil then
+         out = self.def
+      end
+
+      return out
    end,
 
    set = function(self, v)
-      return ui_mcm and ui_mcm.set(self:key(), v)
+      if ui_mcm then
+         ui_mcm.set(self:key(), v)
+      end
    end,
 }
 
