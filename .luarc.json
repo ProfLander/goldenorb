@@ -89,5 +89,7 @@
         "copy_table",
         "mcm_builder_objection",
         "goldenorb_mcm",
+        "goldenorb_joint",
+        "goldenorb_spring",
     ],
 }

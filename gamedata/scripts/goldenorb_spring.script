@@ -1,0 +1,54 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Spring
+----------------------------------------------------------------------------
+-- An abstraction over spring forces
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+-- Implementation
+
+function sign(f)
+   if f > 0 then
+   return 1
+   elseif f < 0 then
+      return -1
+   end
+   return 0
+end
+
+function spring_1d(length, strength, f)
+   assert(f, "Invalid spring input")
+   return f
+      - math.max(math.abs(f) - length, 0)
+      * sign(f)
+      * strength
+end
+
+function spring_3d_linear(length, strength)
+   return function(vec)
+      assert(vec, "Invalid spring input")
+      return vector():set(vec)
+         :sub(vec:mul(spring_1d(length, strength, vec:magnitude())))
+   end
+end
+
+function spring_3d_gimbal(length, strength)
+   return function(vec)
+      return vector():set(
+         spring_1d(length.x, strength.x, vec.x),
+         spring_1d(length.y, strength.y, vec.y),
+         spring_1d(length.z, strength.z, vec.z)
+      )
+   end
+end
+
+function spring_3d_angular(length, strength)
+   return function(vec)
+      return vector():set(
+         spring_1d(length.x, strength.x, vec.x),
+         spring_1d(length.y, strength.y, vec.y),
+         spring_1d(length.z, strength.z, vec.z)
+      )
+   end
+end

@@ -1,0 +1,63 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Joint
+----------------------------------------------------------------------------
+-- An abstraction over physics joints
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+-- Imports
+
+--- Math
+local deg = goldenorb_math.deg
+
+-- Implementation
+
+--- Joint Metatable
+Joint = {}
+
+--- Joint Constructor
+function joint()
+   return setmetatable(
+      { vec = vector() },
+      { __index = Joint }
+   )
+end
+
+function Joint:impulse(impulse)
+   assert(impulse, "Invalid impulse")
+   self.vec:add(impulse)
+   return self
+end
+
+function Joint:impulse_with(f)
+   assert(f, "Invalid impulse function")
+   self.vec = f(self.vec)
+   return self
+end
+
+function Joint:apply_hud_orientation(state)
+   if not state.hud then
+      return state
+   end
+
+   state.hud.hands_orientation = state.hud.hands_orientation:add(
+      vector():set(
+         deg(self.vec.x),
+         deg(self.vec.y),
+         deg(self.vec.z)
+      )
+   )
+
+   return state
+end
+
+function Joint:apply_camera_rotation(state)
+if not state.cam then
+      return state
+   end
+
+   state.cam.rot:add(self.vec)
+
+   return state
+end

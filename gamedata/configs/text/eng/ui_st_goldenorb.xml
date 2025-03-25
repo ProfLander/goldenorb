@@ -49,4 +49,14 @@
     <string id="ui_mcm_menu_weapon_bones">
         <text>Weapon Skeleton</text>
     </string>
+
+    <!-- Spring: Gimbal -->
+    <string id="ui_mcm_lst_gimbal">
+        <text>Gimbal</text>
+    </string>
+
+    <!-- Spring: Linear -->
+    <string id="ui_mcm_lst_linear">
+        <text>Linear</text>
+    </string>
 </string_table>

@@ -9,45 +9,88 @@
 --- HUD offset rotation
 local apply_hud_offset_rot = goldenorb_mod_hud_offset_rot.apply_hud_offset_rot
 
+--- Joint
+local joint = goldenorb_joint.joint
+
+--- Spring
+local spring_3d_gimbal = goldenorb_spring.spring_3d_gimbal
+local spring_3d_angular = goldenorb_spring.spring_3d_angular
+local spring_3d_linear = goldenorb_spring.spring_3d_linear
+
 --- Data
 local get_camera_delta_rotation = goldenorb_camera.get_camera_delta_rotation
 
 --- Math
-local deg = goldenorb_math.deg
+local DEG2RAD = goldenorb_math.DEG2RAD
 
 --- MCM Builder
 local ImageWithText = mcm_builder.ImageWithText
+local Title = mcm_builder.Title
+local Line = mcm_builder.Line
 local Checkbox = mcm_builder.Checkbox
-local Trackbar = mcm_builder.Trackbar
+local List = mcm_builder.List
+local InputField = mcm_builder.InputField
 
 --- Logging
 local log = goldenorb_logging.log
 
 -- State
 
+--- MCM Page
 page = goldenorb_mcm.tree:pages("offset_aim")
 
+--- MCM Title
 page:settings(
    ImageWithText.new("offset_aim_title")
     :text("offset_aim")
 )
 
-local enabled, limit_yaw, limit_pitch = page:settings(
-    Checkbox.new("enabled"):default(false),
-    Trackbar.new("horizontal_limit")
-      :default(6)
-      :increment(0.05)
-      :minmax(0, 90),
-    Trackbar.new("vertical_limit")
-      :default(4.5)
-      :increment(0.05)
-      :minmax(0, 90)
+
+--- MCM Settings
+local enabled, sensitivity = page:settings(
+   Checkbox.new("enabled"):default(false),
+   InputField.new("sensitivity")
+      :default("1.0,1.0")
 )
 
-local yaw = 0
-local pitch = 0
+page:settings(
+   Line.new("spring_line"),
+   Title.new("spring_title"):text("spring")
+)
+
+local SP_GIMBAL = 0
+local SP_ANGULAR = 1
+local SP_LINEAR = 2
+
+local spring_type, spring_strength, spring_limit =
+   page:settings(
+      List.new("spring_type")
+         :content({
+            {SP_GIMBAL, "gimbal"},
+            {SP_ANGULAR, "angular"},
+            {SP_LINEAR, "linear"},
+         })
+         :input_type("float")
+         :default(0),
+      InputField.new("spring_strength")
+         :default("1.0,1.0"),
+      InputField.new("spring_limit")
+         :default("6.0,4.5")
+   )
+
+--- Angular joint
+local joint_ofs = joint()
 
 -- Implementation
+
+function parse_vector(str)
+   assert(type(str) == "string", "Input is not a string")
+   local x, y, z = unpack(str_explode(str, ","))
+   x = tonumber(x) or 0
+   y = tonumber(y) or 0
+   z = tonumber(z) or 0
+   return vector():set(x, y, z)
+end
 
 function offset_aim(state)
    log("offset_aim(%s)", state)
@@ -56,26 +99,35 @@ function offset_aim(state)
       return state
    end
 
-   if not state.wpn then
-      log("No weapon in state, returning...")
-      return state
+   local spring = nil
+   local ty = spring_type:get()
+   if ty == SP_GIMBAL then
+      spring = spring_3d_gimbal(
+         parse_vector(spring_limit:get()):mul(DEG2RAD),
+         parse_vector(spring_strength:get())
+      )
+   elseif ty == SP_ANGULAR then
+      spring = spring_3d_angular(
+         parse_vector(spring_limit:get()):mul(DEG2RAD),
+         parse_vector(spring_strength:get())
+      )
+   elseif ty == SP_LINEAR then
+      spring = spring_3d_linear(
+         parse_vector(spring_limit:get()):mul(DEG2RAD).x,
+         parse_vector(spring_strength:get()).x
+      )
+   else
+      assert(nil, string.format("Invalid spring type %s", ty))
    end
 
-   local delta_rot = get_camera_delta_rotation()
-   log("  delta_rot: %s", delta_rot)
-
-   local lx, ly = limit_yaw:get(), limit_pitch:get()
-
-   yaw = math.max(math.min(yaw - deg(delta_rot.x), lx), -lx)
-   pitch = math.max(math.min(pitch + deg(delta_rot.y), ly), -ly)
-   log("  yaw: %s", yaw)
-   log("  pitch: %s", pitch)
-
-   if state.hud then
-      log("Setting hands orientation")
-      state.hud.hands_orientation = state.hud.hands_orientation
-         :add(vector():set(yaw, pitch, 0))
-   end
+   joint_ofs
+      :impulse(
+         get_camera_delta_rotation()
+         :mul(parse_vector(sensitivity:get()))
+         :mul(vector():set(-1, 1, 1))
+      )
+      :impulse_with(spring)
+      :apply_hud_orientation(state)
 
    return state
 end

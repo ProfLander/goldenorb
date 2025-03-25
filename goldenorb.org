@@ -194,3 +194,9 @@ Vector debug UI framework.
   - [ ] Work around via ~run_script~
   - [ ] Formalize somehow, monkey patch?
 - [ ] Per-scope zoom factors
+*** Parallax Reflex Sights
+- [-] Apply the same logic as 3DSS for reticle positioning
+  - May result in total compatibility, BaS included
+  - [ ] Construct transposed rotation matrix to apply skew to reticle
+  - [ ] Figure out why position is offset
+    - Perhaps due to working in screen space instead of tangent space?
