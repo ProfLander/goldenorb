@@ -1,0 +1,29 @@
+/*
+	=====================================================================
+	Addon      : Parallax Reflex Sights
+	Link       : https://www.moddb.com/mods/stalker-anomaly/addons/parallax-reflex-sights
+	Authors    : LVutner, party_50, Lander
+	Date       : 06.02.2024
+	Last Edit  : 25.03.2025
+	=====================================================================
+*/
+
+#include "common.h"
+#include "mark_adjust.h"
+
+struct vf
+{
+    float4 hpos : SV_Position;
+    float2 tc0 : TEXCOORD0;
+};
+
+float4 main(vf I): SV_Target
+{
+    float2 parallax_tc = I.tc0;
+
+    #ifdef MARK_ADJUST
+    parallax_tc = mark_adjust(parallax_tc);
+    #endif
+
+    return s_base.SampleLevel(smp_rtlinear, parallax_tc, 0.0);
+}
