@@ -154,6 +154,8 @@ ADS
   - Ergo, need an interface that allows such a system to feed crosshair offsets
   - Good test case for the iterate-by-distance function
   - Should be tractable in both fixed and free aim modes by introducing an extra offset transform to the HUD model
+- [ ] Automatic 'Lower Weapon' proc at bottom of screen
+  - Probably only tractable for free aim mode
 - [ ] Aimable knife
   - Regular knife 'fires' from somewhere around the torso bone
   - Needs to hit from the blade in order to take advantage of decoupled aiming
@@ -190,13 +192,18 @@ Vector debug UI framework.
     - Possibility to feed it in via the params struct, but unsure as to how much bandwidth remains unused
   - [X] Implement bicubic sampling
   - [ ] Implement a more permissively-licensed variant of Lanczos so it can be contributed
+- [ ] Reify back image projection formula
+  - Backwards matrix multiplication + divide by Z instead of W
+    - Produces more-correct results
+      - Why?
+      - May be worth testing with PRS to see if there's any correlation
 - [ ] Increased maximum for MCM zoom factor
   - [ ] Work around via ~run_script~
   - [ ] Formalize somehow, monkey patch?
 - [ ] Per-scope zoom factors
+- [ ] 3DSS Binoculars
 *** Parallax Reflex Sights
 - [-] Apply the same logic as 3DSS for reticle positioning
   - May result in total compatibility, BaS included
-  - [ ] Construct transposed rotation matrix to apply skew to reticle
-  - [ ] Figure out why position is offset
-    - Perhaps due to working in screen space instead of tangent space?
+  - [X] Construct transposed rotation matrix to apply skew to reticle
+  - [ ] Figure out why position requires a correction factor
