@@ -106,7 +106,7 @@ function free_aim(state)
    if state.hud then
       --state.hud.hands_position.z = state.hud.hands_position.z - 0.025
       --state.hud.hands_position.z = state.hud.hands_position.z + 0.1
-      state.hud.hands_orientation.x = state.hud.hands_orientation.x - 0.49
+      --state.hud.hands_orientation.x = state.hud.hands_orientation.x - 0.49
    end
 
    return state
