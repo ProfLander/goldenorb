@@ -18,17 +18,21 @@ vf _main(v_model v)
     o.hpos = mul(m_WVP, v.P);
 
     // NDC vertex
-    float4 vpos = mul(m_WVP, v.P);
-    float2 vprj = ((vpos.xy * (1 + OFFSET)) / vpos.w);
+    float2 vprj = ((o.hpos.xy * (1 + OFFSET)) / o.hpos.w);
 
     // NDC aim
     float4 apos = mul(m_WVP, float4(0, 0, 1000, 1));
     float2 aprj = apos.xy / apos.w;
 
-    // Texture coordinate
+    // Align reticle in screen space, correct aspect, scale
     float aspect = screen_res.x / screen_res.y;
-    float2 tc = (vprj - aprj) * float2(aspect, 1) * RETICLE_SCALE + 0.5;
-    o.tc0 = tc;
+    float2 tc = (vprj - aprj) * float2(aspect, 1) * RETICLE_SCALE;
+
+    // Project onto tangent and binormal to recover lens skew
+    o.tc0 = float2(
+        dot(float3(tc, 0), mul(m_WV, v.T)),
+        dot(float3(tc, 0), mul(m_WV, v.B))
+    ) + 0.5;
 
     return o;
 }
