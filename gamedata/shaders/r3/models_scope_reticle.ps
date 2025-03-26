@@ -89,7 +89,7 @@ struct vf
 	float3 v_T : TANGENT1;
 	float3 v_B : BINORMAL1;
 	float3 v_N : NORMAL1;
-        float2 aim : POSITION2;
+        float2 aim : TEXCOORD1;
 };
 
 float3x3 cotangent_frame(float3 N, float3 P, float2 uv)

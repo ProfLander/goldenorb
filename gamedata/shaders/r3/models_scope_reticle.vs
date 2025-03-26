@@ -13,7 +13,7 @@ struct vf
 	float3 v_T : TANGENT1;
 	float3 v_B : BINORMAL1;
 	float3 v_N : NORMAL1;
-        float2 ap : POSITION2;
+        float2 ap : TEXCOORD1;
 };
 
 vf     _main (v_model v)
