@@ -101,21 +101,14 @@ function offset_aim(state)
 
    local spring = nil
    local ty = spring_type:get()
+   local limit = parse_vector(spring_limit:get()):mul(DEG2RAD)
+   local strength = parse_vector(spring_strength:get())
    if ty == SP_GIMBAL then
-      spring = spring_3d_gimbal(
-         parse_vector(spring_limit:get()):mul(DEG2RAD),
-         parse_vector(spring_strength:get())
-      )
+      spring = spring_3d_gimbal(limit, strength)
    elseif ty == SP_ANGULAR then
-      spring = spring_3d_angular(
-         parse_vector(spring_limit:get()):mul(DEG2RAD),
-         parse_vector(spring_strength:get())
-      )
+      spring = spring_3d_angular(limit.x, strength.x)
    elseif ty == SP_LINEAR then
-      spring = spring_3d_linear(
-         parse_vector(spring_limit:get()):mul(DEG2RAD).x,
-         parse_vector(spring_strength:get()).x
-      )
+      spring = spring_3d_linear(limit.x, strength.x)
    else
       assert(nil, string.format("Invalid spring type %s", ty))
    end

@@ -6,16 +6,14 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
--- Implementation
+-- Imports
 
-function sign(f)
-   if f > 0 then
-   return 1
-   elseif f < 0 then
-      return -1
-   end
-   return 0
-end
+--- Math
+local EPSILON = goldenorb_math.EPSILON
+local sign = goldenorb_math.sign
+local axis_angle_to_euler = goldenorb_math.axis_angle_to_euler
+
+-- Implementation
 
 function spring_1d(length, strength, f)
    assert(f, "Invalid spring input")
@@ -45,10 +43,33 @@ end
 
 function spring_3d_angular(length, strength)
    return function(vec)
-      return vector():set(
-         spring_1d(length.x, strength.x, vec.x),
-         spring_1d(length.y, strength.y, vec.y),
-         spring_1d(length.z, strength.z, vec.z)
+      local axis = vector_cross(
+         vec,
+         vector():set(0, 0, 1)
       )
+
+      local mag = axis:magnitude()
+
+      if mag < EPSILON
+         or mag ~= mag
+      then
+         return vector()
+      end
+
+      local angle = math.asin(mag)
+
+      if math.abs(angle) < EPSILON
+        or angle ~= angle
+      then
+         return vector()
+      end
+
+      angle = math.max(math.abs(angle) - length, 0) * sign(angle)
+
+      axis:normalize()
+
+      local result = axis_angle_to_euler(axis, angle)
+
+      return vec:add(vector():set(result.x, -result.y, result.z))
    end
 end

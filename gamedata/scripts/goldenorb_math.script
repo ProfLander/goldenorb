@@ -178,3 +178,32 @@ end
 function hpb_to_direction(hpb)
    return basis():rotate_hpb(hpb).z
 end
+
+--- Convert from an axis-angle representation to euler angles
+function axis_angle_to_euler(axis, angle)
+   local s = math.sin(angle)
+   local c = math.cos(angle)
+   local t = 1 - c;
+
+   if (axis.x * axis.y * t + axis.z * s) > 1.0 - EPSILON then
+      return vector():set(
+         2 * math.atan2(axis.x * math.sin(angle/2), math.cos(angle/2)),
+         PI / 2,
+         0
+      )
+   end
+
+   if (axis.x * axis.y * t + axis.z * s) < -(1.0 - EPSILON) then
+      return vector:set(
+         -2 * math.atan2(axis.x * math.sin(angle / 2), math.cos(angle/2)),
+         -PI / 2,
+         0
+      )
+   end
+
+   return vector():set(
+      math.atan2(axis.y * s - axis.x * axis.z * t, 1 - (axis.y * axis.y + axis.z * axis.z) * t),
+      math.atan2(axis.x * s - axis.y * axis.z * t, 1 - (axis.x * axis.x + axis.z * axis.z) * t),
+      math.asin(axis.x * axis.y * t + axis.z * s)
+   )
+end
