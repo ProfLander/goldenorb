@@ -41,7 +41,7 @@ local log = goldenorb_logging.log
 -- State
 
 page:settings(
-   Line.new("free_aim_line"),
+   Line.new(),
    Title.new("free_aim_title"):text("free_aim")
 )
 local eye_height =

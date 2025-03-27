@@ -4,13 +4,18 @@
         "path": [
             "?.script",
             "?/?.script",
-            "../../stalker-anomaly/gamedata/scripts/?.script",
+            "../../stalker-anomaly/gamedata/scripts/?.script"
         ],
+        "plugin": "~/.local/src/anomaly-definitions/plugin.lua"
     },
     "workspace": {
-        "library": {
-            "../../stalker-anomaly/gamedata/scripts/*.script": true,
-        },
+        "ignoreSubmodules": false,
+        "library": [
+            "~/.local/src/anomaly-definitions/library",
+            "~/games/stalker/stalker-anomaly/gamedata/scripts",
+            "~/games/stalker/original-mods/Lander Math/gamedata/scripts",
+            "~/games/stalker/original-mods/MCM Builder/gamedata/scripts",
+        ],
     },
     "hint": {
         "enable": true,
@@ -20,39 +25,13 @@
         "lowercase-global"
     ],
     "diagnostics.globals": [
-        "db",
-        "hud_adjust",
         "actor_menu",
-        "debug_render",
-        "level",
 
-        "axr_main",
-        "utils_xml",
+        "lander_math",
 
-        "printf",
-
-        "device",
-
-        "vector",
-        "vector_cross",
-
-        "matrix",
-
-        "fcolor",
-
-        "time_global",
-
-        "str_explode",
-
-        "SendScriptCallback",
-        "AddScriptCallback",
-        "RegisterScriptCallback",
-        "AddUniqueCall",
-
-        "DBG_ScriptObject",
-        "SYS_GetParam",
-
-        "IsBolt",
+        "ui_mcm",
+        "mcm_builder",
+        "mcm_builder_objection",
 
         "goldenorb_main",
         "goldenorb_impure",
@@ -73,6 +52,14 @@
         "goldenorb_recoil",
         "goldenorb_update",
         "goldenorb_weapon",
+        "goldenorb_mcm",
+        "goldenorb_joint",
+        "goldenorb_spring",
+        "goldenorb_aim",
+        "goldenorb_string",
+        "robodolg_logging",
+        "goldenorb_list",
+        "goldenorb_function",
         "robodolg_mcm",
         "robodolg_shapes",
         "robodolg_mod_aim_rig_mcm",
@@ -82,21 +69,13 @@
         "robodolg_mod_player_bones",
         "robodolg_mod_weapon_aim_point",
         "robodolg_mod_weapon_bones",
-        "goldenorb_action",
-        "ui_mcm",
-        "mcm_builder",
-        "copy_table",
-        "mcm_builder_objection",
-        "goldenorb_mcm",
-        "goldenorb_joint",
-        "goldenorb_spring",
-        "goldenorb_aim",
-        "goldenorb_string",
-        "robodolg_logging",
-        "lander_math",
+        "robodolg_vanilla_mcm",
         "robodolg_goldenorb_mcm",
-        "trim",
-        "goldenorb_list",
-        "goldenorb_function",
+        "goldenorb_action",
+        "axr_main",
+        "mcm_builder_ex",
+        "debug_render",
+        "DBG_ScriptObject",
+        "utils_xml",
     ],
 }

@@ -99,7 +99,7 @@ function get_actor_rotation(wpn)
 
    log("  actor: %s", actor)
 
-   local cam_aim = get_camera_aim_point(wpn)
+   local cam_aim = get_camera_aim_point()
    log("  cam_aim: %s", cam_aim)
 
    local actor_pos = actor:position()
@@ -115,6 +115,9 @@ function get_actor_rotation(wpn)
 
    local hands_pos = get_hands_position()
    log("  hands_pos: %s", hands_pos)
+   if not hands_pos then
+      return nil
+   end
 
    local cam_loc = cam_aim:sub(hands_pos):normalize()
    log("  cam_loc: %s", cam_loc)
@@ -183,16 +186,22 @@ function body_cam(state)
    state.cam.rot = vector():set(rot.x, rot.y, 0)
    state.cam.affect_hud = true
 
-   if state.wpn and state.hud then
-      local actor_rot = get_actor_rotation(state.wpn)
-      state.hud.hands_orientation.x =
-         state.hud.hands_orientation.x
-         - deg(actor_rot.x)
-
-      state.hud.hands_orientation.y =
-         state.hud.hands_orientation.y
-         + deg(actor_rot.y)
+   if not state.wpn or not state.hud then
+      return state
    end
+
+   local actor_rot = get_actor_rotation(state.wpn)
+   if not actor_rot then
+      return state
+   end
+
+   state.hud.hands_orientation.x =
+      state.hud.hands_orientation.x
+      - deg(actor_rot.x)
+
+   state.hud.hands_orientation.y =
+      state.hud.hands_orientation.y
+      + deg(actor_rot.y)
 
    return state
 end

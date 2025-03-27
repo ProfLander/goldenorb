@@ -26,8 +26,8 @@ local cam_custom = false
 
 local cam_rot = vector()
 
-local prev_pos = nil
-local prev_rot = nil
+local prev_pos = vector()
+local prev_rot = vector()
 
 local delta_pos = vector()
 local delta_rot = vector()
@@ -94,10 +94,9 @@ function read_camera(state)
       0
    )
 
-   prev_pos = prev_pos or pos
-   prev_rot = prev_rot or cam_rot
-
-   delta_pos = vector():set(pos):sub(prev_pos)
+   delta_pos = vector()
+   delta_pos = delta_pos:set(pos)
+   delta_pos = delta_pos:sub(prev_pos)
    log("  delta_pos: %s", delta_pos)
 
    delta_rot = vector():set(cam_rot):sub(prev_rot)
@@ -142,8 +141,16 @@ function apply_camera(state)
    return state
 end
 
+function actor_on_first_update()
+   local dev = device()
+   prev_pos = dev.cam_pos
+   prev_rot = dev.cam_dir
+end
+
 function on_game_start()
    goldenorb_main.ACTOR_ON_UPDATE
       :add_call(inject_camera)
       :after(inject_camera, read_camera)
+
+   RegisterScriptCallback("actor_on_first_update", actor_on_first_update)
 end

@@ -10,6 +10,9 @@ local map = goldenorb_list.map
 
 -- Implementation
 
+---@param str string
+---@return string
+---@return integer count
 function trim_ws(str)
    return trim(str):gsub("\n", "")
 end
@@ -31,9 +34,10 @@ function parse_vector(str)
 
    ---@diagnostic disable-next-line: deprecated
    local x, y, z = unpack(str_explode(str, ","))
-   x = tonumber(x) or 0
-   y = tonumber(y) or 0
-   z = tonumber(z) or 0
-   return vector():set(x, y, z)
+   return vector():set(
+      tonumber(x) or 0,
+      tonumber(y) or 0,
+      tonumber(z) or 0
+   )
 end
 

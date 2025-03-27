@@ -42,7 +42,7 @@ local log = goldenorb_logging.log
 
 --- MCM Title
 page:settings(
-   Line.new("offset_aim_line"),
+   Line.new(),
    Title.new("offset_aim_title"):text("offset_aim")
 )
 

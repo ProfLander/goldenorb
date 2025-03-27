@@ -64,13 +64,14 @@ HUD_DEFAULTS = {
 -- Implementation
 
 function get_hud_sec(wpn)
+   ---@type string|nil
    return wpn and SYS_GetParam(0, wpn:section(), "hud")
 end
 
 function get_hud_string(wpn, key)
    --log("get_hud_string(%s, %s)", wpn, key)
    local hud_sec = get_hud_sec(wpn)
-   return hud_sec and SYS_GetParam(0, get_hud_sec(wpn), key)
+   return hud_sec and SYS_GetParam(0, hud_sec, key)
 end
 
 function get_hud_number(wpn, key)
