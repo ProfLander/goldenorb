@@ -23,7 +23,7 @@ local Checkbox = mcm_builder.Checkbox
 local Trackbar = mcm_builder.Trackbar
 
 --- Robodolg
-local mcm_tree = robodolg_mcm.tree
+local tree = robodolg_goldenorb_mcm.tree
 
 --- Logging
 local log = goldenorb_logging.log
@@ -36,13 +36,17 @@ COLOR_WEAPON = RED
 
 -- State
 
-local page = mcm_tree:pages("crosshair")
+local page = tree:pages("crosshair")
 
 page:settings(ImageWithText.new("crosshair_title"):text("crosshair"))
 
-local should_draw, cross_size, ring_size, ring_segs =
+local draw_camera, draw_hands, draw_weapon, cross_size, ring_size, ring_segs =
    page:settings(
-      Checkbox.new("draw_crosshair")
+      Checkbox.new("draw_camera")
+         :default(true),
+      Checkbox.new("draw_hands")
+         :default(true),
+      Checkbox.new("draw_weapon")
          :default(true),
       Trackbar.new("cross_size")
          :increment(1)
@@ -63,10 +67,6 @@ local should_draw, cross_size, ring_size, ring_segs =
 function draw(state)
    log("draw_crosshair(%s)", state)
 
-   if not should_draw:get() then
-       return state
-   end
-
    if not state.wpn then
       return state
    end
@@ -76,31 +76,37 @@ function draw(state)
    local segs_ring = ring_segs:get()
 
    -- Camera
-   draw_crosshair(
-      get_camera_aim_point(),
-      size_cross,
-      size_ring,
-      segs_ring,
-      COLOR_CAMERA
-   )
+   if draw_camera:get() then
+      draw_crosshair(
+         get_camera_aim_point(),
+         size_cross,
+         size_ring,
+         segs_ring,
+         COLOR_CAMERA
+      )
+   end
 
    -- Hands
-   draw_crosshair(
-      get_hands_aim_point(),
-      size_cross,
-      size_ring,
-      segs_ring,
-      COLOR_HANDS
-   )
+   if draw_hands:get() then
+      draw_crosshair(
+         get_hands_aim_point(),
+         size_cross,
+         size_ring,
+         segs_ring,
+         COLOR_HANDS
+      )
+   end
 
    -- Weapon
-   draw_crosshair(
-      get_weapon_aim_point(state.wpn),
-      size_cross,
-      size_ring,
-      segs_ring,
-      COLOR_WEAPON
-   )
+   if draw_weapon:get() then
+      draw_crosshair(
+         get_weapon_aim_point(state.wpn),
+         size_cross,
+         size_ring,
+         segs_ring,
+         COLOR_WEAPON
+      )
+   end
 
    return state
 end

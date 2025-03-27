@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<string_table>
+    <!-- Aiming Rig -->
+    <string id="ui_mcm_menu_aim_rig">
+        <text>Aiming Rig</text>
+    </string>
+
+    <!-- Crosshair -->
+    <string id="ui_mcm_menu_crosshair">
+        <text>Crosshair</text>
+    </string>
+</string_table>

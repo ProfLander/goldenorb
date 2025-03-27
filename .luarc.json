@@ -94,5 +94,9 @@
         "goldenorb_string",
         "robodolg_logging",
         "lander_math",
+        "robodolg_goldenorb_mcm",
+        "trim",
+        "goldenorb_list",
+        "goldenorb_function",
     ],
 }

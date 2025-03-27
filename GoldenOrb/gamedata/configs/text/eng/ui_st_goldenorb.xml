@@ -9,34 +9,4 @@
     <string id="ui_mcm_menu_bodycam">
         <text>Bodycam</text>
     </string>
-
-    <!-- RoboDolg -->
-    <string id="ui_mcm_menu_robodolg">
-        <text>RoboDolg</text>
-    </string>
-
-    <!-- Core -->
-    <string id="ui_mcm_menu_core">
-        <text>Core</text>
-    </string>
-
-    <!-- Aiming Rig -->
-    <string id="ui_mcm_menu_aim_rig">
-        <text>Aiming Rig</text>
-    </string>
-
-    <!-- Crosshair -->
-    <string id="ui_mcm_menu_crosshair">
-        <text>Crosshair</text>
-    </string>
-
-    <!-- Player Skeleton -->
-    <string id="ui_mcm_menu_player_bones">
-        <text>Player Skeleton</text>
-    </string>
-
-    <!-- Weapon Skeleton -->
-    <string id="ui_mcm_menu_weapon_bones">
-        <text>Weapon Skeleton</text>
-    </string>
 </string_table>
