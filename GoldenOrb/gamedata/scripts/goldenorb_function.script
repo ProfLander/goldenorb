@@ -1,3 +1,10 @@
+-- Imports
+
+--- List
+local fold = goldenorb_list.fold
+
+-- Implementation
+
 --- Returns whatever was passed to it
 ---@param ... any
 ---@return any
@@ -11,17 +18,13 @@ end
 function compose(...)
    local fs = {...}
 
-   local acc = function(p)
-      return p
-   end
-
-   for i=1,#fs do
-      local old = acc
-      acc = function(p)
-         return fs[i](old(p))
+   return fold(
+      fs, id,
+      function(acc, f)
+         return function(p)
+            return f(acc(p))
+         end
       end
-   end
-
-   return acc
+   )
 end
 

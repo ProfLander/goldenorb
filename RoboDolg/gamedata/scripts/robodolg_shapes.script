@@ -6,6 +6,14 @@
 
 -- Imports
 
+--- List
+range = goldenorb_list.range
+map = goldenorb_list.map
+foreach_list = goldenorb_list.foreach
+
+--- Table
+foreach_table = goldenorb_table.foreach
+
 --- Math
 local TAU = lander_math.TAU
 local vector_lerp = lander_math.vector_lerp
@@ -28,6 +36,7 @@ YELLOW = vector():set(1, 1, 0)
 
 local next_id = 1
 local shapes_pool = {}
+---@type table<number, any[]>
 local shapes_used = {}
 
 -- Implementation
@@ -35,13 +44,16 @@ local shapes_used = {}
 ---@return nil
 function reset()
    log("reset()")
-   for k,used in pairs(shapes_used) do
-      while #used > 0 do
-         local shape = table.remove(used, #used)
-         shape.visible = false
-         table.insert(shapes_pool[k], shape)
+   foreach_table(
+      shapes_used,
+      function(k,used)
+         while #used > 0 do
+            local shape = table.remove(used, #used)
+            shape.visible = false
+            table.insert(shapes_pool[k], shape)
+         end
       end
-   end
+   )
 end
 
 ---@return number
@@ -96,8 +108,8 @@ function get_shape(ty)
 end
 
 ---@param pos vector
----@param scale number?
----@param color vector?
+---@param scale? number
+---@param color? vector
 ---@return nil
 function draw_sphere(pos, scale, color)
    log("debug_sphere(%s, %s, %s)", pos, scale, color)
@@ -126,7 +138,7 @@ end
 
 ---@param pa vector
 ---@param pb vector
----@param color vector?
+---@param color? vector
 function draw_line(pa, pb, color)
    log("draw_line(%s, %s, %s)", pa, pb, color)
 
@@ -167,7 +179,7 @@ end
 ---@param pos vector
 ---@param a vector
 ---@param b vector
----@param color vector?
+---@param color? vector
 ---@return nil
 function draw_billboard_line(pos, a, b, color)
    log("draw_billboard_line(%s, %s, %s)", pos, a, b, color)
@@ -185,7 +197,7 @@ end
 
 ---@param pos vector
 ---@param extent vector
----@param color vector?
+---@param color? vector
 ---@return nil
 function draw_billboard_cross(pos, extent, color)
    log("draw_billboard_cross(%s, %s, %s)", pos, extent, color)
@@ -206,27 +218,30 @@ end
 ---@param pos vector
 ---@param rad number
 ---@param sides number
----@param color vector?
+---@param color? vector
 ---@return nil
 function draw_billboard_ngon(pos, rad, sides, color)
    log("draw_billboard_ngon(%s, %s, %s, %s)", pos, rad, sides, color)
    local last = nil
-   for i = 1,sides+1 do
-      local t = i / sides
-      local r = t * TAU
-      local v = vector():set(math.sin(r), math.cos(r), 0):mul(rad)
-      if last then
-         draw_billboard_line(pos, last, v, color)
+   map(
+      range(1, sides+1),
+      function(i)
+         local t = i / sides
+         local r = t * TAU
+         local v = vector():set(math.sin(r), math.cos(r), 0):mul(rad)
+         if last then
+            draw_billboard_line(pos, last, v, color)
+         end
+         last = v
       end
-      last = v
-   end
+   )
 end
 
 ---@param pos vector
 ---@param cross_size number
 ---@param ring_size number
 ---@param ring_segs number
----@param color vector?
+---@param color? vector
 function draw_crosshair(pos, cross_size, ring_size, ring_segs, color)
    -- Cross
    draw_billboard_cross(
@@ -249,35 +264,38 @@ end
 ---@param poly_size number
 ---@param poly_sides number
 ---@param line_length number
----@param color vector?
+---@param color? vector
 function draw_bones(obj, hud, poly_size, poly_sides, line_length, color)
    log("draw_bones(%s)", obj)
    local bones = obj:list_bones(hud)
 
-   for i=1,#bones do
-      local name = bones[i]
-      local pos = obj:bone_position(name, hud)
-      draw_billboard_ngon(
-         pos,
-         poly_size,
-         poly_sides,
-         color
-      )
+   foreach_list(
+      range(1, #bones),
+      function(i)
+         local name = bones[i]
+         local pos = obj:bone_position(name, hud)
+         draw_billboard_ngon(
+            pos,
+            poly_size,
+            poly_sides,
+            color
+         )
 
-      local dir = hpb_to_direction(obj:bone_direction(name, hud))
+         local dir = hpb_to_direction(obj:bone_direction(name, hud))
 
-      draw_line(
-         pos,
-         vector()
-         :set(pos)
-         :add(
+         draw_line(
+            pos,
             vector()
-            :set(dir)
-            :mul(line_length)
-         ),
-         color
-      )
-   end
+            :set(pos)
+            :add(
+               vector()
+               :set(dir)
+               :mul(line_length)
+            ),
+            color
+         )
+      end
+   )
 end
 
 ---@param f fun(vector): nil
@@ -287,8 +305,10 @@ end
 ---@return nil
 function draw_arrayed(f, start, finish, steps)
    log("draw_arrayed(%s, %s, %s, %s)", f, start, finish, steps)
-   for i = 1,steps do
-      local pos = vector_lerp(start, finish, i / steps)
-      f(pos)
-   end
+   foreach_list(
+      range(1, steps),
+      function(i)
+         f(vector_lerp(start, finish, i / steps))
+      end
+   )
 end

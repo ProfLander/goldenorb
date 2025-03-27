@@ -1,12 +1,53 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: List Utilities
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
 
---- Call f on each member of lst and return the results in a list
+--- Return a list from a to b with optional step s
+---@param a number
+---@param b number
+---@param s? number
+---@return number[]
+function range(a, b, s)
+   s = s or 1
+   local out = {}
+   for i=a,b,s do
+      out[i] = i
+   end
+   return out
+end
+
+---Call f on each member of lst and return the results in a list
 ---@param lst any[]
 ---@param f fun(any: any): any
----@return any
+---@return any[]
 function map(lst, f)
    local out = {}
    for i=1,#lst do
       out[i] = f(lst[i])
    end
    return out
+end
+
+---@param lst any[]
+---@param init any
+---@param f fun(acc: any, next: any): any
+---@return any
+function fold(lst, init, f)
+   local acc = init
+   for i=1,#lst do
+      acc = f(acc, lst[i])
+   end
+   return acc
+end
+
+---Call f on each member of lst, ignoring return values.
+---@param lst any[]
+---@param f fun(lst: any, n?: number)
+---@return nil
+function foreach(lst, f)
+   for i=1,#lst do
+      f(lst[i], i)
+   end
 end

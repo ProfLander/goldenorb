@@ -210,6 +210,8 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
     - Can draw a second shape scaled by strength
       - Draw line from edge of base shape
         
+- [ ] Fix incorrect angular spring constraint direction
+        
 - [ ] Fix crossing-pi bug with aim joint
   - Incorrect behaviour after +-180 degrees of rotation
   - Currently measuring angles in world space

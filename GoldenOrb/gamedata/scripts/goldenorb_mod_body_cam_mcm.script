@@ -14,6 +14,10 @@ local deg = lander_math.deg
 
 --- List
 local map = goldenorb_list.map
+local fold = goldenorb_list.fold
+
+--- Table
+local foreach = goldenorb_table.foreach
 
 --- Function
 local compose = goldenorb_function.compose
@@ -83,14 +87,13 @@ function parse_bone_vectors(str)
       )
    )
 
-   local out = {}
-   for i=1,#calls do
-      local call = calls[i]
-      local bone = call[1]
-      local vec = call[2]
-      out[bone] = vec
-   end
-   return out
+   return fold(
+      calls, {},
+      function(a, n)
+         a[n[1]] = n[2]
+         return a
+      end
+   )
 end
 
 -- Implementation
@@ -167,22 +170,28 @@ function body_cam(state)
    local pos = vector()
    local rot = vector()
    local bone_translate = parse_bone_vectors(bone_positions:get())
-   for bone,fac in pairs(bone_translate) do
-      pos:add(
-         state.actor:bone_position(bone)
-         :sub(root_pos)
-         :mul(fac)
-      )
-   end
+   foreach(
+      bone_translate,
+      function(bone, fac)
+         pos:add(
+            state.actor:bone_position(bone)
+            :sub(root_pos)
+            :mul(fac)
+         )
+      end
+   )
 
    local bone_rotate = parse_bone_vectors(bone_rotations:get())
-   for bone,fac in pairs(bone_rotate) do
-      rot:add(
-         state.actor:bone_direction(bone)
-         :sub(root_rot)
-         :mul(fac)
-      )
-   end
+   foreach(
+      bone_rotate,
+      function(bone, fac)
+         rot:add(
+            state.actor:bone_direction(bone)
+            :sub(root_rot)
+            :mul(fac)
+         )
+      end
+   )
 
    pos:add(root_pos)
    rot:add(root_rot)

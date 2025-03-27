@@ -8,6 +8,10 @@
 
 local inject_actor = goldenorb_impure.inject_actor
 
+--- Table
+map = goldenorb_table.map
+foreach = goldenorb_table.foreach
+
 --- Math
 local hpb_to_direction = lander_math.hpb_to_direction
 
@@ -113,16 +117,16 @@ end
 ---@return state_hud
 function get_hud_params(wpn)
    --log("get_hud_params(%s)", wpn)
-   local params = {}
-   for k,v in pairs(HUD_KEYS) do
-      if type(v) == "table" then
-         params[k] = get_hud_vector(wpn, k)
-      else
-         params[k] = get_hud_number(wpn, k)
+   return map(
+      HUD_KEYS,
+      function(k,v)
+         if type(v) == "table" then
+            return k, get_hud_vector(wpn, k)
+         else
+            return k, get_hud_number(wpn, k)
+         end
       end
-      --log("  %s: %s", k, params[k])
-   end
-   return params
+   )
 end
 
 ---@param wpn game_object
@@ -304,10 +308,7 @@ end
 ---@param hud state_hud
 ---@return nil
 function set_hud_params(hud)
-   for k,v in pairs(hud) do
-      log("Setting HUD value %s to %s", k, v)
-      set_hud_value(k, v)
-   end
+   foreach(hud, set_hud_value)
 end
 
 

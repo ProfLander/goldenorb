@@ -9,6 +9,9 @@
 --- Weapon
 local inject_weapon = goldenorb_weapon.inject_weapon
 
+--- Table
+local foreach = goldenorb_table.foreach
+
 --- Lens
 local lens = goldenorb_lens.lens
 
@@ -98,10 +101,13 @@ function consume_weapon(state)
    end
 
    -- Iterate over our parameter lenses
-   for k,l in pairs(lenses) do
-      wpn_cache[sec][k] = l:get(weapon)
-      l:set(weapon, 0)
-   end
+   foreach(
+      lenses,
+      function(k, l)
+         wpn_cache[sec][k] = l:get(weapon)
+         l:set(weapon, 0)
+      end
+   )
 
    return state
 end
