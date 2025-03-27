@@ -1,0 +1,90 @@
+----------------------------------------------------------------------------
+-- RoboDolg: Aim Spring
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+-- Imports
+
+--- Math
+local rad = lander_math.rad
+
+--- String
+local parse_vector = goldenorb_string.parse_vector
+
+--- Aim
+local spring_limit = goldenorb_aim.spring_limit
+
+--- Camera
+local get_camera_aim_point = goldenorb_camera.get_camera_aim_point
+
+--- Shapes
+local draw_billboard_line = robodolg_shapes.draw_billboard_line
+
+--- RoboDolg
+local tree = robodolg_goldenorb_mcm.tree
+
+--- MCM Builder
+local ImageWithText = mcm_builder.ImageWithText
+local Checkbox = mcm_builder.Checkbox
+
+--- Log
+local log = goldenorb_logging.log
+
+-- State
+
+local page = tree:pages("aim_spring")
+
+page:settings(ImageWithText.new("aim_spring_title"):text("aim_spring"))
+
+local should_draw = page:settings(
+   Checkbox.new("draw_aim_spring"):default(true)
+)
+
+-- Implementation
+
+--- Offset fire point slightly to prevent self-intersection
+function draw(state)
+   log("draw_aim_spring(%s)", state)
+
+   if not should_draw:get() then
+       return state
+   end
+
+   local cam_aim = get_camera_aim_point()
+
+   local limit = parse_vector(spring_limit:get())
+   local lx = math.sin(rad(limit.x)) * 850
+   local ly = math.sin(rad(limit.y)) * 850
+
+   draw_billboard_line(
+      cam_aim,
+      vector():set(-lx, ly, 0),
+      vector():set(lx, ly, 0)
+   )
+   draw_billboard_line(
+      cam_aim,
+      vector():set(lx, ly, 0),
+      vector():set(lx, -ly, 0)
+   )
+   draw_billboard_line(
+      cam_aim,
+      vector():set(lx, -ly, 0),
+      vector():set(-lx, -ly, 0)
+   )
+   draw_billboard_line(
+      cam_aim,
+      vector():set(-lx, -ly, 0),
+      vector():set(-lx, ly, 0)
+   )
+
+   return state
+end
+
+function on_game_start()
+   log("robodolg_aim_spring.on_game_start")
+   RegisterScriptCallback(
+      "robodolg_on_draw",
+      draw
+   )
+end
