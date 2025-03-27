@@ -4,8 +4,31 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
+-- Imports
+
+local map = goldenorb_list.map
+
+-- Implementation
+
+function trim_ws(str)
+   return trim(str):gsub("\n", "")
+end
+
+function parse_call(str)
+   assert(
+      type(str) == "string",
+      string.format("Input is not a string: %s", str)
+   )
+   assert(str:gmatch("%)$"), string.format("Not a call: %s", str))
+   return map(str_explode(str, "%("), trim_ws)
+end
+
 function parse_vector(str)
-   assert(type(str) == "string", "Input is not a string")
+   assert(
+      type(str) == "string",
+      string.format("Input is not a string: %s", str)
+   )
+
    ---@diagnostic disable-next-line: deprecated
    local x, y, z = unpack(str_explode(str, ","))
    x = tonumber(x) or 0
@@ -13,3 +36,4 @@ function parse_vector(str)
    z = tonumber(z) or 0
    return vector():set(x, y, z)
 end
+
