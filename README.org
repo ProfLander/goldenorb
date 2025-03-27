@@ -169,16 +169,16 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
 - [X] Object pooling
   - The debug rendering API design suggests its objects are persistent
   - If so, need to implement a pooling system and reuse them instead of allocating new ones every frame
+- [X] Promote goldenorb.org to README.org
+  - Git should be able to render it inline; double-check other repos
+- [X] Type annotation pass
+  - Need to give the LSP as much info as possible
 
 *** To Do
 **** Core
-- [ ] Promote goldenorb.org to README.org
-  - Git should be able to render it inline; double-check other repos
-- [ ] Investigate script namespacing for anomaly-definitions plugin
-- [ ] Type annotation + doco pass
-  - Need to give the LSP as much info as possible
 - [ ] Functional primitives pass
   - Need to replace manual maps, filters, etc with abstractions
+- [ ] Doc comment pass
 - [ ] Address MCM Builder / Lander Math symlinks
   - Not ideal for people cloning the repo
 - [ ] Formalize dependency graph branch / join points
@@ -197,6 +197,7 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
     - Offset Aim
     - Bodycam
     - etc.
+- [ ] Investigate script namespacing for anomaly-definitions plugin
     
 **** Hands
 - [-] Visualize cursor restriction with RoboDolg

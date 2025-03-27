@@ -63,23 +63,34 @@ HUD_DEFAULTS = {
 
 -- Implementation
 
+---@param wpn game_object
+---@return string?
 function get_hud_sec(wpn)
-   ---@type string|nil
+   ---@type string?
    return wpn and SYS_GetParam(0, wpn:section(), "hud")
 end
 
+---@param wpn game_object
+---@param key string
+---@return string?
 function get_hud_string(wpn, key)
-   --log("get_hud_string(%s, %s)", wpn, key)
    local hud_sec = get_hud_sec(wpn)
+   ---@type string?
    return hud_sec and SYS_GetParam(0, hud_sec, key)
 end
 
+---@param wpn game_object
+---@param key string
+---@return number
 function get_hud_number(wpn, key)
    --log("get_hud_number(%s, %s)", wpn, key)
    local str = get_hud_string(wpn, key)
    return str and tonumber(str) or 0
 end
 
+---@param wpn game_object
+---@param key string
+---@return vector
 function get_hud_vector(wpn, key)
    --log("get_hud_vector(%s)", wpn)
    local val = utils_xml.is_widescreen()
@@ -98,6 +109,8 @@ function get_hud_vector(wpn, key)
    end
 end
 
+---@param wpn game_object
+---@return state_hud
 function get_hud_params(wpn)
    --log("get_hud_params(%s)", wpn)
    local params = {}
@@ -112,26 +125,42 @@ function get_hud_params(wpn)
    return params
 end
 
+---@param wpn game_object
+---@return string?
 function get_fire_bone_name(wpn)
    return get_hud_string(wpn, "fire_bone")
 end
 
+---@param wpn game_object
+---@param bone number|string
+---@return vector
 function get_hud_bone_position(wpn, bone)
    return vector():set(wpn:bone_position(bone, true))
 end
 
+---@param wpn game_object
+---@param bone number|string
+---@return vector
 function get_hud_bone_direction(wpn, bone)
    return vector():set(wpn:bone_direction(bone, true))
 end
 
+---@param wpn game_object
+---@return vector
 function get_fire_bone_position(wpn)
-   return get_hud_bone_position(wpn, get_fire_bone_name(wpn))
+   local name = get_fire_bone_name(wpn)
+   assert(name, "No fire bone name")
+   return get_hud_bone_position(wpn, name)
 end
 
+---@param wpn game_object
+---@return vector?
 function get_fire_bone_direction(wpn)
-   return hpb_to_direction(get_hud_bone_direction(wpn, get_fire_bone_name(wpn)))
+   local name = get_fire_bone_name(wpn)
+   return name and hpb_to_direction(get_hud_bone_direction(wpn, name))
 end
 
+---@return vector?
 function get_hands_position()
    local actor = db.actor
    if not actor then
@@ -142,6 +171,7 @@ function get_hands_position()
    return actor:bone_position("bip01", true)
 end
 
+---@return vector?
 function get_hands_rotation()
    local actor = db.actor
    if not actor then
@@ -152,10 +182,13 @@ function get_hands_rotation()
    return actor:bone_direction("bip01", true)
 end
 
+---@return vector?
 function get_hands_direction()
-   return hpb_to_direction(get_hands_rotation())
+   local rot = get_hands_rotation()
+   return rot and hpb_to_direction(rot)
 end
 
+---@return vector
 function get_hands_aim_point()
    log("get_hands_aim_point()")
    return get_hands_position()
@@ -166,6 +199,8 @@ function get_hands_aim_point()
 end
 
 --- Weapon aim point getter
+---@param wpn game_object
+---@return vector
 function get_weapon_aim_point(wpn)
    log("get_weapon_aim_point(%s)", wpn)
    return get_fire_bone_position(wpn)
@@ -176,6 +211,8 @@ function get_weapon_aim_point(wpn)
 end
 
 --- Inject the actor's weapon into the given state
+---@param state state
+---@return state
 function inject_weapon(state)
    log("inject_weapon(%s)", state)
 
@@ -188,7 +225,33 @@ function inject_weapon(state)
    return state
 end
 
+--- HUD param table class
+---@class state_hud
+---@field hands_position vector
+---@field hands_orientation vector
+---@field aim_hud_offset_pos vector
+---@field aim_hud_offset_rot vector
+---@field gl_hud_offset_pos vector
+---@field gl_hud_offset_rot vector
+---@field aim_hud_offset_alt_pos vector
+---@field aim_hud_offset_alt_rot vector
+---@field lowered_hud_offset_pos vector
+---@field lowered_hud_offset_rot vector
+---@field fire_point vector
+---@field fire_point2 vector
+---@field fire_direction vector
+---@field shell_point vector
+---@field custom_ui_pos vector
+---@field custom_ui_rot vector
+---@field item_position vector
+---@field item_orientation vector
+---@field scope_zoom_factor number
+---@field gl_zoom_factor number
+---@field scope_zoom_factor_alt number
+
 --- Inject the weapon's HUD parameters into the given state
+---@param state state
+---@return state
 function inject_weapon_hud(state)
    log("inject_weapon_hud(%s)", state)
 
@@ -203,6 +266,9 @@ end
 
 -- Implementation
 
+---@param key string
+---@param val vector
+---@return nil
 function set_hud_vector(key, val)
    log("set_hud_vector(%s, %s)", key, val)
    local keys = HUD_KEYS[key]
@@ -213,29 +279,40 @@ function set_hud_vector(key, val)
    )
 end
 
+---@param key string
+---@param val number
+---@return nil
 function set_hud_number(key, val)
    log("set_hud_number(%s, %s)", key, val)
    hud_adjust.set_value(key, val)
 end
 
+---@param key string
+---@param value number|vector
+---@return nil
 function set_hud_value(key, value)
    if type(value) == "number" then
       set_hud_number(key, value)
    elseif type(value) == "userdata" then
+      ---@cast value vector
       set_hud_vector(key, value)
    else
       assert(nil, "Invalid HUD data for key %s: %s", key, value)
    end
 end
 
-function set_hud_params(params)
-   for k,v in pairs(params) do
+---@param hud state_hud
+---@return nil
+function set_hud_params(hud)
+   for k,v in pairs(hud) do
       log("Setting HUD value %s to %s", k, v)
       set_hud_value(k, v)
    end
 end
 
 
+---@param state state
+---@return state
 function apply_weapon_hud(state)
    log("apply_weapon_hud(%s)", state)
 
@@ -250,6 +327,7 @@ function apply_weapon_hud(state)
    return state
 end
 
+---@return nil
 function on_game_start()
    goldenorb_main.ACTOR_ON_UPDATE
       :after(inject_actor, inject_weapon)

@@ -17,6 +17,8 @@ function trim_ws(str)
    return trim(str):gsub("\n", "")
 end
 
+---@param str string
+---@return table<number, string>
 function parse_call(str)
    assert(
       type(str) == "string",
@@ -26,6 +28,8 @@ function parse_call(str)
    return map(str_explode(str, "%("), trim_ws)
 end
 
+---@param str string
+---@return vector
 function parse_vector(str)
    assert(
       type(str) == "string",

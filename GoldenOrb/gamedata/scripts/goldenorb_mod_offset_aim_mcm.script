@@ -54,10 +54,13 @@ local sensitivity = page:settings(
 
 -- Implementation
 
+---@return nil
 function enabled()
    return aim_type:get() == AIM_OFFSET
 end
 
+---@param state state
+---@return state
 function offset_aim(state)
    log("offset_aim(%s)", state)
 
@@ -81,6 +84,7 @@ function offset_aim(state)
    return state
 end
 
+---@return nil
 function on_game_start()
    goldenorb_main.ACTOR_ON_UPDATE
       :after(apply_hud_offset_rot, offset_aim)

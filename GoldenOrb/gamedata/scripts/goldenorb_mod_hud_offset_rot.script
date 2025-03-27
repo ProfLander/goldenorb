@@ -30,8 +30,8 @@ local zoom_fac = 0
 -- Implementation
 
 --- Apply HUD aim offset rotation with a lerp to account for ADS animation
----@param state table
----@return table
+---@param state state
+---@return state
 function apply_hud_offset_rot(state)
    log("apply_hud_offset_rot(%s)", state)
 
@@ -71,6 +71,7 @@ function apply_hud_offset_rot(state)
    return state
 end
 
+---@return nil
 function on_game_start()
    goldenorb_main.ACTOR_ON_UPDATE
       :after(reset_hands_orientation, apply_hud_offset_rot)

@@ -47,6 +47,8 @@ local should_draw = page:settings(
 -- Implementation
 
 --- Offset fire point slightly to prevent self-intersection
+---@param state state
+---@parama return state
 function draw(state)
    log("draw_weapon_ik(%s)", state)
 
@@ -92,6 +94,7 @@ function draw(state)
    return state
 end
 
+---@return nil
 function on_game_start()
    log("robodolg_weapon_ik.on_game_start")
    RegisterScriptCallback(

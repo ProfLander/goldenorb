@@ -54,10 +54,13 @@ local eye_height =
 
 -- Implementation
 
+---@return boolean
 function enabled()
    return aim_type:get() == AIM_FREE
 end
 
+---@param state state
+---@return state
 function free_aim(state)
    log("free_aim(%s)", state)
 
@@ -95,6 +98,7 @@ function free_aim(state)
    return state
 end
 
+---@return nil
 function on_game_start()
    goldenorb_main.ACTOR_ON_UPDATE
       :after(apply_hud_offset_rot, free_aim)

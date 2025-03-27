@@ -19,6 +19,8 @@ local RUN = true
 -- Implementation
 
 --- Remove any existing hand orientation
+---@param state state
+---@return state
 function reset_hands_orientation(state)
    log("reset_hands_orientation(%s)", state)
 
@@ -33,6 +35,7 @@ function reset_hands_orientation(state)
    return state
 end
 
+---@return nil
 function on_game_start()
    goldenorb_main.ACTOR_ON_UPDATE
       :after(inject_weapon_hud, reset_hands_orientation)

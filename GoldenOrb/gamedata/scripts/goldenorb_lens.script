@@ -5,22 +5,32 @@
 ----------------------------------------------------------------------------
 
 --- Lens Metatable
+---@class lens
+---@field [1] string
+---@field [2] string
 local Lens = {}
 
---- Get from the given object using this lens
-function Lens:get(d)
-   return d[self[1]](d)
-end
-
---- Set to the given object using this lens
-function Lens:set(d, v)
-   return d[self[2]](d, v)
-end
-
 --- Lens constructor
+---@param get string
+---@param set string
 function lens(get, set)
    return setmetatable(
       {get, set},
       { __index = Lens }
    )
 end
+
+--- Get from the given object using this lens
+---@param d table<string, any>
+---@return any
+function Lens:get(d)
+   return d[self[1]](d)
+end
+
+--- Set to the given object using this lens
+---@param d table<string, any>
+---@return any
+function Lens:set(d, v)
+   return d[self[2]](d, v)
+end
+

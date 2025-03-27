@@ -22,6 +22,8 @@ local OFFSET = vector():set(0, 0, EPSILON)
 -- Implementation
 
 --- Offset fire point slightly to prevent self-intersection
+---@param state state
+---@return state
 function offset_fire_point(state)
    log("offset_fire_point(%s)", state)
 
@@ -35,6 +37,7 @@ function offset_fire_point(state)
    return state
 end
 
+---@return nil
 function on_game_start()
    goldenorb_main.ACTOR_ON_UPDATE
       :after(inject_weapon_hud, offset_fire_point)

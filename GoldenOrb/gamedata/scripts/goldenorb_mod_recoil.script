@@ -61,6 +61,8 @@ local wpn_cache = {}
 -- Implementation
 
 --- Cache a weapon's HUD data before setting it all to 0
+---@param state state
+---@return state
 function consume_weapon(state)
    log("consume_weapon(%s)", state)
 
@@ -104,6 +106,7 @@ function consume_weapon(state)
    return state
 end
 
+---@return nil
 function on_game_start()
    goldenorb_main.ACTOR_ON_UPDATE:after(inject_weapon, consume_weapon)
 end

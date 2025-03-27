@@ -32,8 +32,9 @@ local shapes_used = {}
 
 -- Implementation
 
-function reset(state)
-   log("reset(%s)", state)
+---@return nil
+function reset()
+   log("reset()")
    for k,used in pairs(shapes_used) do
       while #used > 0 do
          local shape = table.remove(used, #used)
@@ -41,15 +42,17 @@ function reset(state)
          table.insert(shapes_pool[k], shape)
       end
    end
-   return state
 end
 
+---@return number
 function get_id()
    local id = next_id
    next_id = next_id + 1
    return id
 end
 
+---@param ty number
+---@return nil
 function allocate_shape_storage(ty)
    log("allocate_shape_storage(%s)", ty)
 
@@ -62,6 +65,8 @@ function allocate_shape_storage(ty)
    end
 end
 
+---@param ty number
+---@return any
 function get_shape(ty)
    log("get_shape(%s)", ty)
 
@@ -90,6 +95,10 @@ function get_shape(ty)
    return shape
 end
 
+---@param pos vector
+---@param scale number?
+---@param color vector?
+---@return nil
 function draw_sphere(pos, scale, color)
    log("debug_sphere(%s, %s, %s)", pos, scale, color)
 
@@ -115,6 +124,9 @@ function draw_sphere(pos, scale, color)
    )
 end
 
+---@param pa vector
+---@param pb vector
+---@param color vector?
 function draw_line(pa, pb, color)
    log("draw_line(%s, %s, %s)", pa, pb, color)
 
@@ -134,6 +146,8 @@ function draw_line(pa, pb, color)
    )
 end
 
+---@param vec vector
+---@return vector
 function billboard_vector(vec)
    local dev = device()
    return vector()
@@ -150,6 +164,11 @@ function billboard_vector(vec)
       )
 end
 
+---@param pos vector
+---@param a vector
+---@param b vector
+---@param color vector?
+---@return nil
 function draw_billboard_line(pos, a, b, color)
    log("draw_billboard_line(%s, %s, %s)", pos, a, b, color)
 
@@ -164,6 +183,10 @@ function draw_billboard_line(pos, a, b, color)
    )
 end
 
+---@param pos vector
+---@param extent vector
+---@param color vector?
+---@return nil
 function draw_billboard_cross(pos, extent, color)
    log("draw_billboard_cross(%s, %s, %s)", pos, extent, color)
    draw_billboard_line(
@@ -180,6 +203,11 @@ function draw_billboard_cross(pos, extent, color)
    )
 end
 
+---@param pos vector
+---@param rad number
+---@param sides number
+---@param color vector?
+---@return nil
 function draw_billboard_ngon(pos, rad, sides, color)
    log("draw_billboard_ngon(%s, %s, %s, %s)", pos, rad, sides, color)
    local last = nil
@@ -194,6 +222,11 @@ function draw_billboard_ngon(pos, rad, sides, color)
    end
 end
 
+---@param pos vector
+---@param cross_size number
+---@param ring_size number
+---@param ring_segs number
+---@param color vector?
 function draw_crosshair(pos, cross_size, ring_size, ring_segs, color)
    -- Cross
    draw_billboard_cross(
@@ -211,11 +244,18 @@ function draw_crosshair(pos, cross_size, ring_size, ring_segs, color)
    )
 end
 
+---@param obj game_object
+---@param hud boolean
+---@param poly_size number
+---@param poly_sides number
+---@param line_length number
+---@param color vector?
 function draw_bones(obj, hud, poly_size, poly_sides, line_length, color)
    log("draw_bones(%s)", obj)
    local bones = obj:list_bones(hud)
 
-   for _,name in pairs(bones) do
+   for i=1,#bones do
+      local name = bones[i]
       local pos = obj:bone_position(name, hud)
       draw_billboard_ngon(
          pos,
@@ -240,6 +280,11 @@ function draw_bones(obj, hud, poly_size, poly_sides, line_length, color)
    end
 end
 
+---@param f fun(vector): nil
+---@param start vector
+---@param finish vector
+---@param steps number
+---@return nil
 function draw_arrayed(f, start, finish, steps)
    log("draw_arrayed(%s, %s, %s, %s)", f, start, finish, steps)
    for i = 1,steps do

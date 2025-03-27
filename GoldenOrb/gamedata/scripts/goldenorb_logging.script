@@ -17,24 +17,29 @@ local LEVEL = OFF
 
 -- Implementation
 
+---@param s string
+---@param ... any
+---@return nil
 function log_impl(s, ...)
    printf("GoldenOrb: " .. s, ...)
 end
 
 --- If logging is enabled, print the given format string and arguments
 ---@param s string
----@vararg any
+---@param ... any
 ---@return nil
 function log(s, ...)
    if LEVEL > OFF then
-      log_impl(s, ...)
+      return log_impl(s, ...)
    end
 end
 
+---@param level number
+---@return fun(s: string, ...: any): nil
 function log_level(level)
    return function(...)
       if LEVEL >= level then
-         log_impl(...)
+         return log_impl(...)
       end
    end
 end

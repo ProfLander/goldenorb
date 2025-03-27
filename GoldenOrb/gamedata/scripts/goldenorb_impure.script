@@ -13,6 +13,8 @@ local log = goldenorb_logging.log
 -- Implementation
 
 --- Set HUD adjustment
+---@param state state
+---@return state
 function hud_adjust_enable(state)
    log("hud_adjust_enable(%s)", state)
    hud_adjust.enabled(true)
@@ -20,6 +22,8 @@ function hud_adjust_enable(state)
 end
 
 --- Inject the actor into the given state
+---@param state state
+---@return state
 function inject_actor(state)
    log("inject_actor(%s)", state)
    state.actor = db.actor
@@ -27,6 +31,7 @@ function inject_actor(state)
 end
 
 --- Entrypoint
+---@return nil
 function on_game_start()
    goldenorb_main.ACTOR_ON_UPDATE:add_call(inject_actor)
 end

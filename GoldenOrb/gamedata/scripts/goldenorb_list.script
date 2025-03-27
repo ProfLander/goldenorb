@@ -1,5 +1,8 @@
 
 --- Call f on each member of lst and return the results in a list
+---@param lst any[]
+---@param f fun(any: any): any
+---@return any
 function map(lst, f)
    local out = {}
    for i=1,#lst do

@@ -64,6 +64,8 @@ local draw_camera, draw_hands, draw_weapon, cross_size, ring_size, ring_segs =
 
 -- Implementation
 
+---@param state state
+---@return state
 function draw(state)
    log("draw_crosshair(%s)", state)
 
@@ -113,6 +115,7 @@ end
 
 -- Entrypoint
 
+---@return nil
 function on_game_start()
    log("robodolg_crosshair.on_game_start")
    RegisterScriptCallback(

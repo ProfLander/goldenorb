@@ -44,6 +44,8 @@ local should_draw = page:settings(
 -- Implementation
 
 --- Offset fire point slightly to prevent self-intersection
+---@param state state
+---@return state
 function draw(state)
    log("draw_aim_spring(%s)", state)
 
@@ -81,6 +83,7 @@ function draw(state)
    return state
 end
 
+---@return nil
 function on_game_start()
    log("robodolg_aim_spring.on_game_start")
    RegisterScriptCallback(

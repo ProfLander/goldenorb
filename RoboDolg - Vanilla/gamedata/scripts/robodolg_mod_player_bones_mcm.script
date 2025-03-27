@@ -40,6 +40,8 @@ local should_draw = page:settings(
 
 -- Implementation
 
+---@param state state
+---@return state
 function draw_player_bones(state)
    if not should_draw:get() then
       return state
@@ -58,6 +60,7 @@ function draw_player_bones(state)
    return state
 end
 
+---@return nil
 function on_game_start()
    log("robodolg_player_bones.on_game_start")
    RegisterScriptCallback(

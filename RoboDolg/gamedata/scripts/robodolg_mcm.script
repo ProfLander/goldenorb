@@ -40,12 +40,15 @@ local cache = nil
 -- Implementation
 
 --- Intercept the state and cache it for later
+---@param state state
+---@return state
 function cache_state(state)
    cache = state
    return state
 end
 
 --- Use the cached stated to draw robodolg modules
+---@return nil
 function draw_robodolg()
    log("draw_robodolg()")
    reset()
@@ -60,6 +63,7 @@ function draw_robodolg()
 end
 
 --- Entrypoint
+---@return nil
 function on_game_start()
    log("robodolg.on_game_start")
 
@@ -75,6 +79,7 @@ function on_game_start()
 end
 
 --- Build the MCM tree on load
+---@return nil
 function on_mcm_load()
    return tree:build()
 end

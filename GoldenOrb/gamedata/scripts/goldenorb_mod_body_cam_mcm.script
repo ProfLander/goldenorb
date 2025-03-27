@@ -64,6 +64,8 @@ local enabled, bone_positions, bone_rotations = page:settings(
       ]])
 )
 
+---@param str string
+---@return table<string, vector>
 function parse_bone_vectors(str)
    printf("parse_bone_vectors(%s)", str)
 
@@ -93,6 +95,8 @@ end
 
 -- Implementation
 
+---@param wpn game_object
+---@return vector?
 function get_actor_rotation(wpn)
    log("get_actor_rotation")
    local actor = db.actor
@@ -141,6 +145,8 @@ function get_actor_rotation(wpn)
    return vector():set(yaw, pitch, 0)
 end
 
+---@param state state
+---@return state
 function body_cam(state)
    log("body_cam(%s)", state)
 
@@ -206,6 +212,7 @@ function body_cam(state)
    return state
 end
 
+---@return nil
 function on_game_start()
    goldenorb_main.ACTOR_ON_UPDATE
       :after(apply_hud_offset_rot, body_cam)

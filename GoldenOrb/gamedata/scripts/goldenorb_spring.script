@@ -13,6 +13,9 @@ local sign = lander_math.sign
 local vector_axis_angle = lander_math.vector_axis_angle
 local axis_angle_to_euler = lander_math.axis_angle_to_euler
 
+--- Function
+local id = goldenorb_function.id
+
 -- Constants
 
 SP_LINEAR = 0
@@ -20,6 +23,10 @@ SP_ANGULAR = 1
 
 -- Implementation
 
+---@param length number
+---@param strength number
+---@param f number
+---@return number
 function spring_1d(length, strength, f)
    assert(f, "Invalid spring input")
    return -math.max(math.abs(f) - length, 0)
@@ -27,6 +34,9 @@ function spring_1d(length, strength, f)
       * strength
 end
 
+---@param length vector
+---@param strength vector
+---@return fun(vec: vector): vector
 function spring_3d_linear(length, strength)
    return function(vec)
       return vector():set(
@@ -37,6 +47,9 @@ function spring_3d_linear(length, strength)
    end
 end
 
+---@param length vector
+---@param strength vector
+---@return fun(vec: vector): vector
 function spring_3d_angular(length, strength)
    return function(vec)
       local vn = vector():set(vec):normalize()
@@ -56,6 +69,10 @@ function spring_3d_angular(length, strength)
    end
 end
 
+---@param ty number
+---@param length vector
+---@param strength vector
+---@return fun(vec: vector): vector
 function spring(ty, length, strength)
    if ty == SP_LINEAR then
       return spring_3d_linear(length, strength)
@@ -64,4 +81,5 @@ function spring(ty, length, strength)
    end
 
    assert(nil, string.format("Invalid spring type %s", ty))
+   return id
 end

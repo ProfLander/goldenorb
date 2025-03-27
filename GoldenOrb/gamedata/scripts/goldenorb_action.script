@@ -14,9 +14,14 @@ local log = goldenorb_logging.log
 -- Implementation
 
 --- Action metatable
+---@class action
+---@field calls (fun(any: any): any)[]
+---@field rules [fun(any: any): any, fun(any: any): any]
+---@field schedule (fun(any: any): any)[]
 local Action = {}
 
 --- Action constructor
+---@return action
 function action()
    return setmetatable(
       {
@@ -28,11 +33,14 @@ function action()
    )
 end
 
+---@return nil
 function Action:invalidate()
    log("Action:invalidate()")
    self.schedule = nil
 end
 
+---@param f fun(any: any): any
+---@return action
 function Action:add_call(f)
    log("Action:add_call(%s)", f)
    self:invalidate()
@@ -40,6 +48,9 @@ function Action:add_call(f)
    return self
 end
 
+---@param fa fun(any: any): any
+---@param fb fun(any: any): any
+---@return action
 function Action:add_rule(fa, fb)
    log("Action:add_rule(%s, %s)", fa, fb)
    assert(fa, "Invalid rule LHS")
@@ -51,6 +62,8 @@ function Action:add_rule(fa, fb)
 end
 
 --- Run FA before FB
+---@param ... fun(any: any): any
+---@return action
 function Action:before(...)
    local args = {...}
    log("Action:before(%s)", #args)
@@ -69,6 +82,8 @@ function Action:before(...)
 end
 
 --- Run FB after FA
+---@param ... fun(any: any): any
+---@return action
 function Action:after(...)
    local args = {...}
    log("Action:after(%s)", #args)
@@ -86,6 +101,7 @@ function Action:after(...)
    return self
 end
 
+---@return action
 function Action:build()
    log("Action:build()")
 
@@ -146,6 +162,8 @@ function Action:build()
 end
 
 --- Run the action with the given parameter and return its result
+---@param p any
+---@return any
 function Action:run(p)
    log("Action:run(%s)", p)
 
@@ -162,6 +180,9 @@ end
 
 --- Run the action with the given error handler and parameter,
 --- and return its result
+---@param e fun(any: any): any
+---@param p any
+---@return any
 function Action:prun(e, p)
    log("Action:prun(%s, %s)", e, p)
    local status, res = pcall(self.run, self, p)
@@ -173,6 +194,8 @@ end
 
 --- Produce a function to run the action,
 --- optionally overriding its input
+---@param pa any
+---@return fun(pb: any): any
 function Action:run_deferred(pa)
    return function(pb)
       return self:run(pa or pb)
@@ -181,6 +204,8 @@ end
 
 --- Produce a function to prun the action,
 --- optionally overriding its input
+---@param e fun(any: any): any
+---@return fun(pb: any): any
 function Action:prun_deferred(e, pa)
    return function(pb)
       return self:prun(e, pa or pb)

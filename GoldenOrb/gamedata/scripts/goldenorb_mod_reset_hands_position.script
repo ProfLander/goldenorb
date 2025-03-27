@@ -19,6 +19,8 @@ RUN = false
 -- Implementation
 
 --- Zero out the position component
+---@param state state
+---@return state
 function reset_hands_position(state)
    log("reset_hands_position(%s)", state)
 
@@ -35,6 +37,7 @@ function reset_hands_position(state)
    return state
 end
 
+---@return nil
 function on_game_start()
    goldenorb_main.ACTOR_ON_UPDATE
       :after(inject_weapon_hud, reset_hands_position)

@@ -39,6 +39,8 @@ local should_draw = page:settings(
 
 -- Implementation
 
+---@param state state
+---@return state
 function draw_weapon_bones(state)
    log("draw_weapon_bones(%s)", state)
 
@@ -62,6 +64,7 @@ function draw_weapon_bones(state)
    return state
 end
 
+---@return nil
 function on_game_start()
    log("robodolg_weapon_bones.on_game_start")
    RegisterScriptCallback(

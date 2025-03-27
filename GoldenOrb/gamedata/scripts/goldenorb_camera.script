@@ -35,36 +35,52 @@ local delta_rot = vector()
 -- Implementation
 
 --- Rotation getter
+---@return vector
 function get_camera_position()
    return device().cam_pos
 end
 
+---@return vector
 function get_camera_direction()
    return device().cam_dir
 end
 
+---@return vector
 function get_camera_rotation()
    return cam_rot
 end
 
 --- Delta position getter
+---@return vector
 function get_camera_delta_position()
    return delta_pos
 end
 
 --- Delta rotation getter
+---@return vector
 function get_camera_delta_rotation()
    return delta_rot
 end
 
 --- Aim point getter
+---@return vector
 function get_camera_aim_point()
    log("get_camera_aim_point(%s)")
    local dev = device()
    return dev.cam_dir:mul(DIST):add(dev.cam_pos)
 end
 
+---@class state_cam
+---@field enable boolean
+---@field pos vector
+---@field rot vector
+---@field smoothing number
+---@field show_hud boolean
+---@field affect_hud boolean
+
 --- Inject default camera parameters into the state
+---@param state state
+---@return state state
 function inject_camera(state)
    log("inject_camera(%s)", state)
 
@@ -81,6 +97,8 @@ function inject_camera(state)
 end
 
 --- Update function
+---@param state state
+---@return state
 function read_camera(state)
    log("read_camera(%s)", state)
 
@@ -108,6 +126,9 @@ function read_camera(state)
    return state
 end
 
+---Apply the state's camera values to the game
+---@param state state
+---@return state
 function apply_camera(state)
    log("apply_camera(%s)", state)
 
@@ -141,16 +162,19 @@ function apply_camera(state)
    return state
 end
 
-function actor_on_first_update()
+---Initialization handler
+---@return nil
+function init_camera()
    local dev = device()
    prev_pos = dev.cam_pos
    prev_rot = dev.cam_dir
 end
 
+---@return nil
 function on_game_start()
    goldenorb_main.ACTOR_ON_UPDATE
       :add_call(inject_camera)
       :after(inject_camera, read_camera)
 
-   RegisterScriptCallback("actor_on_first_update", actor_on_first_update)
+   RegisterScriptCallback("actor_on_first_update", init_camera)
 end

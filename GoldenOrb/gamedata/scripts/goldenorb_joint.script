@@ -14,9 +14,12 @@ local deg = lander_math.deg
 -- Implementation
 
 --- Joint Metatable
+---@class joint
+---@field vec vector
 Joint = {}
 
 --- Joint Constructor
+---@return joint
 function joint()
    return setmetatable(
       { vec = vector() },
@@ -24,18 +27,24 @@ function joint()
    )
 end
 
+---@param impulse vector
+---@return joint
 function Joint:impulse(impulse)
    assert(impulse, "Invalid impulse")
    self.vec:add(impulse)
    return self
 end
 
+---@param f fun(v: vector): vector
+---@return joint
 function Joint:impulse_with(f)
    assert(f, "Invalid impulse function")
    self.vec:add(f(self.vec))
    return self
 end
 
+---@param state state
+---@return state
 function Joint:apply_hud_orientation(state)
    if not state.hud then
       return state
@@ -52,6 +61,8 @@ function Joint:apply_hud_orientation(state)
    return state
 end
 
+---@param state state
+---@return state
 function Joint:apply_camera_rotation(state)
    if not state.cam then
       return state

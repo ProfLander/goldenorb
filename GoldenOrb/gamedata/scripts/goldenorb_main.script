@@ -16,6 +16,12 @@ local action = goldenorb_action.action
 --- Actor update action
 ACTOR_ON_UPDATE = action()
 
+---@class state
+---@field actor game_object?
+---@field wpn game_object?
+---@field cam state_cam?
+---@field hud state_hud?
+
 -- Implementation
 
 --- Error handler

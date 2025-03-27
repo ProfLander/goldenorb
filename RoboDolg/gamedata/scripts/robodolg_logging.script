@@ -10,13 +10,16 @@ local LOG = false
 
 -- Implementation
 
+---@param s string
+---@param ... any
+---@return nil
 function log_impl(s, ...)
    printf("RoboDolg: " .. s, ...)
 end
 
 --- If logging is enabled, print the given format string and arguments
 ---@param s string
----@vararg any
+---@param ... any
 ---@return nil
 function log(s, ...)
    if LOG then

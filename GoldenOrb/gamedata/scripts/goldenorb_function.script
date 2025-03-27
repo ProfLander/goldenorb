@@ -1,5 +1,13 @@
+--- Returns whatever was passed to it
+---@param ... any
+---@return any
+function id(...)
+   return ...
+end
 
 --- Produce a function that threads an input through the given functions
+---@param ... fun(any: any): any
+---@return fun(any: any): any
 function compose(...)
    local fs = {...}
 
@@ -16,3 +24,4 @@ function compose(...)
 
    return acc
 end
+

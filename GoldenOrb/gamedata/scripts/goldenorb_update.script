@@ -30,6 +30,7 @@ local log = goldenorb_logging.log
 
 -- Entrypoint
 
+---@return nil
 function on_game_start()
    log("update.on_game_start")
    ACTOR_ON_UPDATE
