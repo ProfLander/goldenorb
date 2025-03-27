@@ -12,15 +12,27 @@ local apply_hud_offset_rot = goldenorb_mod_hud_offset_rot.apply_hud_offset_rot
 --- Math
 local deg = lander_math.deg
 
+--- List
+local map = goldenorb_list.map
+
+--- Function
+local compose = goldenorb_function.compose
+
 --- Camera
 local get_camera_aim_point = goldenorb_camera.get_camera_aim_point
 
 --- Weapon
 local get_hands_position = goldenorb_weapon.get_hands_position
 
+--- String
+local parse_vector = goldenorb_string.parse_vector
+local parse_call = goldenorb_string.parse_call
+local trim_ws = goldenorb_string.trim_ws
+
 --- MCM Builder
 local ImageWithText = mcm_builder.ImageWithText
 local Checkbox = mcm_builder.Checkbox
+local InputField = mcm_builder.InputField
 
 --- Logging
 local log = goldenorb_logging.log
@@ -32,24 +44,52 @@ BONE_ROOT = "root_stalker"
 -- State
 
 page = goldenorb_mcm.tree:pages("bodycam")
-page:settings(ImageWithText.new("body_cam_title"):text("body_cam"))
-local enabled = page:settings(Checkbox.new("enabled"):default(false))
 
---- Set of bones used to calculate camera transform
-BONES = {
-   bip01_head = {
-      vector():set(0.33, 0.33, 0.33),
-      vector():set(0.25, 0.1, 0.25),
-   },
-   bip01_neck = {
-      vector():set(0.33, 0.33, 0.33),
-      vector():set(0.15, 0.25, 0.25),
-   },
-   bip01_spine2 = {
-      vector():set(0.33, 0.33, 0.33),
-      vector():set(0.0, 0.25, 0.25),
-   },
-}
+page:settings(ImageWithText.new("body_cam_title"):text("body_cam"))
+
+local enabled, bone_positions, bone_rotations = page:settings(
+   Checkbox.new("enabled")
+      :default(false),
+   InputField.new("position_factors")
+      :default([[
+         bip01_head(0.33, 0.33, 0.33):
+         bip01_neck(0.33, 0.33, 0.33):
+         bip01_spine2(0.33, 0.33, 0.33)
+      ]]),
+   InputField.new("rotation_factors")
+      :default([[
+         bip01_head(0.25, 0.1, 0.25):
+         bip01_neck(0.15, 0.25, 0.25):
+         bip01_spine2(0.0, 0.25, 0.25)
+      ]])
+)
+
+function parse_bone_vectors(str)
+   printf("parse_bone_vectors(%s)", str)
+
+   local calls = map(
+      str_explode(str, ":"),
+      compose(
+         trim_ws,
+         parse_call,
+         function(call)
+            return {
+               call[1],
+               parse_vector(call[2])
+            }
+         end
+      )
+   )
+
+   local out = {}
+   for i=1,#calls do
+      local call = calls[i]
+      local bone = call[1]
+      local vec = call[2]
+      out[bone] = vec
+   end
+   return out
+end
 
 -- Implementation
 
@@ -109,10 +149,6 @@ function body_cam(state)
       return state
    end
 
-   for k,v in pairs(state.actor:list_bones()) do
-      printf("%s: %s", k, v)
-   end
-
    local root_pos = state.actor:bone_position(BONE_ROOT)
    log("root_pos: %s", root_pos)
 
@@ -121,18 +157,21 @@ function body_cam(state)
 
    local pos = vector()
    local rot = vector()
-   for bone,facs in pairs(BONES) do
-      local pos_fac = facs[1]
-      local rot_fac = facs[2]
+   local bone_translate = parse_bone_vectors(bone_positions:get())
+   for bone,fac in pairs(bone_translate) do
       pos:add(
          state.actor:bone_position(bone)
          :sub(root_pos)
-         :mul(pos_fac)
+         :mul(fac)
       )
+   end
+
+   local bone_rotate = parse_bone_vectors(bone_rotations:get())
+   for bone,fac in pairs(bone_rotate) do
       rot:add(
          state.actor:bone_direction(bone)
          :sub(root_rot)
-         :mul(rot_fac)
+         :mul(fac)
       )
    end
 
