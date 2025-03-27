@@ -32,7 +32,7 @@ end
 
 function Joint:impulse_with(f)
    assert(f, "Invalid impulse function")
-   self.vec = f(self.vec)
+   self.vec:add(f(self.vec))
    return self
 end
 
@@ -53,7 +53,7 @@ function Joint:apply_hud_orientation(state)
 end
 
 function Joint:apply_camera_rotation(state)
-if not state.cam then
+   if not state.cam then
       return state
    end
 

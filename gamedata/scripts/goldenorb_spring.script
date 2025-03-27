@@ -9,29 +9,25 @@
 -- Imports
 
 --- Math
-local EPSILON = goldenorb_math.EPSILON
 local sign = goldenorb_math.sign
+local vector_axis_angle = goldenorb_math.vector_axis_angle
 local axis_angle_to_euler = goldenorb_math.axis_angle_to_euler
+
+-- Constants
+
+SP_LINEAR = 0
+SP_ANGULAR = 1
 
 -- Implementation
 
 function spring_1d(length, strength, f)
    assert(f, "Invalid spring input")
-   return f
-      - math.max(math.abs(f) - length, 0)
+   return -math.max(math.abs(f) - length, 0)
       * sign(f)
       * strength
 end
 
 function spring_3d_linear(length, strength)
-   return function(vec)
-      assert(vec, "Invalid spring input")
-      return vector():set(vec)
-         :sub(vec:mul(spring_1d(length, strength, vec:magnitude())))
-   end
-end
-
-function spring_3d_gimbal(length, strength)
    return function(vec)
       return vector():set(
          spring_1d(length.x, strength.x, vec.x),
@@ -43,33 +39,29 @@ end
 
 function spring_3d_angular(length, strength)
    return function(vec)
-      local axis = vector_cross(
-         vec,
-         vector():set(0, 0, 1)
-      )
-
-      local mag = axis:magnitude()
-
-      if mag < EPSILON
-         or mag ~= mag
-      then
+      local vn = vector():set(vec):normalize()
+      local axis, angle = vector_axis_angle(vec, vector():set(0, 0, 1))
+      if not axis or not angle then
+         printf("invalid rotation")
          return vector()
       end
 
-      local angle = math.asin(mag)
+      local ofs = vn:mul(length):magnitude()
+      angle = spring_1d(ofs, 1, angle)
 
-      if math.abs(angle) < EPSILON
-        or angle ~= angle
-      then
-         return vector()
-      end
-
-      angle = math.max(math.abs(angle) - length, 0) * sign(angle)
-
-      axis:normalize()
-
-      local result = axis_angle_to_euler(axis, angle)
-
-      return vec:add(vector():set(result.x, -result.y, result.z))
+      local euler = axis_angle_to_euler(axis, angle)
+      euler.x = -euler.x
+      euler.z = -euler.z
+      return euler:mul(strength)
    end
+end
+
+function spring(ty, length, strength)
+   if ty == SP_LINEAR then
+      return spring_3d_linear(length, strength)
+   elseif ty == SP_ANGULAR then
+      return spring_3d_angular(length, strength)
+   end
+
+   assert(nil, string.format("Invalid spring type %s", ty))
 end

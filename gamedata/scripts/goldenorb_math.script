@@ -179,6 +179,34 @@ function hpb_to_direction(hpb)
    return basis():rotate_hpb(hpb).z
 end
 
+--- Return the rotation between the given vectors in axis-angle form
+function vector_axis_angle(va, vb)
+   local axis = vector_cross(va, vb)
+   printf("  axis: %s", axis)
+
+   local mag = axis:magnitude()
+   printf("  mag: %s", mag)
+
+   if mag ~= mag
+   then
+      printf("Invalid magnitude")
+      return nil
+   end
+
+   local angle = math.asin(mag)
+   printf("  angle: %s", angle)
+
+   if angle ~= angle
+   then
+      printf("Invalid angle")
+      return nil
+   end
+
+   axis:normalize()
+
+   return axis, angle
+end
+
 --- Convert from an axis-angle representation to euler angles
 function axis_angle_to_euler(axis, angle)
    local s = math.sin(angle)

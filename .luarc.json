@@ -91,5 +91,7 @@
         "goldenorb_mcm",
         "goldenorb_joint",
         "goldenorb_spring",
+        "goldenorb_aim",
+        "goldenorb_string",
     ],
 }

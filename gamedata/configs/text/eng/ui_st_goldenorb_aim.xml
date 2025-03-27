@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<string_table>
+    <!-- Aim -->
+    <string id="ui_mcm_menu_aim">
+        <text>Aim</text>
+    </string>
+
+    <!-- Aim Mode -->
+    <string id="ui_mcm_goldenorb_aim_mode">
+        <text>Mode</text>
+    </string>
+
+    <!-- Mode: Vanilla -->
+    <string id="ui_mcm_lst_vanilla">
+        <text>Vanilla</text>
+    </string>
+
+    <!-- Mode: Offset -->
+    <string id="ui_mcm_lst_offset">
+        <text>Offset</text>
+    </string>
+
+    <!-- Mode: Free -->
+    <string id="ui_mcm_lst_free">
+        <text>Free</text>
+    </string>
+
+    <!-- Spring Type -->
+    <string id="ui_mcm_goldenorb_aim_spring_type">
+        <text>Type</text>
+    </string>
+
+    <!-- Spring Type: Linear -->
+    <string id="ui_mcm_lst_linear">
+        <text>Linear</text>
+    </string>
+
+    <!-- Spring Type: Angular -->
+    <string id="ui_mcm_lst_angular">
+        <text>Angular</text>
+    </string>
+
+    <!-- Spring Limit -->
+    <string id="ui_mcm_goldenorb_aim_spring_limit">
+        <text>Limit</text>
+    </string>
+
+    <!-- Spring Strength -->
+    <string id="ui_mcm_goldenorb_aim_spring_strength">
+        <text>Strength</text>
+    </string>
+</string_table>

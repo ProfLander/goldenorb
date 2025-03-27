@@ -1,0 +1,15 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: String Utilities
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+function parse_vector(str)
+   assert(type(str) == "string", "Input is not a string")
+   ---@diagnostic disable-next-line: deprecated
+   local x, y, z = unpack(str_explode(str, ","))
+   x = tonumber(x) or 0
+   y = tonumber(y) or 0
+   z = tonumber(z) or 0
+   return vector():set(x, y, z)
+end

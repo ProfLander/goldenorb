@@ -5,16 +5,6 @@
         <text>GoldenOrb</text>
     </string>
     
-    <!-- Free Aim -->
-    <string id="ui_mcm_menu_free_aim">
-        <text>Free Aim</text>
-    </string>
-
-    <!-- Offset Aim -->
-    <string id="ui_mcm_menu_offset_aim">
-        <text>Offset Aim</text>
-    </string>
-
     <!-- Bodycam -->
     <string id="ui_mcm_menu_bodycam">
         <text>Bodycam</text>
@@ -48,15 +38,5 @@
     <!-- Weapon Skeleton -->
     <string id="ui_mcm_menu_weapon_bones">
         <text>Weapon Skeleton</text>
-    </string>
-
-    <!-- Spring: Gimbal -->
-    <string id="ui_mcm_lst_gimbal">
-        <text>Gimbal</text>
-    </string>
-
-    <!-- Spring: Linear -->
-    <string id="ui_mcm_lst_linear">
-        <text>Linear</text>
     </string>
 </string_table>

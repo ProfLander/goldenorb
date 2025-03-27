@@ -10,16 +10,29 @@
 local apply_hud_offset_rot = goldenorb_mod_hud_offset_rot.apply_hud_offset_rot
 
 --- Math
-local rad = goldenorb_math.rad
-local sign = goldenorb_math.sign
-local vector_rotate_y = goldenorb_math.vector_rotate_y
+local DEG2RAD = goldenorb_math.DEG2RAD
+
+--- String
+local parse_vector = goldenorb_string.parse_vector
 
 --- Camera
-local get_hands_direction = goldenorb_weapon.get_hands_direction
+local get_hands_rotation = goldenorb_weapon.get_hands_rotation
+
+--- Spring
+local spring = goldenorb_spring.spring
+
+--- Aim
+local page = goldenorb_aim.page
+local aim_type = goldenorb_aim.aim_type
+local AIM_FREE = goldenorb_aim.AIM_FREE
+local joint_aim = goldenorb_aim.joint_aim
+local spring_type = goldenorb_aim.spring_type
+local spring_strength = goldenorb_aim.spring_strength
+local spring_limit = goldenorb_aim.spring_limit
 
 --- MCM Builder
-local ImageWithText = mcm_builder.ImageWithText
-local Checkbox = mcm_builder.Checkbox
+local Line = mcm_builder.Line
+local Title = mcm_builder.Title
 local Trackbar = mcm_builder.Trackbar
 
 --- Logging
@@ -27,34 +40,28 @@ local log = goldenorb_logging.log
 
 -- State
 
-page = goldenorb_mcm.tree:pages("free_aim")
-page:settings(ImageWithText.new("free_aim_title"):text("free_aim"))
-local enabled, eye_height, limit_yaw, limit_pitch =
+page:settings(
+   Line.new("free_aim_line"),
+   Title.new("free_aim_title"):text("free_aim")
+)
+local eye_height =
    page:settings(
-      Checkbox.new("enabled")
-         :default(true),
       Trackbar.new("eye_height")
          :default(1.671)
          :increment(0.001)
-         :minmax(1, 2),
-      Trackbar.new("horizontal_limit")
-         :default(45)
-         :increment(0.05)
-         :minmax(0, 90),
-      Trackbar.new("vertical_limit")
-         :default(22.5)
-         :increment(0.05)
-         :minmax(0, 90)
+         :minmax(1, 2)
    )
 
-local cam_rot = vector()
-
 -- Implementation
+
+function enabled()
+   return aim_type:get() == AIM_FREE
+end
 
 function free_aim(state)
    log("free_aim(%s)", state)
 
-   if not enabled:get() then
+   if not enabled() then
       return state
    end
 
@@ -62,46 +69,22 @@ function free_aim(state)
       return state
    end
 
-   log("  cam_rot: %s", cam_rot)
+   local ty = spring_type:get()
+   local limit = parse_vector(spring_limit:get()):mul(DEG2RAD)
+   local strength = parse_vector(spring_strength:get())
 
-   local lx, ly = rad(limit_yaw:get()), rad(limit_pitch:get())
-   log("  lx: %s, ly: %s", lx, ly)
-
-   local hands_dir = get_hands_direction():normalize()
-   log("  hands_dir: %s", hands_dir)
-
-   local delta_pitch = math.asin(hands_dir.y) - cam_rot.x
-   log("  delta_pitch: %s", delta_pitch)
-
-   if math.abs(delta_pitch) > ly then
-      log("  pitch moved beyond limit")
-      cam_rot.x = cam_rot.x + (math.abs(delta_pitch) - ly) * sign(delta_pitch)
-   end
-
-
-   local cam_xz = vector_rotate_y(vector():set(0, 0, 1), cam_rot.y)
-
-   hands_dir.y = 0
-   hands_dir = hands_dir:normalize()
-
-   local delta_yaw = math.atan2(
-      vector_cross(cam_xz, hands_dir):dotproduct(vector():set(0, 1, 0)),
-      cam_xz:dotproduct(hands_dir)
-   )
-   log("  delta_yaw: %s", delta_yaw)
-
-   if math.abs(delta_yaw) > lx then
-      log("  yaw moved beyond limit")
-      cam_rot.y = cam_rot.y + (math.abs(delta_yaw) - lx) * sign(delta_yaw)
-   end
-
-   log("  cam_rot: %s", cam_rot)
+   joint_aim
+      :impulse(
+         spring(ty, limit, strength)(get_hands_rotation():sub(joint_aim.vec):mul(-1))
+      )
 
    state.cam.enable = true
+   state.cam.affect_hud = false
+
    state.cam.pos = state.actor:position()
       :add(vector():set(0, eye_height:get(), 0))
-   state.cam.rot = vector():set(-cam_rot.y, cam_rot.x, 0)
-   state.cam.affect_hud = false
+
+   state = joint_aim:apply_camera_rotation(state)
 
    if state.hud then
       --state.hud.hands_position.z = state.hud.hands_position.z - 0.025
