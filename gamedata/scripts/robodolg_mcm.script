@@ -11,6 +11,7 @@
 -- Imports
 
 --- MCM Builder
+local Tree = mcm_builder.Tree
 local ImageWithText = mcm_builder.ImageWithText
 local Checkbox = mcm_builder.Checkbox
 
@@ -22,7 +23,7 @@ local log = goldenorb_logging.log
 
 -- State
 
-tree = goldenorb_mcm.tree:subtrees("robodolg")
+tree = Tree.new("robodolg")
 
 local page = tree:pages("core")
 
@@ -71,4 +72,9 @@ function on_game_start()
    -- Register a unique level call
    -- so we can draw in sync with the debug renderer
    AddUniqueCall(draw_robodolg)
+end
+
+--- Build the MCM tree on load
+function on_mcm_load()
+   return tree:build()
 end
