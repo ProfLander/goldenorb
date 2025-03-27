@@ -1,0 +1,26 @@
+----------------------------------------------------------------------------
+-- RoboDolg: Logging Utilities
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+-- Constants
+
+local LOG = false
+
+-- Implementation
+
+function log_impl(s, ...)
+   printf("RoboDolg: " .. s, ...)
+end
+
+--- If logging is enabled, print the given format string and arguments
+---@param s string
+---@vararg any
+---@return nil
+function log(s, ...)
+   if LOG then
+      log_impl(s, ...)
+   end
+end
+

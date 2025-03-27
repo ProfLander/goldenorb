@@ -18,7 +18,7 @@ local reset_hands_orientation = goldenorb_mod_reset_hands_orientation.reset_hand
 local get_hud_number = goldenorb_weapon.get_hud_number
 
 --- Math
-local deg = goldenorb_math.deg
+local deg = lander_math.deg
 
 --- Logging
 local log = goldenorb_logging.log

@@ -10,7 +10,7 @@
 local apply_hud_offset_rot = goldenorb_mod_hud_offset_rot.apply_hud_offset_rot
 
 --- Math
-local deg = goldenorb_math.deg
+local deg = lander_math.deg
 
 --- Camera
 local get_camera_aim_point = goldenorb_camera.get_camera_aim_point

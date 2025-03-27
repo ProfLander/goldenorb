@@ -9,7 +9,7 @@
 local inject_actor = goldenorb_impure.inject_actor
 
 --- Math
-local hpb_to_direction = goldenorb_math.hpb_to_direction
+local hpb_to_direction = lander_math.hpb_to_direction
 
 --- Logging
 local log = goldenorb_logging.log

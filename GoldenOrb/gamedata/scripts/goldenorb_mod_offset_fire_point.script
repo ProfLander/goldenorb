@@ -10,7 +10,7 @@
 local inject_weapon_hud = goldenorb_weapon.inject_weapon_hud
 
 --- Math
-local EPSILON = goldenorb_math.EPSILON
+local EPSILON = lander_math.EPSILON
 
 --- Log
 local log = goldenorb_logging.log

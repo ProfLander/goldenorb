@@ -10,7 +10,7 @@
 local apply_hud_offset_rot = goldenorb_mod_hud_offset_rot.apply_hud_offset_rot
 
 --- Math
-local DEG2RAD = goldenorb_math.DEG2RAD
+local DEG2RAD = lander_math.DEG2RAD
 
 --- String
 local parse_vector = goldenorb_string.parse_vector

@@ -19,7 +19,7 @@ local Checkbox = mcm_builder.Checkbox
 local reset = robodolg_shapes.reset
 
 --- Logging
-local log = goldenorb_logging.log
+local log = robodolg_logging.log
 
 -- State
 

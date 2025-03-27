@@ -6,13 +6,13 @@
 
 -- Imports
 
----@module 'goldenorb_math'
-local TAU = goldenorb_math.TAU
-local vector_lerp = goldenorb_math.vector_lerp
-local hpb_to_direction = goldenorb_math.hpb_to_direction
+--- Math
+local TAU = lander_math.TAU
+local vector_lerp = lander_math.vector_lerp
+local hpb_to_direction = lander_math.hpb_to_direction
 
----@module 'goldenorb_logging'
-local log = goldenorb_logging.log
+--- Logging
+local log = robodolg_logging.log
 
 -- Constants
 

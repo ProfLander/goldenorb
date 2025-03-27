@@ -1,5 +1,5 @@
 --- Forcefully load the monkey patch
-local mcm_builder_objection = mcm_builder_objection
+local mcm_builder_ex = mcm_builder_ex
 
 --- Create the mod's tree
 tree = mcm_builder.Tree.new("goldenorb")

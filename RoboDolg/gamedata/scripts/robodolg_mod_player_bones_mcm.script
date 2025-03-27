@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------------
--- RoboDolg: Weapon Bones
+-- RoboDolg: Player Bones
 ----------------------------------------------------------------------------
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
@@ -7,8 +7,11 @@
 -- Imports
 
 --- Shapes
-local CYAN = robodolg_shapes.CYAN
+local GREEN = robodolg_shapes.GREEN
 local draw_bones = robodolg_shapes.draw_bones
+
+--- Log
+local log = robodolg_logging.log
 
 --- RoboDolg
 local mcm_tree = robodolg_mcm.tree
@@ -17,42 +20,35 @@ local mcm_tree = robodolg_mcm.tree
 local ImageWithText = mcm_builder.ImageWithText
 local Checkbox = mcm_builder.Checkbox
 
---- Log
-local log = goldenorb_logging.log
-
 -- Constants
 
+HUD = true
 POLY_SIZE = 0.005
 POLY_SIDES = 4
 LINE_LENGTH = 0.05
-COLOR = CYAN
+COLOR = GREEN
 
 -- State
 
-local page = mcm_tree:pages("weapon_bones")
+local page = mcm_tree:pages("player_bones")
 
-page:settings(ImageWithText.new("weapon_bones_title"):text("weapon_bones"))
+page:settings(ImageWithText.new("player_bones_title"):text("player_bones"))
 
 local should_draw = page:settings(
-   Checkbox.new("draw_weapon_bones"):default(true)
+   Checkbox.new("draw_player_bones"):default(false)
 )
 
 -- Implementation
 
-function draw_weapon_bones(state)
-   log("draw_weapon_bones(%s)", state)
-
+function draw_player_bones(state)
    if not should_draw:get() then
-        return state
-    end
-
-   if not state.wpn then
       return state
    end
 
+   log("draw_player_bones(%s)", state)
    draw_bones(
-      state.wpn,
-      true,
+      db.actor,
+      HUD,
       POLY_SIZE,
       POLY_SIDES,
       LINE_LENGTH,
@@ -63,9 +59,9 @@ function draw_weapon_bones(state)
 end
 
 function on_game_start()
-   log("robodolg_weapon_bones.on_game_start")
+   log("robodolg_player_bones.on_game_start")
    RegisterScriptCallback(
       "robodolg_on_draw",
-      draw_weapon_bones
+      draw_player_bones
    )
 end

@@ -28,7 +28,7 @@ local get_camera_delta_rotation = goldenorb_camera.get_camera_delta_rotation
 local parse_vector = goldenorb_string.parse_vector
 
 --- Math
-local DEG2RAD = goldenorb_math.DEG2RAD
+local DEG2RAD = lander_math.DEG2RAD
 
 --- MCM Builder
 local Line = mcm_builder.Line

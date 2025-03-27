@@ -9,7 +9,7 @@
 -- Imports
 
 --- Math
-local deg = goldenorb_math.deg
+local deg = lander_math.deg
 
 -- Implementation
 

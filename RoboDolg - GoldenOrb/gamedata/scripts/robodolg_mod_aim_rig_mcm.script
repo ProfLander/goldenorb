@@ -7,7 +7,7 @@
 -- Imports
 
 --- Math
-local hpb_to_direction = goldenorb_math.hpb_to_direction
+local hpb_to_direction = lander_math.hpb_to_direction
 
 --- Weapon
 local get_hands_aim_point = goldenorb_weapon.get_hands_aim_point

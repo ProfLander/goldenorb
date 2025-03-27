@@ -9,9 +9,9 @@
 -- Imports
 
 --- Math
-local sign = goldenorb_math.sign
-local vector_axis_angle = goldenorb_math.vector_axis_angle
-local axis_angle_to_euler = goldenorb_math.axis_angle_to_euler
+local sign = lander_math.sign
+local vector_axis_angle = lander_math.vector_axis_angle
+local axis_angle_to_euler = lander_math.axis_angle_to_euler
 
 -- Constants
 
