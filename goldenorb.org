@@ -1,8 +1,7 @@
-#TITLE GoldenOrb
 
+* GoldenOrb
 Total camera and aiming overhaul for Anomaly.
 
-* Design Document
 ** Mod Compatibility
 *** Fundamental
 Will technically function without these, but with reduced functionality.
@@ -45,6 +44,7 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
   - A major inspiration in concert with Parallax Reflex Sights
 **** Mods that use ~set_cam_custom_position_rotation~
 ***** ???
+
 
 ** Features
 - [ ] Reimplement recoil via decoupled aim point
@@ -125,6 +125,15 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
 
 ** TODO
 *** Core
+- [ ] Promote goldenorb.org to README.org
+  - Git should be able to render it inline; double-check other repos
+- [ ] Investigate script namespacing for anomaly-definitions plugin
+- [ ] Type annotation + doco pass
+  - Need to give the LSP as much info as possible
+- [ ] Functional primitives pass
+  - Need to replace manual maps, filters, etc with abstractions
+- [ ] Address MCM Builder / Lander Math symlinks
+  - Not ideal for people cloning the repo
 - [ ] Formalize dependency graph branch / join points
   - ex. Need singular 'before modifiers' / 'after modifiers' points instead of having to explicitly name everything 
 - [ ] Tie module state to character state
