@@ -1,0 +1,9 @@
+
+--- Call f on each member of lst and return the results in a list
+function map(lst, f)
+   local out = {}
+   for i=1,#lst do
+      out[i] = f(lst[i])
+   end
+   return out
+end

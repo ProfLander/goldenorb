@@ -1,0 +1,18 @@
+
+--- Produce a function that threads an input through the given functions
+function compose(...)
+   local fs = {...}
+
+   local acc = function(p)
+      return p
+   end
+
+   for i=1,#fs do
+      local old = acc
+      acc = function(p)
+         return fs[i](old(p))
+      end
+   end
+
+   return acc
+end
