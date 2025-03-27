@@ -49,7 +49,9 @@ Will technically function without these, but with reduced functionality.
 **** Shader 3D Scopes
 - Necessary for proper scope rendering when off-center
 
+
 *** Supported
+**** ???
 
 *** Partially Supported
 **** Private's Gun Reposition
@@ -132,7 +134,8 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
   - Allow gun to follow aim
 
 
-** DONE
+** Progress
+*** Done
 - [X] Fix 3DSS distortion when displayed off-center
   - Will likely need to reverse-engineer unless LVutner comes through with info
 - [X] Further generalize execution model
@@ -159,9 +162,16 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
     - i.e. A region where camera motion scales up to full 1:1
 - [X] Generalize existing 'offset aim' behaviour into an interface module
   - Will be needed so it can share code with an auto-aiming module
+- [X] Decouple RoboDolg from GoldenOrb update
+  - Needs to update via ~level~ instead of ~actor~ in order to properly synchronize with the camera
+  - Whereas GoldenOrb needs to update via ~actor~ in order to properly synchronize with the arms mesh
+  - Need to test and see where is optimal to update HUD repositioning
+- [X] Object pooling
+  - The debug rendering API design suggests its objects are persistent
+  - If so, need to implement a pooling system and reuse them instead of allocating new ones every frame
 
-** TODO
-*** Core
+*** To Do
+**** Core
 - [ ] Promote goldenorb.org to README.org
   - Git should be able to render it inline; double-check other repos
 - [ ] Investigate script namespacing for anomaly-definitions plugin
@@ -188,7 +198,7 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
     - Bodycam
     - etc.
     
-*** Hands
+**** Hands
 - [-] Visualize cursor restriction with RoboDolg
   - [X] Implement box drawing for linear spring
   - [ ] Manually billboard rotated vectors for correct sizing
@@ -214,7 +224,7 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
     - Can tie to an extra keybind or somesuch, use aimed recoil values
       - Still subject to hip-fire accuracy penalty
 
-*** Weapon
+**** Weapon
 - [ ] Goldeneye-style auto-aim
   - Need to search for visible actors, pick closest / most relevant
     - Can use skeletons to target closest body part
@@ -236,16 +246,9 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
 - [ ] Aimable bolts
   - Regular bolt fires relative to the camera rather than the arms
     
-*** RoboDolg
+**** RoboDolg
 Vector debug UI framework.
 
-- [X] Decouple RoboDolg from GoldenOrb update
-  - Needs to update via ~level~ instead of ~actor~ in order to properly synchronize with the camera
-  - Whereas GoldenOrb needs to update via ~actor~ in order to properly synchronize with the arms mesh
-  - Need to test and see where is optimal to update HUD repositioning
-- [X] Object pooling
-  - The debug rendering API design suggests its objects are persistent
-  - If so, need to implement a pooling system and reuse them instead of allocating new ones every frame
 - [ ] Full RoboDolg HUD?
   - Health
   - Stamina
@@ -255,7 +258,7 @@ Vector debug UI framework.
     - Name, faction, etc readout
   - Metroid prime visor effect?
 
-*** 3DSS
+**** 3DSS
 - [-] Lanczos filter for back image
   - [X] Implement RetroArch lanczos2_sharp as proof-of-concept
   - [X] Implement choice of filter via shader macro
@@ -272,7 +275,7 @@ Vector debug UI framework.
   - [ ] Formalize somehow, monkey patch?
 - [ ] Per-scope zoom factors
 - [ ] 3DSS Binoculars
-*** Parallax Reflex Sights
+**** Parallax Reflex Sights
 - [-] Apply the same logic as 3DSS for reticle positioning
   - May result in total compatibility, BaS included
   - [X] Construct transposed rotation matrix to apply skew to reticle
