@@ -15,6 +15,7 @@ local get_weapon_aim_point = goldenorb_weapon.get_weapon_aim_point
 local RED = robodolg_shapes.RED
 local GREEN = robodolg_shapes.GREEN
 local BLUE = robodolg_shapes.BLUE
+local billboard = robodolg_shapes.billboard
 local draw_crosshair = robodolg_shapes.draw_crosshair
 
 --- MCM Builder
@@ -80,33 +81,39 @@ function draw(state)
    -- Camera
    if draw_camera:get() then
       draw_crosshair(
-         get_camera_aim_point(),
          size_cross,
          size_ring,
          segs_ring,
-         COLOR_CAMERA
+         COLOR_CAMERA,
+         function(v)
+            return billboard(v):add(get_camera_aim_point())
+         end
       )
    end
 
    -- Hands
    if draw_hands:get() then
       draw_crosshair(
-         get_hands_aim_point(),
          size_cross,
          size_ring,
          segs_ring,
-         COLOR_HANDS
+         COLOR_HANDS,
+         function(v)
+            return billboard(v):add(get_hands_aim_point())
+         end
       )
    end
 
    -- Weapon
    if draw_weapon:get() then
       draw_crosshair(
-         get_weapon_aim_point(state.wpn),
          size_cross,
          size_ring,
          segs_ring,
-         COLOR_WEAPON
+         COLOR_WEAPON,
+         function(v)
+            return billboard(v):add(get_weapon_aim_point(state.wpn))
+         end
       )
    end
 

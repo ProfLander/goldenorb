@@ -21,8 +21,10 @@ local get_camera_aim_point = goldenorb_camera.get_camera_aim_point
 local RED = robodolg_shapes.RED
 local CYAN = robodolg_shapes.CYAN
 local YELLOW = robodolg_shapes.YELLOW
+local billboard = robodolg_shapes.billboard
+local camera_relative = robodolg_shapes.camera_relative
 local draw_line = robodolg_shapes.draw_line
-local draw_billboard_ngon = robodolg_shapes.draw_billboard_ngon
+local draw_ngon = robodolg_shapes.draw_ngon
 
 --- RoboDolg
 local tree = robodolg_goldenorb_mcm.tree
@@ -46,11 +48,11 @@ local should_draw = page:settings(
 
 -- Implementation
 
---- Offset fire point slightly to prevent self-intersection
+--- Draw aim rig
 ---@param state state
----@parama return state
+---@return state
 function draw(state)
-   log("draw_weapon_ik(%s)", state)
+   log("draw_aim_rig(%s)", state)
 
    if not should_draw:get() then
        return state
@@ -87,8 +89,20 @@ function draw(state)
       local pos = state.actor:bone_position("bip01", true)
       local rot = state.actor:bone_direction("bip01", true)
       local dir = hpb_to_direction(rot)
-      draw_billboard_ngon(pos, 0.5, 8, vector():set(0, 1, 0))
-      draw_line(pos, vector():set(pos):add(dir:mul(1000)), vector():set(0, 1, 0))
+      draw_ngon(
+         0.005,
+         8,
+         vector():set(0, 1, 0),
+         function(v)
+            return billboard(v):add(pos)
+         end
+      )
+
+      draw_line(
+         pos,
+         vector():set(pos):add(dir:mul(1000)),
+         vector():set(0, 1, 0)
+      )
    end
 
    return state

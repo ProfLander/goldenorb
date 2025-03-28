@@ -9,7 +9,11 @@
 --- List
 range = goldenorb_list.range
 map = goldenorb_list.map
+fold = goldenorb_list.fold
 foreach_list = goldenorb_list.foreach
+
+--- Function
+id = goldenorb_function.id
 
 --- Table
 foreach_table = goldenorb_table.foreach
@@ -107,6 +111,33 @@ function get_shape(ty)
    return shape
 end
 
+---@param pa vector
+---@param pb vector
+---@param color? vector
+---@param f? fun(v: vector): vector
+function draw_line(pa, pb, color, f)
+   log("draw_line(%s, %s, %s)", pa, pb, color)
+
+   f = f or id
+   pa = f(vector():set(pa))
+   pb = f(vector():set(pb))
+
+   assert(pa, "Invalid line start")
+   assert(pa, "Invalid line end")
+   color = color or vector():set(1, 1, 1)
+
+   local line = get_shape(DBG_ScriptObject.line):cast_dbg_line()
+
+   line.point_a = pa
+   line.point_b = pb
+   line.color = fcolor():set(
+      color.x,
+      color.y,
+      color.z,
+      1
+   )
+end
+
 ---@param pos vector
 ---@param scale? number
 ---@param color? vector
@@ -136,31 +167,9 @@ function draw_sphere(pos, scale, color)
    )
 end
 
----@param pa vector
----@param pb vector
----@param color? vector
-function draw_line(pa, pb, color)
-   log("draw_line(%s, %s, %s)", pa, pb, color)
-
-   assert(pa, "Invalid line start")
-   assert(pa, "Invalid line end")
-   color = color or vector():set(1, 1, 1)
-
-   local line = get_shape(DBG_ScriptObject.line):cast_dbg_line()
-
-   line.point_a = pa
-   line.point_b = pb
-   line.color = fcolor():set(
-      color.x,
-      color.y,
-      color.z,
-      1
-   )
-end
-
 ---@param vec vector
 ---@return vector
-function billboard_vector(vec)
+function billboard(vec)
    local dev = device()
    return vector()
       :set(dev.cam_right)
@@ -176,86 +185,102 @@ function billboard_vector(vec)
       )
 end
 
----@param pos vector
----@param a vector
----@param b vector
----@param color? vector
----@return nil
-function draw_billboard_line(pos, a, b, color)
-   log("draw_billboard_line(%s, %s, %s)", pos, a, b, color)
-
-   assert(pos, "Invalid position")
-   assert(a, "Invalid line start")
-   assert(b, "Invalid line end")
-
-   draw_line(
-      billboard_vector(a):add(pos),
-      billboard_vector(b):add(pos),
-      color
-   )
+---@param vec vector
+---@return vector
+function camera_relative(vec)
+   return vec:add(device().cam_pos)
 end
 
----@param pos vector
----@param extent vector
 ---@param color? vector
----@return nil
-function draw_billboard_cross(pos, extent, color)
-   log("draw_billboard_cross(%s, %s, %s)", pos, extent, color)
-   draw_billboard_line(
-      pos,
-      vector():set(-extent.x, 0, 0),
-      vector():set(extent.x, 0, 0),
-      color
-   )
-   draw_billboard_line(
-      pos,
-      vector():set(0, extent.y, 0),
-      vector():set(0, -extent.y, 0),
-      color
-   )
+---@param f? fun(v: vector): vector
+---@return fun(...: [vector, vector]): nil
+function draw_line_list(color, f)
+   return function(...)
+      foreach_list(
+         {...},
+         function(line)
+            draw_line(line[1], line[2], color, f)
+         end
+      )
+   end
 end
 
----@param pos vector
+---@param color? vector
+---@param f? fun(v: vector): vector
+---@return fun(...: vector): nil
+function draw_line_strip(color, f)
+   return function(...)
+      fold(
+         {...},
+         nil,
+         function(acc, point)
+            if acc then
+               draw_line(acc, point, color, f)
+            end
+            return point
+         end
+      )
+   end
+end
+
 ---@param rad number
 ---@param sides number
 ---@param color? vector
+---@param f? fun(v: vector): vector
 ---@return nil
-function draw_billboard_ngon(pos, rad, sides, color)
-   log("draw_billboard_ngon(%s, %s, %s, %s)", pos, rad, sides, color)
-   local last = nil
-   map(
-      range(1, sides+1),
-      function(i)
-         local t = i / sides
-         local r = t * TAU
-         local v = vector():set(math.sin(r), math.cos(r), 0):mul(rad)
-         if last then
-            draw_billboard_line(pos, last, v, color)
-         end
-         last = v
-      end
+function draw_ngon(rad, sides, color, f)
+   log("draw_billboard_ngon(%s, %s, %s, %s)", rad, sides, color, f)
+   draw_line_strip(color, f)(
+      unpack(
+         map(
+            range(1, sides+1),
+            function(i)
+               local t = i / sides
+               local r = t * TAU
+               return vector():set(math.sin(r), math.cos(r), 0):mul(rad)
+            end
+         )
+      )
    )
 end
 
----@param pos vector
+
+---@param extent vector
+---@param color? vector
+---@param f? fun(v: vector): vector
+---@return nil
+function draw_cross(extent, color, f)
+   log("draw_billboard_cross(%s, %s, %s)", extent, color, f)
+   draw_line_list(color, f)(
+      {
+         vector():set(-extent.x, 0, 0),
+         vector():set(extent.x, 0, 0),
+      },
+      {
+         vector():set(0, extent.y, 0),
+         vector():set(0, -extent.y, 0),
+      }
+   )
+end
+
 ---@param cross_size number
 ---@param ring_size number
 ---@param ring_segs number
 ---@param color? vector
-function draw_crosshair(pos, cross_size, ring_size, ring_segs, color)
+function draw_crosshair(cross_size, ring_size, ring_segs, color, f)
    -- Cross
-   draw_billboard_cross(
-      pos,
+   draw_cross(
       vector():set(cross_size, cross_size, 0),
-      color
+      color,
+      f
    )
 
    -- Diamond
-   draw_billboard_ngon(
-      pos,
+   draw_ngon(
       ring_size,
       ring_segs,
-      color
+      color,
+      f
    )
 end
 
@@ -267,6 +292,8 @@ end
 ---@param color? vector
 function draw_bones(obj, hud, poly_size, poly_sides, line_length, color)
    log("draw_bones(%s)", obj)
+   f = f or id
+
    local bones = obj:list_bones(hud)
 
    foreach_list(
@@ -274,11 +301,13 @@ function draw_bones(obj, hud, poly_size, poly_sides, line_length, color)
       function(i)
          local name = bones[i]
          local pos = obj:bone_position(name, hud)
-         draw_billboard_ngon(
-            pos,
+         draw_ngon(
             poly_size,
             poly_sides,
-            color
+            color,
+            function(v)
+               return billboard(v):add(pos)
+            end
          )
 
          local dir = hpb_to_direction(obj:bone_direction(name, hud))

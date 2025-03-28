@@ -8,9 +8,10 @@
 
 --- Math
 local DEG2RAD = lander_math.DEG2RAD
-local vector_rotate_x = lander_math.vector_rotate_x
-local vector_rotate_y = lander_math.vector_rotate_y
 local hpb_to_direction = lander_math.hpb_to_direction
+
+--- Function
+local compose = goldenorb_function.compose
 
 --- String
 local parse_vector = goldenorb_string.parse_vector
@@ -19,12 +20,12 @@ local parse_vector = goldenorb_string.parse_vector
 local spring_limit = goldenorb_aim.spring_limit
 
 --- Camera
-local get_camera_direction = goldenorb_camera.get_camera_direction
 local get_camera_aim_point = goldenorb_camera.get_camera_aim_point
 
 --- Shapes
-local draw_billboard_line = robodolg_shapes.draw_billboard_line
-local draw_line = robodolg_shapes.draw_line
+local billboard = robodolg_shapes.billboard
+local camera_relative = robodolg_shapes.camera_relative
+local draw_line_strip = robodolg_shapes.draw_line_strip
 
 --- RoboDolg
 local tree = robodolg_goldenorb_mcm.tree
@@ -68,11 +69,10 @@ function draw(state)
    local c = hpb_to_direction(vector():set(limit.x, -limit.y, 0))
    local d = hpb_to_direction(vector():set(-limit.x, -limit.y, 0))
 
-   local cam_pos = device().cam_pos
-   draw_billboard_line(cam_pos, a, b)
-   draw_billboard_line(cam_pos, b, c)
-   draw_billboard_line(cam_pos, c, d)
-   draw_billboard_line(cam_pos, d, a)
+   draw_line_strip(
+      nil,
+      compose(billboard, camera_relative)
+   )(a, b, c, d, a)
 
    return state
 end
