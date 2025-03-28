@@ -6,6 +6,11 @@
 
 -- Imports
 
+--- Goldenorb Aim
+local spring_type = goldenorb_aim.spring_type
+local SP_LINEAR = goldenorb_spring.SP_LINEAR
+local SP_ANGULAR = goldenorb_spring.SP_ANGULAR
+
 --- Math
 local DEG2RAD = lander_math.DEG2RAD
 local hpb_to_direction = lander_math.hpb_to_direction
@@ -19,13 +24,11 @@ local parse_vector = goldenorb_string.parse_vector
 --- Aim
 local spring_limit = goldenorb_aim.spring_limit
 
---- Camera
-local get_camera_aim_point = goldenorb_camera.get_camera_aim_point
-
 --- Shapes
 local billboard = robodolg_shapes.billboard
 local camera_relative = robodolg_shapes.camera_relative
 local draw_line_strip = robodolg_shapes.draw_line_strip
+local draw_ngon = robodolg_shapes.draw_ngon
 
 --- RoboDolg
 local tree = robodolg_goldenorb_mcm.tree
@@ -59,20 +62,39 @@ function draw(state)
        return state
    end
 
-   local cam_aim = get_camera_aim_point()
-
    local limit = parse_vector(spring_limit:get()):mul(DEG2RAD)
    printf("limit: %s", limit)
 
-   local a = hpb_to_direction(vector():set(-limit.x, limit.y, 0))
-   local b = hpb_to_direction(vector():set(limit.x, limit.y, 0))
-   local c = hpb_to_direction(vector():set(limit.x, -limit.y, 0))
-   local d = hpb_to_direction(vector():set(-limit.x, -limit.y, 0))
+   local ty = spring_type:get()
+   if ty == SP_LINEAR then
+      local a = hpb_to_direction(vector():set(-limit.x, limit.y, 0))
+      local b = hpb_to_direction(vector():set(limit.x, limit.y, 0))
+      local c = hpb_to_direction(vector():set(limit.x, -limit.y, 0))
+      local d = hpb_to_direction(vector():set(-limit.x, -limit.y, 0))
 
-   draw_line_strip(
-      nil,
-      compose(billboard, camera_relative)
-   )(a, b, c, d, a)
+      draw_line_strip(
+         nil,
+         compose(billboard, camera_relative)
+      )(a, b, c, d, a)
+   elseif ty == SP_ANGULAR then
+      local d = hpb_to_direction(vector():set(limit.x, limit.y, 0))
+      draw_ngon(
+         1,
+         32,
+         nil,
+         compose(
+            function(v)
+               return v
+                  :mul(d)
+                  :add(vector():set(0, 0, 1))
+            end,
+            billboard,
+            camera_relative
+         )
+      )
+   else
+      assert(nil, string.format("Unrecognized string type %s", ty))
+   end
 
    return state
 end
