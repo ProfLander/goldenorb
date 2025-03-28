@@ -17,7 +17,7 @@ local hud_adjust_enable = goldenorb_impure.hud_adjust_enable
 local apply_weapon_hud = goldenorb_weapon.apply_weapon_hud
 
 --- Camera
-local apply_camera = goldenorb_camera.apply_camera
+local apply_camera = goldenorb_camera_mcm.apply_camera
 
 --- Modifiers
 local body_cam = goldenorb_mod_body_cam_mcm.body_cam

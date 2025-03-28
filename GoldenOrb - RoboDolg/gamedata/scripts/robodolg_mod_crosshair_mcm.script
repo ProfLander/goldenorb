@@ -7,7 +7,7 @@
 -- Imports
 
 --- Aim Point
-local get_camera_aim_point = goldenorb_camera.get_camera_aim_point
+local get_camera_aim_point = goldenorb_camera_mcm.get_camera_aim_point
 local get_hands_aim_point = goldenorb_weapon.get_hands_aim_point
 local get_weapon_aim_point = goldenorb_weapon.get_weapon_aim_point
 

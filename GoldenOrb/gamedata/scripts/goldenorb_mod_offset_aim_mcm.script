@@ -22,7 +22,7 @@ local spring_strength = goldenorb_aim.spring_strength
 local spring_limit = goldenorb_aim.spring_limit
 
 --- Data
-local get_camera_delta_rotation = goldenorb_camera.get_camera_delta_rotation
+local get_camera_delta_rotation = goldenorb_camera_mcm.get_camera_delta_rotation
 
 --- String
 local parse_vector = goldenorb_string.parse_vector

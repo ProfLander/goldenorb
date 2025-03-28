@@ -6,12 +6,20 @@
 
 -- Imports
 
+--- Goldenorb
+
+local tree = goldenorb_mcm.tree
+
 --- Level
 local set_cam_custom_position_direction = level.set_cam_custom_position_direction
 local remove_cam_custom_position_direction = level.remove_cam_custom_position_direction
 
 --- Main
 ACTOR_ON_UPDATE = goldenorb_main.ACTOR_ON_UPDATE
+
+--- MCM Builder
+local ImageWithText = mcm_builder.ImageWithText
+local Trackbar = mcm_builder.Trackbar
 
 --- Logging
 local log = goldenorb_logging.log
@@ -21,6 +29,19 @@ local log = goldenorb_logging.log
 local DIST = 800
 
 -- State
+
+local page = tree:pages("camera")
+
+page:settings(
+   ImageWithText.new("camera_title"):text("camera")
+)
+
+local smoothing = page:settings(
+   Trackbar.new("smoothing")
+      :default(0)
+      :minmax(0, 60)
+      :increment(1)
+)
 
 local cam_custom = false
 
@@ -88,7 +109,7 @@ function inject_camera(state)
       enable = false,
       pos = vector(),
       rot = vector(),
-      smoothing = -1,
+      smoothing = smoothing:get(),
       show_hud = true,
       affect_hud = true,
    }
