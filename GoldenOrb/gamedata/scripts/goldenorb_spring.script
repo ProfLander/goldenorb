@@ -59,12 +59,13 @@ function spring_3d_angular(length, strength)
       end
 
       local ofs = math.max(length.x, length.y, length.z)
-      if length.x >= length.y then
-         ofs = ofs * math.cos(vec.y / length.y)
-      else
-         ofs = ofs * math.cos(vec.x / length.x)
+      local fac = 1
+      if length.x > length.y then
+         fac = math.cos(vec.y / length.y)
+      elseif length.x < length.y then
+         fac = math.cos(vec.x / length.x)
       end
-      angle = spring_1d(ofs, 1, angle)
+      angle = spring_1d(ofs * fac, 1, angle)
 
       local euler = axis_angle_to_euler(axis, angle)
       euler.x = -euler.x
