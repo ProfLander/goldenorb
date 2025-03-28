@@ -52,14 +52,18 @@ end
 ---@return fun(vec: vector): vector
 function spring_3d_angular(length, strength)
    return function(vec)
-      local vn = vector():set(vec):normalize()
       local axis, angle = vector_axis_angle(vec, vector():set(0, 0, 1))
       if not axis or not angle then
          printf("invalid rotation")
          return vector()
       end
 
-      local ofs = vn:mul(length):magnitude()
+      local ofs = math.max(length.x, length.y, length.z)
+      if length.x >= length.y then
+         ofs = ofs * math.cos(vec.y / length.y)
+      else
+         ofs = ofs * math.cos(vec.x / length.x)
+      end
       angle = spring_1d(ofs, 1, angle)
 
       local euler = axis_angle_to_euler(axis, angle)
