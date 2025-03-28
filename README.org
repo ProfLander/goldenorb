@@ -173,14 +173,19 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
   - Git should be able to render it inline; double-check other repos
 - [X] Type annotation pass
   - Need to give the LSP as much info as possible
+- [X] Functional primitives pass
+  - Need to replace manual maps, filters, etc with abstractions
 
 *** To Do
 **** Core
-- [ ] Functional primitives pass
-  - Need to replace manual maps, filters, etc with abstractions
+- [ ] matrix / fcolor usage pass
+  - Basis reimplements a lot of matrix functionality
+  - No need to use vector for colors
 - [ ] Doc comment pass
 - [ ] Address MCM Builder / Lander Math symlinks
   - Not ideal for people cloning the repo
+  - MCM Builder Ex is needed too
+    - Currently loaded as a separate mod
 - [ ] Formalize dependency graph branch / join points
   - ex. Need singular 'before modifiers' / 'after modifiers' points instead of having to explicitly name everything 
 - [ ] Tie module state to character state
@@ -202,15 +207,20 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
 **** Hands
 - [-] Visualize cursor restriction with RoboDolg
   - [X] Implement box drawing for linear spring
-  - [ ] Manually billboard rotated vectors for correct sizing
-  - [ ] Implement circle drawing for angular spring
+  - [X] Manually billboard rotated vectors for correct sizing
+  - [X] Implement circle drawing for angular spring
   - [ ] Implement rounded box shape
     - Can offset by crosshair size for edge-conforming
   - [ ] Visualize spring strength as well as length and type
     - Can draw a second shape scaled by strength
       - Draw line from edge of base shape
-        
-- [ ] Fix incorrect angular spring constraint direction
+
+- [-] Fix incorrect angular spring constraint direction
+  - [X] Correct behaviour under current conditions
+  - [-] Categorically correct behaviour
+    - [X] Need to account for cases where limit.y > limit.x
+    - [ ] Need to account for scaling of force
+      - Setting strength to the length factor produces smooth results, but causes a simulation explosion if the spring suddenly moves too far beyond its length
         
 - [ ] Fix crossing-pi bug with aim joint
   - Incorrect behaviour after +-180 degrees of rotation
