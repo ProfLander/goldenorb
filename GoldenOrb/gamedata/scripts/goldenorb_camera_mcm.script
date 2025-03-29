@@ -38,8 +38,8 @@ page:settings(
 
 local smoothing = page:settings(
    Trackbar.new("smoothing")
-      :default(0)
-      :minmax(0, 60)
+      :default(-1)
+      :minmax(-1, 60)
       :increment(1)
 )
 
