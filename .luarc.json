@@ -77,5 +77,7 @@
         "debug_render",
         "DBG_ScriptObject",
         "utils_xml",
+        "utils_item",
+        "goldenorb_table",
     ],
 }
