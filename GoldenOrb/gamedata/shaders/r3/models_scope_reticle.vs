@@ -5,39 +5,37 @@ struct vf
 {
     float4 hpos : SV_Position;
     float2 tc0 : TEXCOORD0;	
-	float3 w_P : POSITION0;
-	float3 w_T : TANGENT0;
-	float3 w_B : BINORMAL0;
-	float3 w_N : NORMAL0;
-	float3 v_P : POSITION1;
-	float3 v_T : TANGENT1;
-	float3 v_B : BINORMAL1;
-	float3 v_N : NORMAL1;
-        float2 ap : TEXCOORD1;
+    float3 w_P : POSITION0;
+    float3 w_T : TANGENT0;
+    float3 w_B : BINORMAL0;
+    float3 w_N : NORMAL0;
+    float3 v_P : POSITION1;
+    float3 v_T : TANGENT1;
+    float3 v_B : BINORMAL1;
+    float3 v_N : NORMAL1;
+    float4 vpos : TEXCOORD1;
+    float4 apos : TEXCOORD2;
 };
 
-vf     _main (v_model v)
+vf _main(v_model v)
 {
     vf o;
 
     o.hpos = mul(m_WVP, v.P);
     o.tc0 = v.tc.xy;
 
-	o.w_P = mul(m_W, v.P).xyz;
-	o.w_T = mul(m_W, v.T).xyz;
-	o.w_B = mul(m_W, v.B).xyz;
-	o.w_N = mul(m_W, v.N).xyz;
+    o.w_P = mul(m_W, v.P).xyz;
+    o.w_T = mul(m_W, v.T).xyz;
+    o.w_B = mul(m_W, v.B).xyz;
+    o.w_N = mul(m_W, v.N).xyz;
 
-	o.v_P = mul(m_WV, v.P).xyz;
-	o.v_T = mul(m_WV, v.T).xyz;
-	o.v_B = mul(m_WV, v.B).xyz;
-	o.v_N = mul(m_WV, v.N).xyz;
+    o.v_P = mul(m_WV, v.P).xyz;
+    o.v_T = mul(m_WV, v.T).xyz;
+    o.v_B = mul(m_WV, v.B).xyz;
+    o.v_N = mul(m_WV, v.N).xyz;
 
-        float4 SCREEN_POS = mul(float4(0, 0, 1000, 1), m_WVP);
-        o.ap = (float2(
-            -SCREEN_POS.x / SCREEN_POS.z * (screen_res.y / screen_res.x),
-            SCREEN_POS.y / SCREEN_POS.z
-        ) + 1) * 0.5;
+    o.vpos = o.hpos;
+    o.apos = mul(m_WVP, float4(0, 0, 1000, 1));
 	
     return o;
 }
