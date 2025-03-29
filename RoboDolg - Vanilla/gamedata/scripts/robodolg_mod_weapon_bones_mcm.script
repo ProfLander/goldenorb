@@ -22,7 +22,7 @@ local log = robodolg_logging.log
 
 -- Constants
 
-POLY_SIZE = 0.005
+POLY_SIZE = 0.02
 POLY_SIDES = 4
 LINE_LENGTH = 0.05
 COLOR = CYAN

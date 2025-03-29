@@ -36,6 +36,9 @@ CYAN = vector():set(0, 1, 1)
 MAGENTA = vector():set(1, 0, 1)
 YELLOW = vector():set(1, 1, 0)
 
+local CORRECTION = 0.09
+local CORRECTION_HUD = 0.13
+
 -- State
 
 local next_id = 1
@@ -167,9 +170,21 @@ function draw_sphere(pos, scale, color)
    )
 end
 
+function project(vec, hud, allow_offscreen)
+   local dev = device()
+   local ui = game.world2ui(vec, hud, allow_offscreen)
+   local aspect = dev.width / dev.height
+   return vector():set(
+      ((ui.x / 1024) - 0.5) * 2 * aspect,
+      ((ui.y / 768) - 0.5) * -2,
+      0
+   )
+end
+
 ---@param vec vector
 ---@return vector
 function billboard(vec)
+   log("billboard(%s)", vec)
    local dev = device()
    return vector()
       :set(dev.cam_right)
@@ -189,6 +204,23 @@ end
 ---@return vector
 function camera_relative(vec)
    return vec:add(device().cam_pos)
+end
+
+function ui_2d(pos, hud, allow_offscreen)
+   allow_offscreen = allow_offscreen ~= nil and allow_offscreen or true
+
+   local correction = hud and CORRECTION_HUD or CORRECTION
+   return function(v)
+      return camera_relative(
+         billboard(
+            project(
+               pos,
+               hud,
+               allow_offscreen
+            ):add(v):add(vector():set(0, 0, 1 + correction))
+         )
+      )
+   end
 end
 
 ---@param color? vector
@@ -305,22 +337,14 @@ function draw_bones(obj, hud, poly_size, poly_sides, line_length, color)
             poly_size,
             poly_sides,
             color,
-            function(v)
-               return billboard(v):add(pos)
-            end
+            ui_2d(pos, true)
          )
 
          local dir = hpb_to_direction(obj:bone_direction(name, hud))
 
          draw_line(
-            pos,
-            vector()
-            :set(pos)
-            :add(
-               vector()
-               :set(dir)
-               :mul(line_length)
-            ),
+            ui_2d(pos, true)(vector()),
+            ui_2d(vector():set(pos):add(dir:mul(line_length)), true)(vector()),
             color
          )
       end

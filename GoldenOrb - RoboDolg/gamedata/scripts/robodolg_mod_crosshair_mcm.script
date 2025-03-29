@@ -15,7 +15,7 @@ local get_weapon_aim_point = goldenorb_weapon.get_weapon_aim_point
 local RED = robodolg_shapes.RED
 local GREEN = robodolg_shapes.GREEN
 local BLUE = robodolg_shapes.BLUE
-local billboard = robodolg_shapes.billboard
+local ui_2d = robodolg_shapes.ui_2d
 local draw_crosshair = robodolg_shapes.draw_crosshair
 
 --- MCM Builder
@@ -50,13 +50,13 @@ local draw_camera, draw_hands, draw_weapon, cross_size, ring_size, ring_segs =
       Checkbox.new("draw_weapon")
          :default(true),
       Trackbar.new("cross_size")
-         :increment(1)
-         :default(30)
-         :minmax(1, 60),
+         :increment(0.01)
+         :default(0.03)
+         :minmax(0, 1),
       Trackbar.new("ring_size")
-         :increment(1)
-         :default(20)
-         :minmax(1, 60),
+         :increment(0.01)
+         :default(0.02)
+         :minmax(0, 1),
       Trackbar.new("ring_segments")
          :increment(1)
          :default(8)
@@ -85,9 +85,7 @@ function draw(state)
          size_ring,
          segs_ring,
          COLOR_CAMERA,
-         function(v)
-            return billboard(v):add(get_camera_aim_point())
-         end
+         ui_2d(get_camera_aim_point(), true)
       )
    end
 
@@ -98,9 +96,7 @@ function draw(state)
          size_ring,
          segs_ring,
          COLOR_HANDS,
-         function(v)
-            return billboard(v):add(get_hands_aim_point())
-         end
+         ui_2d(get_hands_aim_point(), true)
       )
    end
 
@@ -111,9 +107,7 @@ function draw(state)
          size_ring,
          segs_ring,
          COLOR_WEAPON,
-         function(v)
-            return billboard(v):add(get_weapon_aim_point(state.wpn))
-         end
+      ui_2d(get_weapon_aim_point(state.wpn), true)
       )
    end
 

@@ -21,8 +21,7 @@ local get_camera_aim_point = goldenorb_camera_mcm.get_camera_aim_point
 local RED = robodolg_shapes.RED
 local CYAN = robodolg_shapes.CYAN
 local YELLOW = robodolg_shapes.YELLOW
-local billboard = robodolg_shapes.billboard
-local camera_relative = robodolg_shapes.camera_relative
+local ui_2d = robodolg_shapes.ui_2d
 local draw_line = robodolg_shapes.draw_line
 local draw_ngon = robodolg_shapes.draw_ngon
 
@@ -61,9 +60,9 @@ function draw(state)
    local cam_aim = get_camera_aim_point()
 
    if state.wpn then
-      local hands_aim = get_hands_aim_point()
-      local wpn_aim = get_weapon_aim_point(state.wpn)
-      local fire_pos = get_fire_bone_position(state.wpn)
+      local hands_aim = ui_2d(get_hands_aim_point(), true)(vector())
+      local wpn_aim = ui_2d(get_weapon_aim_point(state.wpn), true)(vector())
+      local fire_pos = ui_2d(get_fire_bone_position(state.wpn), true)(vector())
 
       draw_line(
          cam_aim,
@@ -90,17 +89,15 @@ function draw(state)
       local rot = state.actor:bone_direction("bip01", true)
       local dir = hpb_to_direction(rot)
       draw_ngon(
-         0.005,
+         0.02,
          8,
          vector():set(0, 1, 0),
-         function(v)
-            return billboard(v):add(pos)
-         end
+         ui_2d(pos, true)
       )
 
       draw_line(
-         pos,
-         vector():set(pos):add(dir:mul(1000)),
+         ui_2d(pos, true)(vector()),
+         ui_2d(vector():set(pos):add(dir:mul(1000)), true)(vector()),
          vector():set(0, 1, 0)
       )
    end
