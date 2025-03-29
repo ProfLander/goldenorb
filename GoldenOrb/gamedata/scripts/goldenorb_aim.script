@@ -11,13 +11,10 @@ local joint = goldenorb_joint.joint
 
 --- MCM Builder
 local ImageWithText = mcm_builder.ImageWithText
-local Title = mcm_builder.Title
 local List = mcm_builder.List
-local InputField = mcm_builder.InputField
 
 --- Spring
-local SP_LINEAR = goldenorb_spring.SP_LINEAR
-local SP_ANGULAR = goldenorb_spring.SP_ANGULAR
+local mcm_spring = goldenorb_spring.mcm_spring
 
 -- Constants
 
@@ -48,24 +45,8 @@ aim_type = page:settings(
       :default(0)
 )
 
---- Spring Title
-page:settings(Title.new("spring_title"):text("spring"))
-
---- Spring Settings
-spring_type, spring_strength, spring_limit =
-   page:settings(
-      List.new("spring_type")
-         :content({
-            {SP_LINEAR, "linear"},
-            {SP_ANGULAR, "angular"},
-         })
-         :input_type("float")
-         :default(0),
-      InputField.new("spring_strength")
-         :default("1.0,1.0"),
-      InputField.new("spring_limit")
-         :default("6.0,4.5")
-   )
-
 --- Angular joint
 joint_aim = joint()
+
+--- Spring force
+spring_aim = mcm_spring(page, SP_LINEAR, "6.0,4.5", "1.0, 1.0")

@@ -9,26 +9,18 @@
 --- HUD offset rotation
 local apply_hud_offset_rot = goldenorb_mod_hud_offset_rot.apply_hud_offset_rot
 
---- Spring
-local spring = goldenorb_spring.spring
-
 --- Aim
 local page = goldenorb_aim.page
 local aim_type = goldenorb_aim.aim_type
 local AIM_OFFSET = goldenorb_aim.AIM_OFFSET
 local joint_aim = goldenorb_aim.joint_aim
-local spring_type = goldenorb_aim.spring_type
-local spring_strength = goldenorb_aim.spring_strength
-local spring_limit = goldenorb_aim.spring_limit
+local spring_aim = goldenorb_aim.spring_aim
 
 --- Data
 local get_camera_delta_rotation = goldenorb_camera_mcm.get_camera_delta_rotation
 
 --- String
 local parse_vector = goldenorb_string.parse_vector
-
---- Math
-local DEG2RAD = lander_math.DEG2RAD
 
 --- MCM Builder
 local Line = mcm_builder.Line
@@ -68,17 +60,13 @@ function offset_aim(state)
       return state
    end
 
-   local ty = spring_type:get()
-   local limit = parse_vector(spring_limit:get()):mul(DEG2RAD)
-   local strength = parse_vector(spring_strength:get())
-
    joint_aim
       :impulse(
          get_camera_delta_rotation()
          :mul(parse_vector(sensitivity:get()))
          :mul(vector():set(-1, 1, 1))
       )
-      :impulse_with(spring(ty, limit, strength))
+      :impulse_with(spring_aim.spring)
       :apply_hud_orientation(state)
 
    return state

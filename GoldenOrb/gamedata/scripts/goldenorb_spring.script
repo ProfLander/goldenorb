@@ -9,12 +9,24 @@
 -- Imports
 
 --- Math
+local DEG2RAD = lander_math.DEG2RAD
 local sign = lander_math.sign
 local vector_axis_angle = lander_math.vector_axis_angle
 local axis_angle_to_euler = lander_math.axis_angle_to_euler
 
+--- MCM Builder
+local Title = mcm_builder.Title
+local List = mcm_builder.List
+local InputField = mcm_builder.InputField
+
+--- String
+local parse_vector = goldenorb_string.parse_vector
+
 --- Function
 local id = goldenorb_function.id
+
+--- Logging
+local log = goldenorb_logging.log
 
 -- Constants
 
@@ -39,6 +51,8 @@ end
 ---@return fun(vec: vector): vector
 function spring_3d_linear(length, strength)
    return function(vec)
+      log("spring_3d_linear(%s, %s)(%s)", length, strength, vec)
+
       return vector():set(
          spring_1d(length.x, strength.x, vec.x),
          spring_1d(length.y, strength.y, vec.y),
@@ -52,6 +66,7 @@ end
 ---@return fun(vec: vector): vector
 function spring_3d_angular(length, strength)
    return function(vec)
+      log("spring_3d_angular(%s, %s, %s)", length, strength, vec)
       local axis, angle = vector_axis_angle(vec, vector():set(0, 0, 1))
       if not axis or not angle then
          printf("invalid rotation")
@@ -79,6 +94,20 @@ end
 ---@param strength vector
 ---@return fun(vec: vector): vector
 function spring(ty, length, strength)
+   assert(
+      type(ty) == "number",
+      string.format("Invalid spring type %s", ty)
+   )
+   assert(
+      type(length) == "userdata",
+      string.format("Invalid spring length %s", ty)
+   )
+   ---@cast length vector
+   assert(
+      type(strength) == "userdata",
+      string.format("Invalid spring strength %s", ty)
+   )
+   ---@cast strength vector
    if ty == SP_LINEAR then
       return spring_3d_linear(length, strength)
    elseif ty == SP_ANGULAR then
@@ -87,4 +116,54 @@ function spring(ty, length, strength)
 
    assert(nil, string.format("Invalid spring type %s", ty))
    return id
+end
+
+---@class mcm_spring
+---@field type any
+---@field strength any
+---@field length any
+---@field spring fun(vec: vector): vector
+
+---@param page any
+---@param type? number
+---@param length? string
+---@param strength? string
+---@param prefix? string
+---@return mcm_spring
+function mcm_spring(page, type, length, strength, prefix)
+   prefix = prefix or ""
+
+   --- Spring Title
+   page:settings(Title.new(prefix .. "spring_title"):text(prefix .. "spring"))
+
+   --- Spring Settings
+   local spring_type, spring_length, spring_strength =
+      page:settings(
+         List.new(prefix .. "spring_type")
+            :content({
+               {SP_LINEAR, "linear"},
+               {SP_ANGULAR, "angular"},
+            })
+            :input_type("float")
+            :default(type),
+         InputField.new(prefix .. "spring_length")
+            :default(length),
+         InputField.new(prefix .. "spring_strength")
+            :default(strength)
+      )
+
+   return {
+      type = spring_type,
+      length = spring_length,
+      strength = spring_strength,
+      spring = function(v)
+         local t = spring_type:get()
+         local l = parse_vector(spring_length:get())
+         local s = parse_vector(spring_strength:get())
+         if t == SP_ANGULAR then
+            l:mul(DEG2RAD)
+         end
+         return spring(t, l, s)(v)
+      end
+   }
 end

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<string_table>
+    <!-- Aim -->
+    <string id="ui_mcm_menu_recoil">
+        <text>Recoil</text>
+    </string>
+</string_table>

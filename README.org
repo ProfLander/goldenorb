@@ -86,16 +86,15 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
 
 
 ** Features
-- [ ] Reimplement recoil via decoupled aim point
-  - Can use the consumed values to inform a custom treatment
-    - Can add an additional recoil transform to the HUD model and aggregate it from composable property animations (i.e. add one per shot, auto-cleanup finished)
-    - Can use physical weapon properties to calculate kick direction and force
-      - Account for:
-        - Caliber, barrel length, (handle position?) for vertical component
-        - Built-in stats as a vague abstraction over weight / power ratio
-        - Position relative to shooter's center of mass for horizontal component
-  - Alternately, just turn regular recoil back on and let mods handle it
-    - Likely possible now aiming is properly integrated with the HUD skeleton
+- [-] Reimplement recoil via decoupled aim point
+  - [X] Add recoil joint
+  - [X] Simple implementation that increments by dispersion
+  - [ ] Reimplement engine recoil logic
+    - ~CWeaponShotEffector~ has the core of it
+    - Accounts for ammo, weapon, silencer, scope and launcher dispersion factors when calculating base angle in ~Shot~
+    - Applies fraction in ~Shot2~ to calculate actual X/Y offset
+    - Increment depends on ~weapon->ShotsFired()~, which appears to be the amount of consecutive shots since the last trigger release
+  - [ ] Implement recentering via spring force
 - [ ] Weapon inverse kinematics
   - For aiming around cover in appropriate situations
     - Functionally dependent on accurate ballistics
@@ -203,7 +202,11 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
     - Bodycam
     - etc.
 - [ ] Investigate script namespacing for anomaly-definitions plugin
-
+**** Spring
+- [ ] Time-based spring simulation
+  - Currently using first-order position springs
+  - Need second-order velocity springs
+    - Will need to pick out an appropriate integrator
 **** Camera
 - [ ] Implement custom smoothing
   - Built-in engine smoothing desynchronizes with the actor update

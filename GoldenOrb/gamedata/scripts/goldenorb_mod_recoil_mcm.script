@@ -1,0 +1,290 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Recoil
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+-- Imports
+
+--- Goldenorb
+local handle_error = goldenorb_main.handle_error
+local tree = goldenorb_mcm.tree
+
+--- Weapon
+local inject_weapon = goldenorb_weapon.inject_weapon
+
+--- Joint
+local joint = goldenorb_joint.joint
+
+--- Lens
+local lens = goldenorb_lens.lens
+
+--- Spring
+local spring_1d = goldenorb_spring.spring_1d
+
+--- Table
+local foreach = goldenorb_table.foreach
+
+--- MCM Builder
+local Trackbar = mcm_builder.Trackbar
+
+--- Logging
+local log = goldenorb_logging.log
+
+-- Constants
+
+--- Lenses for interacting with weapon parameters
+local lenses = {
+   cam_relax_speed = lens(
+      "GetCamRelaxSpeed",
+      "SetCamRelaxSpeed"
+   ),
+   cam_dispersion = lens(
+      "GetCamDispersion",
+      "SetCamDispersion"
+   ),
+   cam_dispersion_inc = lens(
+      "GetCamDispersionInc",
+      "SetCamDispersionInc"
+   ),
+   cam_dispersion_frac = lens(
+      "GetCamDispersionFrac",
+      "SetCamDispersionFrac"
+   ),
+   cam_max_angle_vert = lens(
+      "GetCamMaxAngleHorz",
+      "SetCamMaxAngleHorz"
+   ),
+   cam_max_angle_horz = lens(
+      "GetCamMaxAngleHorz",
+      "SetCamMaxAngleHorz"
+   ),
+   cam_step_angle_horz = lens(
+      "GetCamStepAngleHorz",
+      "SetCamStepAngleHorz"
+   ),
+   zoom_cam_relax_speed = lens(
+      "GetZoomCamRelaxSpeed",
+      "SetZoomCamRelaxSpeed"
+   ),
+   zoom_cam_dispersion = lens(
+      "GetZoomCamDispersion",
+      "SetZoomCamDispersion"
+   ),
+   zoom_cam_dispersion_inc = lens(
+      "GetZoomCamDispersionInc",
+      "SetZoomCamDispersionInc"
+   ),
+   zoom_cam_dispersion_frac = lens(
+      "GetZoomCamDispersionFrac",
+      "SetZoomCamDispersionFrac"
+   ),
+   zoom_cam_max_angle_vert = lens(
+      "GetZoomCamMaxAngleHorz",
+      "SetZoomCamMaxAngleHorz"
+   ),
+   zoom_cam_max_angle_horz = lens(
+      "GetCamMaxAngleHorz",
+      "SetCamMaxAngleHorz"
+   ),
+   zoom_cam_step_angle_horz = lens(
+      "GetZoomCamStepAngleHorz",
+      "SetZoomCamStepAngleHorz"
+   ),
+}
+
+-- State
+
+local page = tree:pages("recoil")
+
+local kick_multiplier, control_strength = page:settings(
+   Trackbar.new("kick_multiplier")
+      :default(8)
+      :minmax(1, 32)
+      :increment(1),
+   Trackbar.new("control_strength")
+      :default(0.05)
+      :minmax(0, 1)
+      :increment(0.01)
+)
+
+local spring_recoil = goldenorb_spring.mcm_spring(
+   page,
+   SP_ANGULAR,
+   "0,0",
+   "0.05,0.05"
+)
+
+--- Weapon data cache
+local wpn_cache = {}
+
+--- How under-control the weapon is
+local control_fac = 0
+
+-- Implementation
+
+--- Cache a weapon's HUD data before setting it all to 0
+---@param state state
+---@return state
+function consume_weapon(state)
+   log("consume_weapon(%s)", state)
+
+   if not state.wpn then
+      return state
+   end
+
+   -- Fetch the weapon's section
+   local sec = state.wpn:section()
+   log("  section(%s)", sec)
+
+   -- Return with a warning if it's not valid
+   if not sec then
+      log("  WARNING: Invalid weapon section")
+      return state
+   end
+
+   -- Return if it's already set
+   if wpn_cache[sec] then
+      log("  %s is already cached, returning.", sec)
+      return state
+   end
+
+   -- Fetch existing cache data
+   wpn_cache[sec] = {}
+
+   -- Cast our weapon to a CWeapon
+   local weapon = state.wpn:cast_Weapon()
+
+   if not weapon then
+      log("  WARNING: Invalid weapon")
+      return state
+   end
+
+   -- Iterate over our parameter lenses
+   foreach(
+      lenses,
+      function(k, l)
+         wpn_cache[sec][k] = l:get(weapon)
+         l:set(weapon, 0)
+      end
+   )
+
+   return state
+end
+
+local joint_recoil = joint()
+
+function recoil_weapon(state)
+   log("recoil_weapon(%s)", state)
+
+   if not state.hud then
+      printf("  invalid HUD, returning")
+      return state
+   end
+
+   control_fac = control_fac + spring_1d(
+      0,
+      control_strength:get(),
+      control_fac
+   )
+   printf("  control_fac: %s", control_fac)
+
+   joint_recoil:impulse_with(spring_recoil.spring)
+
+   state = joint_recoil:apply_hud_orientation(state)
+   return state
+end
+
+function actor_on_weapon_fired_impl(actor, wpn, ammo)
+   printf("actor_on_weapon_fired(%s, %s, %s)", actor, wpn, ammo)
+
+   control_fac = control_fac + kick_multiplier:get()
+
+   local id = wpn:id()
+   printf("  id: %s", id)
+
+   local sec = wpn:section()
+   printf("  sec: %s", sec)
+
+   local cache = wpn_cache[sec]
+   if not cache then
+      printf("No cached recoil information")
+      return
+   end
+
+   -- Fetch weapon recoil stats
+   local wpn_disp = nil
+   local wpn_frac = nil
+   local wpn_inc = nil
+   local wpn_max_vert = nil
+   local wpn_max_horz = nil
+   local wpn_step_horz = nil
+
+   if axr_main.weapon_is_zoomed then
+      wpn_disp = cache.zoom_cam_dispersion
+      wpn_frac = cache.zoom_cam_dispersion_frac
+      wpn_inc = cache.zoom_cam_dispersion_inc
+      wpn_max_vert = cache.zoom_cam_max_angle_vert
+      wpn_max_horz = cache.zoom_cam_max_angle_horz
+      wpn_step_horz = cache.zoom_cam_step_angle_horz
+   else
+      wpn_disp = cache.cam_dispersion
+      wpn_frac = cache.cam_dispersion_frac
+      wpn_inc = cache.cam_dispersion_inc
+      wpn_max_vert = cache.cam_max_angle_vert
+      wpn_max_horz = cache.cam_max_angle_horz
+      wpn_step_horz = cache.cam_step_angle_horz
+   end
+
+   -- Gather ammo box list
+   local ammo_list_n = utils_item.get_ammo(sec, id)
+
+   -- Gather weapon info
+   local ammo_type = wpn:get_ammo_type()
+   local ammo_sec = ammo_list_n[ammo_type + 1]
+   local ammo_disp = ini_sys:r_float_ex(ammo_sec, "k_cam_disp") or 1
+
+   -- Fetch silencer recoil stats
+   local silencer = ini_sys:r_string_ex(sec, "silencer_name")
+   printf("  silencer: %s", silencer)
+
+   local silencer_disp = silencer
+      and ini_sys:r_string_ex(silencer, "cam_dispersion_k") or 1
+   local silencer_inc = silencer
+      and ini_sys:r_string_ex(silencer, "cam_dispersion_inc_k") or 1
+
+   printf("  silencer_disp: %s", silencer_disp)
+   printf("  silencer_inc: %s", silencer_inc)
+
+   local disp = wpn_disp * silencer_disp * ammo_disp
+   local inc = wpn_inc * silencer_inc * (control_fac + 1)
+
+   local ang = disp + inc
+
+   local rnd = (math.random() - 1) * 2
+   local recoil_y = ang * (wpn_frac + rnd * (1 - wpn_frac))
+   printf("  recoil_y: %s", recoil_y)
+
+   rnd = (math.random() - 1) * 2
+   local recoil_x = (joint_recoil.vec.y / wpn_max_vert) * rnd * wpn_step_horz
+   printf("  recoil_x: %s", recoil_x)
+
+   joint_recoil:impulse(vector():set(recoil_x, recoil_y, 0))
+   printf("  joint: %s", joint_recoil.vec)
+end
+
+function actor_on_weapon_fired(...)
+   local res, out = pcall(actor_on_weapon_fired_impl, ...)
+   if not res then
+      ---@cast out string
+      handle_error(out)
+   end
+end
+
+---@return nil
+function on_game_start()
+   goldenorb_main.ACTOR_ON_UPDATE
+      :after(inject_weapon, consume_weapon)
+      --:after(apply_hud_offset_rot, recoil_weapon)
+   RegisterScriptCallback("actor_on_weapon_fired", actor_on_weapon_fired)
+end

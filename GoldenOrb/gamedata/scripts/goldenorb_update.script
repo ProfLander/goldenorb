@@ -24,6 +24,7 @@ local body_cam = goldenorb_mod_body_cam_mcm.body_cam
 local free_aim = goldenorb_mod_free_aim_mcm.free_aim
 local offset_aim = goldenorb_mod_offset_aim_mcm.offset_aim
 local apply_hud_offset_rot = goldenorb_mod_hud_offset_rot.apply_hud_offset_rot
+local recoil_weapon = goldenorb_mod_recoil_mcm.recoil_weapon
 
 --- Logging
 local log = goldenorb_logging.log
@@ -34,12 +35,15 @@ local log = goldenorb_logging.log
 function on_game_start()
    log("update.on_game_start")
    ACTOR_ON_UPDATE
-      -- Finalize
       :after(
          apply_hud_offset_rot,
          body_cam,
          free_aim,
          offset_aim,
+         recoil_weapon
+      )
+      :after(
+         recoil_weapon,
          hud_adjust_enable
       )
       :after(hud_adjust_enable, apply_weapon_hud)
