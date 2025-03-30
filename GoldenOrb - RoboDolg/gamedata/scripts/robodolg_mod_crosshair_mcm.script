@@ -9,7 +9,9 @@
 --- Aim Point
 local get_camera_aim_point = goldenorb_camera_mcm.get_camera_aim_point
 local get_hands_aim_point = goldenorb_weapon.get_hands_aim_point
+local get_hands_rotation = goldenorb_weapon.get_hands_rotation
 local get_weapon_aim_point = goldenorb_weapon.get_weapon_aim_point
+local get_fire_bone_rotation = goldenorb_weapon.get_fire_bone_rotation
 
 --- Shapes
 local RED = robodolg_shapes.RED
@@ -25,6 +27,9 @@ local Trackbar = mcm_builder.Trackbar
 
 --- Robodolg
 local tree = robodolg_goldenorb_mcm.tree
+
+--- Math
+local vector_rotate_z = lander_math.vector_rotate_z
 
 --- Logging
 local log = goldenorb_logging.log
@@ -96,7 +101,11 @@ function draw(state)
          size_ring,
          segs_ring,
          COLOR_HANDS,
-         ui_2d(get_hands_aim_point(), true)
+         function(v)
+            return ui_2d(get_hands_aim_point(), true)(
+               vector_rotate_z(v, -get_hands_rotation().z)
+            )
+         end
       )
    end
 
@@ -107,7 +116,11 @@ function draw(state)
          size_ring,
          segs_ring,
          COLOR_WEAPON,
-      ui_2d(get_weapon_aim_point(state.wpn), true)
+         function(v)
+            return ui_2d(get_weapon_aim_point(state.wpn), true)(
+               vector_rotate_z(v, -get_fire_bone_rotation(state.wpn).z)
+            )
+         end
       )
    end
 

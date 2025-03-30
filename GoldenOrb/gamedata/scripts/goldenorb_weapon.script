@@ -159,9 +159,16 @@ end
 
 ---@param wpn game_object
 ---@return vector?
-function get_fire_bone_direction(wpn)
+function get_fire_bone_rotation(wpn)
    local name = get_fire_bone_name(wpn)
-   return name and hpb_to_direction(get_hud_bone_direction(wpn, name))
+   return name and get_hud_bone_direction(wpn, name)
+end
+
+---@param wpn game_object
+---@return vector?
+function get_fire_bone_direction(wpn)
+   local rot = get_fire_bone_rotation(wpn)
+   return rot and hpb_to_direction(rot)
 end
 
 ---@return vector?
