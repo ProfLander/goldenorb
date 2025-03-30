@@ -174,6 +174,19 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
   - Need to give the LSP as much info as possible
 - [X] Functional primitives pass
   - Need to replace manual maps, filters, etc with abstractions
+- [X] Apply the same logic as 3DSS for reticle positioning
+  - May result in total compatibility, BaS included
+  - [X] Construct transposed rotation matrix to apply skew to reticle
+- [X] Reify back image projection formula
+  - Backwards matrix multiplication + divide by Z instead of W
+    - Produces more-correct results
+      - Why?
+      - May be worth testing with PRS to see if there's any correlation
+- [X] MCM selection for back image filters
+  - Should be able to pass an int through s3ds_param_2 and have it drive selection logic
+- [X] Increased maximum for MCM zoom factor
+  - [X] Work around via ~run_string~
+  - [X] Formalize somehow, monkey patch?
 
 *** To Do
 **** Core
@@ -289,25 +302,34 @@ Vector debug UI framework.
     - Name, faction, etc readout
   - Metroid prime visor effect?
 
-**** 3DSS
+**** Shaders
+- [ ] Figure out why position projection requires a correction factor
+  - Different factors for 3DSS and PRS
+    - Each is linear before W divide
+    - 3DSS's is <1, PRS' is >1
+      - Possibly reciprocal in some way
+    - Appears to scale with zoom
+      - i.e. Scope zoom factor 4 requires an offset of -0.12
+        - Need to graph this on powers of 2 and infer from results
+  - Potentially related to some yet-unknown shader uniforms describing zNear and zFar (i.e. zFar - zNear or similar)
+- [ ] Refactor existing reusable projection logic into a header
+  - Preferable to call a shared function and tweak the result
+- [ ] Deduplicate existing scope code w.r.t. precision variant
+
+***** 3DSS
 - [-] Lanczos filter for back image
   - [X] Implement RetroArch lanczos2_sharp as proof-of-concept
   - [X] Implement choice of filter via shader macro
-    - Possibility to feed it in via the params struct, but unsure as to how much bandwidth remains unused
   - [X] Implement bicubic sampling
   - [ ] Implement a more permissively-licensed variant of Lanczos so it can be contributed
-- [ ] Reify back image projection formula
-  - Backwards matrix multiplication + divide by Z instead of W
-    - Produces more-correct results
-      - Why?
-      - May be worth testing with PRS to see if there's any correlation
-- [ ] Increased maximum for MCM zoom factor
-  - [ ] Work around via ~run_script~
-  - [ ] Formalize somehow, monkey patch?
 - [ ] Per-scope zoom factors
 - [ ] 3DSS Binoculars
-**** Parallax Reflex Sights
-- [-] Apply the same logic as 3DSS for reticle positioning
-  - May result in total compatibility, BaS included
-  - [X] Construct transposed rotation matrix to apply skew to reticle
-  - [ ] Figure out why position requires a correction factor
+***** Parallax Reflex Sights
+
+**** Engine
+- [ ] Use HUD projection to calculate g_firepos endpoint
+- [ ] Spawn bullets from gun barrel when g_firepos is active
+  - Already has a significant chunk of commented code present
+    - Can likely be cleaned up and refined
+      - i.e. Remove hacks like offsetting bullets to prevent wall penetration
+        - Correct solution is preventing the barrel from intersecting

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<string_table>
+    <string id="ui_mcm_3d_scopes_zoom_filter">
+        <text>Zoom filter</text>
+    </string>
+
+    <string id="ui_mcm_lst_3d_scopes_bilinear">
+        <text>Bilinear</text>
+    </string>
+
+    <string id="ui_mcm_lst_3d_scopes_bicubic">
+        <text>Bicubic</text>
+    </string>
+
+    <string id="ui_mcm_lst_3d_scopes_lanczos">
+        <text>Lanczos</text>
+    </string>
+</string_table>
