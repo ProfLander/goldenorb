@@ -300,6 +300,7 @@ Vector debug UI framework.
 - [ ] Orient reticle based on bone roll
   - May be a good opportunity to formalize the bone API around a proper Transform abstraction
     - Would also benefit the spring / joint system
+- [ ] Setup pcall for drawing callback
 - [ ] Implement sprite rendering via UI
   - Use a similar ~draw_foo~ interface for simplicity
 - [ ] Implement sprite crosshair
