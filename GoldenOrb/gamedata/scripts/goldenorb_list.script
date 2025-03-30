@@ -30,6 +30,17 @@ function map(lst, f)
    return out
 end
 
+--- Return a reversed copy of the given list
+---@param lst table<number, any>
+---@return table<number, any>
+function reverse(lst)
+   local out = {}
+   for i=1,math.floor(#lst/2),1 do
+        out[i], out[#lst-i+1] = lst[#lst-i+1], lst[i]
+   end
+   return out
+end
+
 ---@param lst any[]
 ---@param init any
 ---@param f fun(acc: any, next: any): any
