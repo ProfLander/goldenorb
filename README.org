@@ -86,15 +86,6 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
 
 
 ** Features
-- [-] Reimplement recoil via decoupled aim point
-  - [X] Add recoil joint
-  - [X] Simple implementation that increments by dispersion
-  - [ ] Reimplement engine recoil logic
-    - ~CWeaponShotEffector~ has the core of it
-    - Accounts for ammo, weapon, silencer, scope and launcher dispersion factors when calculating base angle in ~Shot~
-    - Applies fraction in ~Shot2~ to calculate actual X/Y offset
-    - Increment depends on ~weapon->ShotsFired()~, which appears to be the amount of consecutive shots since the last trigger release
-  - [ ] Implement recentering via spring force
 - [ ] Weapon inverse kinematics
   - For aiming around cover in appropriate situations
     - Functionally dependent on accurate ballistics
@@ -187,6 +178,18 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
 - [X] Increased maximum for MCM zoom factor
   - [X] Work around via ~run_string~
   - [X] Formalize somehow, monkey patch?
+- [X] Orient reticle based on bone roll
+  - May be a good opportunity to formalize the bone API around a proper Transform abstraction
+    - Would also benefit the spring / joint system
+- [X] Reimplement recoil via decoupled aim point
+  - [X] Add recoil joint
+  - [X] Simple implementation that increments by dispersion
+  - [X] Reimplement engine recoil logic
+    - ~CWeaponShotEffector~ has the core of it
+    - Accounts for ammo, weapon, silencer, scope and launcher dispersion factors when calculating base angle in ~Shot~
+    - Applies fraction in ~Shot2~ to calculate actual X/Y offset
+    - Increment depends on ~weapon->ShotsFired()~, which appears to be the amount of consecutive shots since the last trigger release
+  - [X] Implement recentering via spring force
 
 *** To Do
 **** Core
@@ -297,10 +300,11 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
 **** RoboDolg
 Vector debug UI framework.
 
-- [ ] Orient reticle based on bone roll
-  - May be a good opportunity to formalize the bone API around a proper Transform abstraction
-    - Would also benefit the spring / joint system
 - [ ] Setup pcall for drawing callback
+- [ ] Offset reticle roll by camera roll
+  - Alternately, offset camera roll by inverse
+    - Option for either?
+      - World-relative vs player-relative
 - [ ] Implement sprite rendering via UI
   - Use a similar ~draw_foo~ interface for simplicity
 - [ ] Implement sprite crosshair
