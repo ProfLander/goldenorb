@@ -8,6 +8,7 @@
 
 --- Aim Point
 local get_camera_aim_point = goldenorb_camera_mcm.get_camera_aim_point
+local get_camera_rotation = goldenorb_camera_mcm.get_camera_rotation
 local get_hands_aim_point = goldenorb_weapon.get_hands_aim_point
 local get_hands_rotation = goldenorb_weapon.get_hands_rotation
 local get_weapon_aim_point = goldenorb_weapon.get_weapon_aim_point
@@ -28,6 +29,10 @@ local Trackbar = mcm_builder.Trackbar
 
 --- Robodolg
 local tree = robodolg_goldenorb_mcm.tree
+
+--- Function
+local advise_before = goldenorb_function.advise_before
+local curry_r = goldenorb_function.curry_r
 
 --- Math
 local vector_rotate_z = lander_math.vector_rotate_z
@@ -100,6 +105,14 @@ local
 
 -- Implementation
 
+function vert(v, cond, r)
+   printf("vert(%s, %s, %s)", v, cond, r)
+   local out = ui_2d(v, true)
+   return cond
+      and advise_before(out, curry_r(vector_rotate_z, r))
+      or out
+end
+
 ---@param state state
 ---@return state
 function draw(state)
@@ -112,6 +125,8 @@ function draw(state)
    local size_cross = cross_size:get()
    local size_ring = ring_size:get()
    local segs_ring = ring_segs:get()
+
+   local cam_roll = get_camera_rotation().z
 
    -- Camera
    if draw_camera:get() then
@@ -126,37 +141,31 @@ function draw(state)
 
    -- Hands
    if draw_hands:get() then
-      local hands_vert = rotate_hands:get()
-         and function(v)
-            return ui_2d(get_hands_aim_point(), true)(
-               vector_rotate_z(v, -get_hands_rotation().z)
-            )
-         end
-         or ui_2d(get_hands_aim_point(), true)
       draw_crosshair(
          size_cross,
          size_ring,
          segs_ring,
          COLOR_HANDS,
-         hands_vert
+         vert(
+            get_hands_aim_point(),
+            rotate_hands:get(),
+            -(get_hands_rotation().z - cam_roll)
+         )
       )
    end
 
    -- Weapon
    if draw_weapon:get() then
-      local weapon_vert = rotate_weapon:get()
-         and function(v)
-            return ui_2d(get_weapon_aim_point(state.wpn), true)(
-               vector_rotate_z(v, -get_fire_bone_rotation(state.wpn).z)
-            )
-         end
-         or ui_2d(get_weapon_aim_point(state.wpn), true)
       draw_crosshair(
          size_cross,
          size_ring,
          segs_ring,
          COLOR_WEAPON,
-         weapon_vert
+         vert(
+            get_weapon_aim_point(state.wpn),
+            rotate_weapon:get(),
+            -(get_fire_bone_rotation(state.wpn).z - cam_roll)
+         )
       )
    end
 
