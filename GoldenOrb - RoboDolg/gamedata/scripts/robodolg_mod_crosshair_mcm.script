@@ -22,6 +22,7 @@ local draw_crosshair = robodolg_shapes.draw_crosshair
 
 --- MCM Builder
 local ImageWithText = mcm_builder.ImageWithText
+local Title = mcm_builder.Title
 local Checkbox = mcm_builder.Checkbox
 local Trackbar = mcm_builder.Trackbar
 
@@ -42,18 +43,19 @@ COLOR_WEAPON = RED
 
 -- State
 
+--- MCM Page
 local page = tree:pages("crosshair")
 
+--- Page title
 page:settings(ImageWithText.new("crosshair_title"):text("crosshair"))
 
-local draw_camera, draw_hands, draw_weapon, cross_size, ring_size, ring_segs =
+--- Visual section
+page:settings(Title.new("visual_title"):text("visual"))
+local
+   cross_size,
+   ring_size,
+   ring_segs =
    page:settings(
-      Checkbox.new("draw_camera")
-         :default(true),
-      Checkbox.new("draw_hands")
-         :default(true),
-      Checkbox.new("draw_weapon")
-         :default(true),
       Trackbar.new("cross_size")
          :increment(0.01)
          :default(0.03)
@@ -66,6 +68,34 @@ local draw_camera, draw_hands, draw_weapon, cross_size, ring_size, ring_segs =
          :increment(1)
          :default(8)
          :minmax(3, 64)
+   )
+
+--- Camera section
+page:settings(Title.new("camera_title"):text("camera"))
+local draw_camera = page:settings(
+   Checkbox.new("draw_camera")
+      :default(true)
+)
+
+--- Hands section
+page:settings(Title.new("hands_title"):text("hands"))
+local draw_hands, rotate_hands = page:settings(
+   Checkbox.new("draw_hands")
+      :default(true),
+   Checkbox.new("rotate_hands")
+      :default(true)
+)
+
+--- Weapon section
+page:settings(Title.new("weapon_title"):text("weapon"))
+local
+   draw_weapon,
+   rotate_weapon =
+   page:settings(
+   Checkbox.new("draw_weapon")
+         :default(true),
+      Checkbox.new("rotate_weapon")
+         :default(true)
    )
 
 -- Implementation
@@ -96,31 +126,37 @@ function draw(state)
 
    -- Hands
    if draw_hands:get() then
+      local hands_vert = rotate_hands:get()
+         and function(v)
+            return ui_2d(get_hands_aim_point(), true)(
+               vector_rotate_z(v, -get_hands_rotation().z)
+            )
+         end
+         or ui_2d(get_hands_aim_point(), true)
       draw_crosshair(
          size_cross,
          size_ring,
          segs_ring,
          COLOR_HANDS,
-         function(v)
-            return ui_2d(get_hands_aim_point(), true)(
-               vector_rotate_z(v, -get_hands_rotation().z)
-            )
-         end
+         hands_vert
       )
    end
 
    -- Weapon
    if draw_weapon:get() then
+      local weapon_vert = rotate_weapon:get()
+         and function(v)
+            return ui_2d(get_weapon_aim_point(state.wpn), true)(
+               vector_rotate_z(v, -get_fire_bone_rotation(state.wpn).z)
+            )
+         end
+         or ui_2d(get_weapon_aim_point(state.wpn), true)
       draw_crosshair(
          size_cross,
          size_ring,
          segs_ring,
          COLOR_WEAPON,
-         function(v)
-            return ui_2d(get_weapon_aim_point(state.wpn), true)(
-               vector_rotate_z(v, -get_fire_bone_rotation(state.wpn).z)
-            )
-         end
+         weapon_vert
       )
    end
 
