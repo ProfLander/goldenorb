@@ -8,13 +8,64 @@
 
 -- Imports
 
---- Action
-local action = goldenorb_action.action
+--- Schedule
+local schedule = goldenorb_schedule.schedule
+local start = goldenorb_schedule.start
+local finish = goldenorb_schedule.finish
+
+--- Function
+local protected = goldenorb_function.protected
+
+--- Logging
+local log = goldenorb_logging.logger(
+   "GoldenOrb/Main",
+   goldenorb_logging.TRACE
+)
 
 -- Constants
 
+--- State build barrier
+function phase_build_state(...)
+   log:info("Phase: Build State")
+   return ...
+end
+
+--- State modify barrier
+function phase_modify_state(...)
+   log:info("Phase: Modify State")
+   return ...
+end
+
+--- State apply barrier
+function phase_apply_state(...)
+   log:info("Phase: Apply State")
+   return ...
+end
+
+--- State apply barrier
+function phase_done(...)
+   log:info("Phase: Done")
+   return ...
+end
+
 --- Actor update action
-ACTOR_ON_UPDATE = action()
+ACTOR_ON_UPDATE = schedule()
+   :insert(
+      {
+         phase_build_state,
+         phase_modify_state,
+         phase_apply_state,
+         phase_done,
+      },
+      {
+         start,
+         phase_build_state,
+         phase_modify_state,
+         phase_apply_state,
+         phase_done,
+         finish
+      }
+   )
 
 ---@class state
 ---@field actor game_object?
@@ -35,12 +86,15 @@ end
 
 --- Entrypoint
 ---@return nil
-function on_game_start()
-   -- We use AddUniqueCall here instead of registering with actor_on_update
-   -- to make sure our updates are in sync with device().cam_*
-   --AddUniqueCall(goldenorb_update)
-   RegisterScriptCallback(
-      "actor_on_update",
-      ACTOR_ON_UPDATE:prun_deferred(handle_error, {})
-   )
-end
+on_game_start = protected(
+   handle_error,
+   function()
+      -- We use AddUniqueCall here instead of registering with actor_on_update
+      -- to make sure our updates are in sync with device().cam_*
+      --AddUniqueCall(goldenorb_update)
+      RegisterScriptCallback(
+         "actor_on_update",
+         ACTOR_ON_UPDATE:run_deferred({})
+      )
+   end
+)

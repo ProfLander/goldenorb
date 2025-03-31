@@ -13,15 +13,28 @@
 
 -- Imports
 
---- Weapon
+--- Main
+local phase_build_state = goldenorb_main.phase_build_state
+local phase_modify_state = goldenorb_main.phase_modify_state
+local handle_error = goldenorb_main.handle_error
+
+--- Reset Hands Orientation
 local reset_hands_orientation = goldenorb_mod_reset_hands_orientation.reset_hands_orientation
+
+--- Weapon
 local get_hud_number = goldenorb_weapon.get_hud_number
 
 --- Math
 local deg = lander_math.deg
 
+--- Function
+local protected = goldenorb_function.protected
+
 --- Logging
-local log = goldenorb_logging.log
+local log = goldenorb_logging.logger(
+   "GoldenOrb/HUD Offset Rotation",
+   goldenorb_logging.TRACE
+)
 
 -- State
 
@@ -33,7 +46,7 @@ local zoom_fac = 0
 ---@param state state
 ---@return state
 function apply_hud_offset_rot(state)
-   log("apply_hud_offset_rot(%s)", state)
+   log:trace("apply_hud_offset_rot(%s)", state)
 
    if not state.wpn or not state.hud then
       return state
@@ -45,7 +58,7 @@ function apply_hud_offset_rot(state)
    then
       zoom_duration = 0.25
    end
-   log("  zoom_duration: %s", zoom_duration)
+   log:debug("  zoom_duration: %s", zoom_duration)
 
    -- Apply HUD offset rotation based on zoom state
    local ofs = vector():set(
@@ -55,7 +68,7 @@ function apply_hud_offset_rot(state)
    )
 
    local dt = (device().time_delta / 1000) / zoom_duration
-   log("  dt: %s", dt)
+   log:debug("  dt: %s", dt)
    if not axr_main.weapon_is_zoomed then
       dt = -dt
    end
@@ -63,7 +76,7 @@ function apply_hud_offset_rot(state)
 
    zoom_fac = math.min(math.max(zoom_fac, 0), 1)
 
-   log("  zoom_fac: %s", zoom_fac)
+   log:debug("  zoom_fac: %s", zoom_fac)
 
    state.hud.hands_orientation:add(ofs:mul(zoom_fac))
 
@@ -72,7 +85,18 @@ function apply_hud_offset_rot(state)
 end
 
 ---@return nil
-function on_game_start()
-   goldenorb_main.ACTOR_ON_UPDATE
-      :after(reset_hands_orientation, apply_hud_offset_rot)
-end
+on_game_start = protected(
+   handle_error,
+   function()
+      goldenorb_main.ACTOR_ON_UPDATE
+         :insert(
+            {apply_hud_offset_rot},
+            {
+               phase_build_state,
+               reset_hands_orientation,
+               apply_hud_offset_rot,
+               phase_modify_state
+            }
+         )
+   end
+)

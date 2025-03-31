@@ -7,7 +7,9 @@
 -- Imports
 
 --- HUD offset rotation
-local apply_hud_offset_rot = goldenorb_mod_hud_offset_rot.apply_hud_offset_rot
+local phase_modify_state = goldenorb_main.phase_modify_state
+local phase_apply_state = goldenorb_main.phase_apply_state
+local handle_error = goldenorb_main.handle_error
 
 --- Aim
 local page = goldenorb_aim.page
@@ -22,13 +24,19 @@ local get_camera_delta_rotation = goldenorb_camera_mcm.get_camera_delta_rotation
 --- String
 local parse_vector = goldenorb_string.parse_vector
 
+--- Function
+local protected = goldenorb_function.protected
+
 --- MCM Builder
 local Line = mcm_builder.Line
 local Title = mcm_builder.Title
 local InputField = mcm_builder.InputField
 
 --- Logging
-local log = goldenorb_logging.log
+local log = goldenorb_logging.logger(
+   "GoldenOrb/Offset Aim",
+   goldenorb_logging.TRACE
+)
 
 -- State
 
@@ -54,7 +62,7 @@ end
 ---@param state state
 ---@return state
 function offset_aim(state)
-   log("offset_aim(%s)", state)
+   log:trace("offset_aim(%s)", state)
 
    if not enabled() then
       return state
@@ -73,7 +81,17 @@ function offset_aim(state)
 end
 
 ---@return nil
-function on_game_start()
-   goldenorb_main.ACTOR_ON_UPDATE
-      :after(apply_hud_offset_rot, offset_aim)
-end
+on_game_start = protected(
+   handle_error,
+   function()
+      goldenorb_main.ACTOR_ON_UPDATE
+         :insert(
+            {offset_aim},
+            {
+               phase_modify_state,
+               offset_aim,
+               phase_apply_state
+            }
+         )
+   end
+)

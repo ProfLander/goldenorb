@@ -8,7 +8,20 @@
 
 -- Imports
 
-local log = goldenorb_logging.log
+--- Main
+local phase_build_state = goldenorb_main.phase_build_state
+local phase_apply_state = goldenorb_main.phase_apply_state
+local phase_done = goldenorb_main.phase_done
+local handle_error = goldenorb_main.handle_error
+
+--- Function
+local protected = goldenorb_function.protected
+
+--- Logging
+local log = goldenorb_logging.logger(
+   "GoldenOrb/Impure",
+    goldenorb_logging.TRACE
+)
 
 -- Implementation
 
@@ -16,7 +29,7 @@ local log = goldenorb_logging.log
 ---@param state state
 ---@return state
 function hud_adjust_enable(state)
-   log("hud_adjust_enable(%s)", state)
+   log:trace("hud_adjust_enable(%s)", state)
    hud_adjust.enabled(true)
    return state
 end
@@ -25,13 +38,29 @@ end
 ---@param state state
 ---@return state
 function inject_actor(state)
-   log("inject_actor(%s)", state)
+   log:trace("inject_actor(%s)", state)
    state.actor = db.actor
    return state
 end
 
 --- Entrypoint
 ---@return nil
-function on_game_start()
-   goldenorb_main.ACTOR_ON_UPDATE:add_call(inject_actor)
-end
+on_game_start = protected(
+   handle_error,
+   function()
+      goldenorb_main.ACTOR_ON_UPDATE
+         :insert(
+            {
+               inject_actor,
+               hud_adjust_enable,
+            },
+            {
+               phase_build_state,
+               inject_actor,
+               phase_apply_state,
+               hud_adjust_enable,
+               phase_done
+            }
+         )
+   end
+)

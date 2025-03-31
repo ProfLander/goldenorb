@@ -39,6 +39,15 @@ local cache = nil
 
 -- Implementation
 
+--- Error handler
+---@param e string
+---@return nil
+function handle_error(e)
+   local msg = string.format("RoboDolg: ERROR: %s", e)
+   printf(msg)
+   actor_menu.set_msg(1, msg, 10000)
+end
+
 --- Intercept the state and cache it for later
 ---@param state state
 ---@return state
@@ -49,8 +58,8 @@ end
 
 --- Use the cached stated to draw robodolg modules
 ---@return nil
-function draw_robodolg()
-   log("draw_robodolg()")
+function draw_robodolg_impl()
+   log("draw_robodolg_impl()")
    reset()
 
    if not enabled:get() then
@@ -59,6 +68,15 @@ function draw_robodolg()
 
    if cache then
       SendScriptCallback("robodolg_on_draw", cache)
+   end
+end
+
+function draw_robodolg()
+   log("draw_robodolg()")
+   local res, err = pcall(draw_robodolg_impl)
+   if not res then
+      ---@cast err string
+      handle_error(err)
    end
 end
 

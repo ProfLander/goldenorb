@@ -13,39 +13,53 @@ INFO = 3
 DEBUG = 4
 TRACE = 5
 
-local LEVEL = OFF
+local LEVEL = TRACE
 
 -- Implementation
 
+---@class logger
+---@field mod string
+---@field level number
+
+--- Logger Metatable
+Logger = {}
+
+--- Logger constructor
+function logger(mod, level)
+   assert(
+      type(mod) == "string",
+      string.format("Invalid module name: %s", mod)
+   )
+   assert(
+      type(level) == "number",
+      string.format("Invalid log level: %s", level)
+   )
+   return setmetatable(
+      { mod = mod, level = level },
+      { __index = Logger }
+   )
+end
+
 ---@param s string
 ---@param ... any
 ---@return nil
-function log_impl(s, ...)
-   printf("GoldenOrb: " .. s, ...)
+function Logger:log_impl(s, ...)
+   printf("%s: " .. s, self.mod, ...)
 end
 
 --- If logging is enabled, print the given format string and arguments
----@param s string
----@param ... any
----@return nil
-function log(s, ...)
-   if LEVEL > OFF then
-      return log_impl(s, ...)
-   end
-end
-
 ---@param level number
----@return fun(s: string, ...: any): nil
-function log_level(level)
-   return function(...)
-      if LEVEL >= level then
-         return log_impl(...)
+---@return fun(self: logger, s: string, ...: any): nil
+function make_log(level)
+   return function(self, s, ...)
+      if self.level >= level and LEVEL >= level then
+         return self:log_impl(s, ...)
       end
    end
 end
 
-err = log_level(ERROR)
-warn = log_level(WARNING)
-info = log_level(INFO)
-dbg = log_level(DEBUG)
-trace = log_level(TRACE)
+Logger.error = make_log(ERROR)
+Logger.warning = make_log(WARNING)
+Logger.debug = make_log(DEBUG)
+Logger.info = make_log(INFO)
+Logger.trace = make_log(TRACE)

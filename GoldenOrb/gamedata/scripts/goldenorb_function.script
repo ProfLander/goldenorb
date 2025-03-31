@@ -71,3 +71,19 @@ function curry_r(f, p)
       return f(..., p)
    end
 end
+
+--- Wrap the given function F in pcall,
+--- delegating to function E in case of an error.
+---@param e fun(...: string): any
+---@param f fun(...: any): any
+---@return fun(...: any): any
+function protected(e, f)
+   return function(...)
+      local res, out = pcall(f, ...)
+      if not res then
+         return e(out)
+      end
+      return out
+   end
+end
+

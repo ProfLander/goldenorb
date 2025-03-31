@@ -6,11 +6,22 @@
 
 -- Imports
 
+--- Main
+local handle_error = goldenorb_main.handle_error
+local phase_build_state = goldenorb_main.phase_build_state
+local phase_modify_state = goldenorb_main.phase_modify_state
+
+--- Function
+local protected = goldenorb_function.protected
+
 --- Weapon
 local inject_weapon_hud = goldenorb_weapon.inject_weapon_hud
 
 --- Logging
-local log = goldenorb_logging.log
+local log = goldenorb_logging.logger(
+   "GoldenOrb/Reset Hands Position",
+   goldenorb_logging.TRACE
+)
 
 -- Constants
 
@@ -22,7 +33,7 @@ RUN = false
 ---@param state state
 ---@return state
 function reset_hands_position(state)
-   log("reset_hands_position(%s)", state)
+   log:trace("reset_hands_position(%s)", state)
 
    if not RUN then
       return state
@@ -38,7 +49,18 @@ function reset_hands_position(state)
 end
 
 ---@return nil
-function on_game_start()
-   goldenorb_main.ACTOR_ON_UPDATE
-      :after(inject_weapon_hud, reset_hands_position)
-end
+on_game_start = protected(
+   handle_error,
+   function()
+      goldenorb_main.ACTOR_ON_UPDATE
+         :insert(
+            {reset_hands_position},
+            {
+               phase_build_state,
+               inject_weapon_hud,
+               reset_hands_position,
+               phase_modify_state
+            }
+         )
+   end
+)

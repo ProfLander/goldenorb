@@ -6,14 +6,24 @@
 
 -- Imports
 
+--- Main
+local phase_build_state = goldenorb_main.phase_build_state
+local handle_error = goldenorb_main.handle_error
+
 --- Weapon
 local inject_weapon_hud = goldenorb_weapon.inject_weapon_hud
+
+--- Function
+local protected = goldenorb_function.protected
 
 --- Math
 local EPSILON = lander_math.EPSILON
 
 --- Log
-local log = goldenorb_logging.log
+local log = goldenorb_logging.logger(
+   "GoldenOrb/Offset Fire Point",
+   goldenorb_logging.TRACE
+)
 
 -- Constants
 
@@ -25,7 +35,7 @@ local OFFSET = vector():set(0, 0, EPSILON)
 ---@param state state
 ---@return state
 function offset_fire_point(state)
-   log("offset_fire_point(%s)", state)
+   log:trace("offset_fire_point(%s)", state)
 
    if not state.hud then
       return state
@@ -38,7 +48,18 @@ function offset_fire_point(state)
 end
 
 ---@return nil
-function on_game_start()
-   goldenorb_main.ACTOR_ON_UPDATE
-      :after(inject_weapon_hud, offset_fire_point)
-end
+on_game_start = protected(
+   handle_error,
+   function()
+      goldenorb_main.ACTOR_ON_UPDATE
+         :insert(
+            {offset_fire_point},
+            {
+               phase_build_state,
+               inject_weapon_hud,
+               offset_fire_point,
+               phase_modify_state
+            }
+         )
+   end
+)

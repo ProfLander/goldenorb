@@ -106,7 +106,7 @@ local
 -- Implementation
 
 function vert(v, cond, r)
-   printf("vert(%s, %s, %s)", v, cond, r)
+   log("vert(%s, %s, %s)", v, cond, r)
    local out = ui_2d(v, true)
    return cond
       and advise_before(out, curry_r(vector_rotate_z, r))

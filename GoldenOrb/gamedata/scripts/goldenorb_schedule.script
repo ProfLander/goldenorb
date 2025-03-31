@@ -1,0 +1,281 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Schedule
+----------------------------------------------------------------------------
+-- Object-oriented dependent function scheduling.
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+-- Imports
+
+--- List
+local fold = goldenorb_list.fold
+
+--- Logging
+local log = goldenorb_logging.logger(
+   "GoldenOrb/Schedule",
+    goldenorb_logging.TRACE
+)
+
+-- Implementation
+
+function start(...)
+   log:trace("Start")
+   return ...
+end
+
+function finish(...)
+   log:trace("Finish")
+   return ...
+end
+
+--- Schedule metatable
+---@class schedule
+---@field calls (fun(any: any): any)[]
+---@field rules [fun(any: any): any, fun(any: any): any]
+---@field schedule (fun(any: any): any)[]
+local Schedule = {}
+
+--- Schedule constructor
+---@return schedule
+function schedule()
+   return setmetatable(
+      {
+         calls = {start, finish},
+         rules = {{start, finish}},
+         schedule = nil,
+      },
+      { __index = Schedule }
+   )
+end
+
+---@return nil
+function Schedule:invalidate()
+   log:trace("Schedule:invalidate()")
+   self.schedule = nil
+end
+
+---@param f fun(any: any): any
+---@return schedule
+function Schedule:add_call(f)
+   log:trace("Schedule:add_call(%s)", f)
+   assert(f ~= nil, "Invalid call")
+   self:invalidate()
+   table.insert(self.calls, f)
+   return self
+end
+
+function Schedule:add_calls(...)
+   local args = {...}
+   for i=1,#args do
+      self:add_call(args[i])
+   end
+   return self
+end
+
+---@param fa fun(any: any): any
+---@param fb fun(any: any): any
+---@return schedule
+function Schedule:add_rule(fa, fb)
+   log:trace("Schedule:add_rule(%s, %s)", fa, fb)
+   assert(fa ~= nil, "Invalid rule LHS")
+   assert(fb ~= nil, "Invalid rule RHS")
+   assert(fa ~= fb, "Cannot constrain a call to run relative to itself")
+   self:invalidate()
+   table.insert(self.rules, {fa, fb})
+   return self
+end
+
+function Schedule:add_rules(...)
+   local args = {...}
+   for i=1,#args do
+      local arg = args[i]
+      local acc = nil
+      for j=1,#arg do
+         local call = arg[j]
+         if acc then
+            self:add_rule(acc, call)
+         end
+         acc = call
+      end
+   end
+   return self
+end
+
+--- Return the number of elements for which F returns true
+function count(lst, f)
+   return fold(
+      lst,
+      0,
+      function(acc, next)
+         return f(next) and (acc + 1) or acc
+      end
+   )
+end
+
+--- Curried equality check
+function eq(a)
+   return function(b)
+      return a == b
+   end
+end
+
+--- Curried inequality check
+function ne(a)
+   return function(b)
+      return a ~= b
+   end
+end
+
+function Schedule:insert(calls, rules)
+   log:trace("Schedule:insert(%s, %s)", calls, rules)
+
+   assert(
+      type(calls) == "table",
+      string.format("Invalid calls: %s", calls)
+   )
+   assert(
+      type(rules) == "table",
+      string.format("Invalid rules: %s", rules)
+   )
+   assert(
+      #rules >= #calls + 2,
+      "Rules must include at least two non-associated calls"
+   )
+
+   for i=1,#calls do
+      local call = calls[i]
+      assert(
+         call ~= nil,
+         string.format("Invalid call at index %s", i)
+      )
+      assert(
+         count(rules, eq(call)) == 1,
+         "Rules must mention their associated calls exactly once each"
+      )
+      assert(
+         rules[1] ~= call,
+         "Rules must not begin with any of their associated calls"
+      )
+      assert(
+         rules[#rules] ~= call,
+         "Rules must not end with any of their associated calls"
+      )
+      self:add_call(call)
+   end
+
+   self:add_rules(rules)
+   return self
+end
+
+---@return schedule
+function Schedule:build()
+   log:trace("Schedule:build()")
+
+   self.schedule = {}
+
+   log:debug("  calls: %s", #self.calls)
+   log:debug("  rules: %s", #self.rules)
+
+   local called = {}
+   local count = 0
+   while count < #self.calls do
+      log:trace("  count: %s", count)
+      for _,call in ipairs(self.calls) do
+         log:trace("  call: %s", call)
+         if called[call] then
+            log:trace("    already called")
+            goto next_call
+         end
+
+         for _,rule in ipairs(self.rules) do
+            --log:debug("    rule: %s -> %s", rule[1], rule[2])
+
+            -- If the rule doen't mention the call, skip it
+            if rule[2] ~= call then
+               --log:debug("      not relevant")
+               goto next_rule
+            end
+
+            -- If the call is the target of the rule
+            -- and its dependency is not met, skip it
+            if not called[rule[1]] then
+               --log:debug("      not satisfied")
+               goto next_call
+            end
+
+            --log:debug("      pass")
+
+            ::next_rule::
+         end
+
+         --log:debug("  pass")
+
+         -- If all rules pass, call the function
+         table.insert(self.schedule, call)
+         called[call] = true
+         count = count + 1
+         goto next_iter
+
+         ::next_call::
+      end
+
+      assert(nil, "Unsolvable dependency graph")
+
+      ::next_iter::
+   end
+
+   return self
+end
+
+--- Run the schedule with the given parameter and return its result
+---@param p any
+---@return any
+function Schedule:run(p)
+   log:trace("Schedule:run(%s)", p)
+
+   if not self.schedule then
+      self:build()
+   end
+
+   return fold(
+      self.schedule, p,
+      function(acc, f)
+         return f(acc)
+      end
+   )
+end
+
+--- Run the schedule with the given error handler and parameter,
+--- and return its result
+---@param e fun(any: any): any
+---@param p any
+---@return any
+function Schedule:prun(e, p)
+   log:trace("Schedule:prun(%s, %s)", e, p)
+   local status, res = pcall(self.run, self, p)
+   if not status then
+      return e(res)
+   end
+   return res
+end
+
+--- Produce a function to run the schedule,
+--- optionally overriding its input
+---@param pa any
+---@return fun(pb: any): any
+function Schedule:run_deferred(pa)
+   return function(pb)
+      return self:run(pa or pb)
+   end
+end
+
+--- Produce a function to prun the schedule,
+--- optionally overriding its input
+---@param e fun(any: any): any
+---@return fun(pb: any): any
+function Schedule:prun_deferred(e, pa)
+   return function(pb)
+      return self:prun(e, pa or pb)
+   end
+end

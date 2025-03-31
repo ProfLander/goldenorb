@@ -7,11 +7,17 @@
 -- Imports
 
 --- Goldenorb
-local handle_error = goldenorb_main.handle_error
 local tree = goldenorb_mcm.tree
 
---- Weapon
-local inject_weapon = goldenorb_weapon.inject_weapon
+--- Main
+local phase_modify_state = goldenorb_main.phase_modify_state
+local phase_apply_state = goldenorb_main.phase_apply_state
+local handle_error = goldenorb_main.handle_error
+
+--- Modifiers
+local body_cam = goldenorb_mod_body_cam_mcm.body_cam
+local free_aim = goldenorb_mod_free_aim_mcm.free_aim
+local offset_aim = goldenorb_mod_offset_aim_mcm.offset_aim
 
 --- Joint
 local joint = goldenorb_joint.joint
@@ -25,11 +31,17 @@ local spring_1d = goldenorb_spring.spring_1d
 --- Table
 local foreach = goldenorb_table.foreach
 
+--- Function
+local protected = goldenorb_function.protected
+
 --- MCM Builder
 local Trackbar = mcm_builder.Trackbar
 
 --- Logging
-local log = goldenorb_logging.log
+local log = goldenorb_logging.logger(
+   "GoldenOrb/Recoil",
+   goldenorb_logging.TRACE
+)
 
 -- Constants
 
@@ -127,7 +139,7 @@ local control_fac = 0
 ---@param state state
 ---@return state
 function consume_weapon(state)
-   log("consume_weapon(%s)", state)
+   log:trace("consume_weapon(%s)", state)
 
    if not state.wpn then
       return state
@@ -135,17 +147,17 @@ function consume_weapon(state)
 
    -- Fetch the weapon's section
    local sec = state.wpn:section()
-   log("  section(%s)", sec)
+   log:debug("  section(%s)", sec)
 
    -- Return with a warning if it's not valid
    if not sec then
-      log("  WARNING: Invalid weapon section")
+      log:warning("  WARNING: Invalid weapon section")
       return state
    end
 
    -- Return if it's already set
    if wpn_cache[sec] then
-      log("  %s is already cached, returning.", sec)
+      log:info("  %s is already cached, returning.", sec)
       return state
    end
 
@@ -156,7 +168,7 @@ function consume_weapon(state)
    local weapon = state.wpn:cast_Weapon()
 
    if not weapon then
-      log("  WARNING: Invalid weapon")
+      log:warning("  WARNING: Invalid weapon")
       return state
    end
 
@@ -175,7 +187,7 @@ end
 local joint_recoil = joint()
 
 function recoil_weapon(state)
-   log("recoil_weapon(%s)", state)
+   log:trace("recoil_weapon(%s)", state)
 
    if not state.hud then
       printf("  invalid HUD, returning")
@@ -187,7 +199,7 @@ function recoil_weapon(state)
       control_strength:get(),
       control_fac
    )
-   printf("  control_fac: %s", control_fac)
+   log:debug("  control_fac: %s", control_fac)
 
    joint_recoil:impulse_with(spring_recoil.spring)
 
@@ -196,19 +208,19 @@ function recoil_weapon(state)
 end
 
 function actor_on_weapon_fired_impl(actor, wpn, ammo)
-   printf("actor_on_weapon_fired(%s, %s, %s)", actor, wpn, ammo)
+   log:trace("actor_on_weapon_fired(%s, %s, %s)", actor, wpn, ammo)
 
    control_fac = control_fac + kick_multiplier:get()
 
    local id = wpn:id()
-   printf("  id: %s", id)
+   log:debug("  id: %s", id)
 
    local sec = wpn:section()
-   printf("  sec: %s", sec)
+   log:debug("  sec: %s", sec)
 
    local cache = wpn_cache[sec]
    if not cache then
-      printf("No cached recoil information")
+      log:info("No cached recoil information")
       return
    end
 
@@ -282,9 +294,22 @@ function actor_on_weapon_fired(...)
 end
 
 ---@return nil
-function on_game_start()
-   goldenorb_main.ACTOR_ON_UPDATE
-      :after(inject_weapon, consume_weapon)
-      --:after(apply_hud_offset_rot, recoil_weapon)
-   RegisterScriptCallback("actor_on_weapon_fired", actor_on_weapon_fired)
-end
+on_game_start = protected(
+   handle_error,
+   function()
+      goldenorb_main.ACTOR_ON_UPDATE
+         :insert(
+            {consume_weapon, recoil_weapon},
+            {
+               phase_modify_state,
+               consume_weapon,
+               body_cam,
+               free_aim,
+               offset_aim,
+               recoil_weapon,
+               phase_apply_state
+            }
+         )
+      RegisterScriptCallback("actor_on_weapon_fired", actor_on_weapon_fired)
+   end
+)

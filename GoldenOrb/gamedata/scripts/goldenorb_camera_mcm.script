@@ -7,22 +7,32 @@
 -- Imports
 
 --- Goldenorb
-
 local tree = goldenorb_mcm.tree
+
+--- Main
+local ACTOR_ON_UPDATE = goldenorb_main.ACTOR_ON_UPDATE
+local phase_build_state = goldenorb_main.phase_build_state
+local phase_modify_state = goldenorb_main.phase_modify_state
+local phase_apply_state = goldenorb_main.phase_apply_state
+local phase_done = goldenorb_main.phase_done
+local handle_error = goldenorb_main.handle_error
+
+--- Function
+local protected = goldenorb_function.protected
 
 --- Level
 local set_cam_custom_position_direction = level.set_cam_custom_position_direction
 local remove_cam_custom_position_direction = level.remove_cam_custom_position_direction
-
---- Main
-ACTOR_ON_UPDATE = goldenorb_main.ACTOR_ON_UPDATE
 
 --- MCM Builder
 local ImageWithText = mcm_builder.ImageWithText
 local Trackbar = mcm_builder.Trackbar
 
 --- Logging
-local log = goldenorb_logging.log
+local log = goldenorb_logging.logger(
+   "GoldenOrb/Camera",
+    goldenorb_logging.TRACE
+)
 
 -- Constants
 
@@ -89,7 +99,7 @@ end
 --- Aim point getter
 ---@return vector
 function get_camera_aim_point()
-   log("get_camera_aim_point(%s)")
+   log:trace("get_camera_aim_point(%s)")
    local dev = device()
    return dev.cam_dir:mul(DIST):add(dev.cam_pos)
 end
@@ -106,7 +116,7 @@ end
 ---@param state state
 ---@return state state
 function inject_camera(state)
-   log("inject_camera(%s)", state)
+   log:trace("inject_camera(%s)", state)
 
    state.cam = {
       enable = false,
@@ -124,7 +134,7 @@ end
 ---@param state state
 ---@return state
 function read_camera(state)
-   log("read_camera(%s)", state)
+   log:trace("read_camera(%s)", state)
 
    local dev = device()
    local pos = dev.cam_pos
@@ -133,11 +143,11 @@ function read_camera(state)
    delta_pos = vector()
    delta_pos = delta_pos:set(pos)
    delta_pos = delta_pos:sub(prev_pos)
-   log("  delta_pos: %s", delta_pos)
+   log:trace("  delta_pos: %s", delta_pos)
 
    local cam_rot = get_camera_rotation()
    delta_rot = vector():set(cam_rot):sub(prev_rot)
-   log("  delta_rot: %s", delta_rot)
+   log:trace("  delta_rot: %s", delta_rot)
 
    prev_pos = pos
    prev_rot = cam_rot
@@ -149,7 +159,7 @@ end
 ---@param state state
 ---@return state
 function apply_camera(state)
-   log("apply_camera(%s)", state)
+   log:trace("apply_camera(%s)", state)
 
    -- Apply camera state
    if not state.cam then
@@ -157,12 +167,12 @@ function apply_camera(state)
    end
 
    if state.cam.enable then
-      log("  Applying camera state:")
-      log("    pos: %s", state.cam.pos)
-      log("    rot: %s", state.cam.rot)
-      log("    smoothing: %s", state.cam.smoothing)
-      log("    show_hud: %s", state.cam.show_hud)
-      log("    affect_hud: %s", state.cam.affect_hud)
+      log:info("  Applying camera state:")
+      log:debug("    pos: %s", state.cam.pos)
+      log:debug("    rot: %s", state.cam.rot)
+      log:debug("    smoothing: %s", state.cam.smoothing)
+      log:debug("    show_hud: %s", state.cam.show_hud)
+      log:debug("    affect_hud: %s", state.cam.affect_hud)
 
       set_cam_custom_position_direction(
          state.cam.pos,
@@ -173,7 +183,7 @@ function apply_camera(state)
       )
       cam_custom = true
    elseif cam_custom then
-      log("  Resetting camera state.")
+      log:info("  Resetting camera state.")
       remove_cam_custom_position_direction()
       cam_custom = false
    end
@@ -190,10 +200,27 @@ function init_camera()
 end
 
 ---@return nil
-function on_game_start()
-   goldenorb_main.ACTOR_ON_UPDATE
-      :add_call(inject_camera)
-      :after(inject_camera, read_camera)
+on_game_start = protected(
+   handle_error,
+   function()
+      goldenorb_main.ACTOR_ON_UPDATE
+         :insert(
+            {
+               inject_camera,
+               read_camera,
+               apply_camera,
+            },
+            {
+               phase_build_state,
+               inject_camera,
+               read_camera,
+               phase_modify_state,
+               phase_apply_state,
+               apply_camera,
+               phase_done
+            }
+         )
 
-   RegisterScriptCallback("actor_on_first_update", init_camera)
-end
+      RegisterScriptCallback("actor_on_first_update", init_camera)
+   end
+)

@@ -26,7 +26,10 @@ local parse_vector = goldenorb_string.parse_vector
 local id = goldenorb_function.id
 
 --- Logging
-local log = goldenorb_logging.log
+local log = goldenorb_logging.logger(
+   "GoldenOrb/Spring",
+   goldenorb_logging.TRACE
+)
 
 -- Constants
 
@@ -51,7 +54,7 @@ end
 ---@return fun(vec: vector): vector
 function spring_3d_linear(length, strength)
    return function(vec)
-      log("spring_3d_linear(%s, %s)(%s)", length, strength, vec)
+      log:trace("spring_3d_linear(%s, %s)(%s)", length, strength, vec)
 
       return vector():set(
          spring_1d(length.x, strength.x, vec.x),
@@ -66,7 +69,7 @@ end
 ---@return fun(vec: vector): vector
 function spring_3d_angular(length, strength)
    return function(vec)
-      log("spring_3d_angular(%s, %s, %s)", length, strength, vec)
+      log:trace("spring_3d_angular(%s, %s, %s)", length, strength, vec)
       local axis, angle = vector_axis_angle(vec, vector():set(0, 0, 1))
       if not axis or not angle then
          printf("invalid rotation")

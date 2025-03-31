@@ -7,12 +7,12 @@
 -- Imports
 
 --- Goldenorb Aim
-local spring_type = goldenorb_aim.spring_type
 local SP_LINEAR = goldenorb_spring.SP_LINEAR
 local SP_ANGULAR = goldenorb_spring.SP_ANGULAR
 
 --- Math
 local DEG2RAD = lander_math.DEG2RAD
+local TAU = lander_math.TAU
 local hpb_to_direction = lander_math.hpb_to_direction
 
 --- Function
@@ -21,14 +21,15 @@ local compose = goldenorb_function.compose
 --- String
 local parse_vector = goldenorb_string.parse_vector
 
+--- Camera
+local get_camera_aim_point = goldenorb_camera_mcm.get_camera_aim_point
+
 --- Aim
-local spring_limit = goldenorb_aim.spring_limit
+local spring_aim = goldenorb_aim.spring_aim
 
 --- Shapes
-local billboard = robodolg_shapes.billboard
-local camera_relative = robodolg_shapes.camera_relative
-local draw_line_strip = robodolg_shapes.draw_line_strip
-local draw_ngon = robodolg_shapes.draw_ngon
+local draw_line = robodolg_shapes.draw_line
+local ui_2d = robodolg_shapes.ui_2d
 
 --- RoboDolg
 local tree = robodolg_goldenorb_mcm.tree
@@ -62,22 +63,23 @@ function draw(state)
        return state
    end
 
-   local limit = parse_vector(spring_limit:get()):mul(DEG2RAD)
-   printf("limit: %s", limit)
+   local length = parse_vector(spring_aim.length:get()):mul(DEG2RAD)
+   log("length: %s", length)
 
-   local ty = spring_type:get()
+   --[[
+   local ty = spring_aim.type:get()
    if ty == SP_LINEAR then
-      local a = hpb_to_direction(vector():set(-limit.x, limit.y, 0))
-      local b = hpb_to_direction(vector():set(limit.x, limit.y, 0))
-      local c = hpb_to_direction(vector():set(limit.x, -limit.y, 0))
-      local d = hpb_to_direction(vector():set(-limit.x, -limit.y, 0))
+      local a = hpb_to_direction(vector():set(-length.x, length.y, 0))
+      local b = hpb_to_direction(vector():set(length.x, length.y, 0))
+      local c = hpb_to_direction(vector():set(length.x, -length.y, 0))
+      local d = hpb_to_direction(vector():set(-length.x, -length.y, 0))
 
       draw_line_strip(
          nil,
          compose(billboard, camera_relative)
       )(a, b, c, d, a)
    elseif ty == SP_ANGULAR then
-      local d = hpb_to_direction(vector():set(limit.x, limit.y, 0))
+      local d = hpb_to_direction(vector():set(length.x, length.y, 0))
       draw_ngon(
          1,
          32,
@@ -95,6 +97,28 @@ function draw(state)
    else
       assert(nil, string.format("Unrecognized string type %s", ty))
    end
+   --]]
+
+   local acc = nil
+   for i=1,32 do
+      local t = i / 31
+      local x = math.sin(t * TAU)
+      local y = math.cos(t * TAU)
+      local pos = get_camera_aim_point()
+      local v = vector():set(
+         x * length.x,
+         y * length.y,
+         length.x * length.y
+      )
+      if acc then
+         draw_line(
+            ui_2d(pos, true)(acc),
+            ui_2d(pos, true)(v)
+         )
+      end
+      acc = vector():set(v)
+   end
+
 
    return state
 end

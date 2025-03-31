@@ -6,6 +6,14 @@
 
 -- Imports
 
+--- Main
+local phase_build_state = goldenorb_main.phase_build_state
+local phase_modify_state = goldenorb_main.phase_modify_state
+local phase_apply_state = goldenorb_main.phase_apply_state
+local phase_done = goldenorb_main.phase_done
+local handle_error = goldenorb_main.handle_error
+
+--- Impure
 local inject_actor = goldenorb_impure.inject_actor
 
 --- Table
@@ -15,8 +23,14 @@ foreach = goldenorb_table.foreach
 --- Math
 local hpb_to_direction = lander_math.hpb_to_direction
 
+--- Function
+local protected = goldenorb_function.protected
+
 --- Logging
-local log = goldenorb_logging.log
+local log = goldenorb_logging.logger(
+   "GoldenOrb/Weapon",
+   goldenorb_logging.TRACE
+)
 
 -- Constants
 
@@ -87,7 +101,7 @@ end
 ---@param key string
 ---@return number
 function get_hud_number(wpn, key)
-   --log("get_hud_number(%s, %s)", wpn, key)
+   --log:trace("get_hud_number(%s, %s)", wpn, key)
    local str = get_hud_string(wpn, key)
    return str and tonumber(str) or 0
 end
@@ -96,7 +110,7 @@ end
 ---@param key string
 ---@return vector
 function get_hud_vector(wpn, key)
-   --log("get_hud_vector(%s)", wpn)
+   log:trace("get_hud_vector(%s)", wpn)
    local val = utils_xml.is_widescreen()
       and get_hud_string(wpn, key .. "_16x9")
       or get_hud_string(wpn, key)
@@ -116,7 +130,7 @@ end
 ---@param wpn game_object
 ---@return state_hud
 function get_hud_params(wpn)
-   --log("get_hud_params(%s)", wpn)
+   log:trace("get_hud_params(%s)", wpn)
    return map(
       HUD_KEYS,
       function(k,v)
@@ -175,7 +189,7 @@ end
 function get_hands_position()
    local actor = db.actor
    if not actor then
-      log("WARNING: No actor")
+      log:warning("WARNING: No actor")
       return nil
    end
 
@@ -186,7 +200,7 @@ end
 function get_hands_rotation()
    local actor = db.actor
    if not actor then
-      log("WARNING: No actor")
+      log:warning("WARNING: No actor")
       return nil
    end
 
@@ -201,7 +215,7 @@ end
 
 ---@return vector
 function get_hands_aim_point()
-   log("get_hands_aim_point()")
+   log:trace("get_hands_aim_point()")
    return get_hands_position()
       :add(
          get_hands_direction()
@@ -213,7 +227,7 @@ end
 ---@param wpn game_object
 ---@return vector
 function get_weapon_aim_point(wpn)
-   log("get_weapon_aim_point(%s)", wpn)
+   log:trace("get_weapon_aim_point(%s)", wpn)
    return get_fire_bone_position(wpn)
       :add(
          get_fire_bone_direction(wpn)
@@ -225,7 +239,7 @@ end
 ---@param state state
 ---@return state
 function inject_weapon(state)
-   log("inject_weapon(%s)", state)
+   log:trace("inject_weapon(%s)", state)
 
    if not state.actor then
       return state
@@ -264,7 +278,7 @@ end
 ---@param state state
 ---@return state
 function inject_weapon_hud(state)
-   log("inject_weapon_hud(%s)", state)
+   log:trace("inject_weapon_hud(%s)", state)
 
    if not state.wpn then
       return state
@@ -281,9 +295,9 @@ end
 ---@param val vector
 ---@return nil
 function set_hud_vector(key, val)
-   log("set_hud_vector(%s, %s)", key, val)
+   log:trace("set_hud_vector(%s, %s)", key, val)
    local keys = HUD_KEYS[key]
-   log("  keys: %s", keys)
+   log:debug("  keys: %s", keys)
    hud_adjust.set_vector(
       keys[1], keys[2],
       val.x, val.y, val.z
@@ -294,7 +308,7 @@ end
 ---@param val number
 ---@return nil
 function set_hud_number(key, val)
-   log("set_hud_number(%s, %s)", key, val)
+   log:trace("set_hud_number(%s, %s)", key, val)
    hud_adjust.set_value(key, val)
 end
 
@@ -322,22 +336,40 @@ end
 ---@param state state
 ---@return state
 function apply_weapon_hud(state)
-   log("apply_weapon_hud(%s)", state)
+   log:trace("apply_weapon_hud(%s)", state)
 
    if not state.hud then
       return state
    end
 
-   log("  Applying HUD parameters...")
+   log:info("  Applying HUD parameters...")
    set_hud_params(state.hud)
-   log("  Done.")
+   log:info("  Done.")
 
    return state
 end
 
 ---@return nil
-function on_game_start()
-   goldenorb_main.ACTOR_ON_UPDATE
-      :after(inject_actor, inject_weapon)
-      :after(inject_weapon, inject_weapon_hud)
-end
+on_game_start = protected(
+   handle_error,
+   function()
+      goldenorb_main.ACTOR_ON_UPDATE
+         :insert(
+            {
+               inject_weapon,
+               inject_weapon_hud,
+               apply_weapon_hud
+            },
+            {
+               phase_build_state,
+               inject_actor,
+               inject_weapon,
+               inject_weapon_hud,
+               phase_modify_state,
+               phase_apply_state,
+               apply_weapon_hud,
+               phase_done
+            }
+         )
+   end
+)

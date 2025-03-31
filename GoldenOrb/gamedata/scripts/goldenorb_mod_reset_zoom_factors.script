@@ -7,10 +7,17 @@
 -- Imports
 
 --- Weapon
-local inject_weapon_hud = goldenorb_weapon.inject_weapon_hud
+local phase_modify_state = goldenorb_main.phase_modify_state
+local phase_apply_state = goldenorb_main.phase_apply_state
+
+--- Function
+local protected = goldenorb_function.protected
 
 --- Logging
-local log = goldenorb_logging.log
+local log = goldenorb_logging.logger(
+   "GoldenOrb/Reset Zoom Factors",
+   goldenorb_logging.TRACE
+)
 
 -- Implementation
 
@@ -18,10 +25,10 @@ local log = goldenorb_logging.log
 ---@param state state
 ---@return state
 function reset_zoom_factors(state)
-   log("reset_zoom_factors(%s)", state)
+   log:trace("reset_zoom_factors(%s)", state)
 
    if not state.hud then
-      log("  no HUD, returning.")
+      log:trace("  no HUD, returning.")
       return state
    end
 
@@ -33,7 +40,17 @@ function reset_zoom_factors(state)
 end
 
 ---@return nil
-function on_game_start()
-   goldenorb_main.ACTOR_ON_UPDATE
-      :after(inject_weapon_hud, reset_zoom_factors)
-end
+on_game_start = protected(
+   handle_error,
+   function()
+      goldenorb_main.ACTOR_ON_UPDATE
+         :insert(
+            {reset_zoom_factors},
+            {
+               phase_build_state,
+               reset_zoom_factors,
+               phase_modify_state
+            }
+         )
+   end
+)
