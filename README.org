@@ -289,6 +289,8 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
   - Can probably indirect camera position / rotation through a simple spring
 
 **** Hands
+- [ ] Formalize hands module
+  - Need to move hands-specific methods out of weapon
 - [-] Visualize cursor restriction with RoboDolg
   - [X] Implement box drawing for linear spring
   - [X] Manually billboard rotated vectors for correct sizing
