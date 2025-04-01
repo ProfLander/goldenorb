@@ -259,11 +259,12 @@ function Schedule:build()
 end
 
 ---@param tbl table<any, any>
----@param paths table<any, boolean|table>
+---@param paths number|table<any, boolean|table>
 ---@return table<any, any>
 function slice(tbl, paths)
    log:trace("slice(%s, %s)", tbl, paths)
 
+   -- Special case: Retrieve entire state with an I_READ
    if paths == I_READ then
       return tbl
    end
