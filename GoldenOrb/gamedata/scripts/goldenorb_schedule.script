@@ -9,28 +9,41 @@
 -- Imports
 
 --- List
-local fold = goldenorb_list.fold
+local fold_list = goldenorb_list.fold
+local concat_lists = goldenorb_list.concat
+local fold_table = goldenorb_table.fold
 
 --- Logging
 local log = goldenorb_logging.logger(
    "GoldenOrb/Schedule",
-    goldenorb_logging.TRACE
+    goldenorb_logging.WARNING
 )
+
+-- Constants
+
+--- Input enum
+--- Data exists
+I_EXIST = 0
+--- Data does not exist
+I_NOT_EXIST = 1
+--- Read data, asserting non-nil
+I_READ = 2
+--- Read data, allowing nil
+I_READ_MAYBE = 3
+
+--- Output enum
+--- Write data, nil included
+O_WRITE = 0
+--- Write data if non-nil
+O_WRITE_MAYBE = 1
+
 
 -- Implementation
 
-function start(...)
-   log:trace("Start")
-   return ...
-end
-
-function finish(...)
-   log:trace("Finish")
-   return ...
-end
-
 --- Schedule metatable
 ---@class schedule
+---@field start fun(any: any): any
+---@field finish fun(any: any): any
 ---@field calls (fun(any: any): any)[]
 ---@field rules [fun(any: any): any, fun(any: any): any]
 ---@field schedule (fun(any: any): any)[]
@@ -38,10 +51,22 @@ local Schedule = {}
 
 --- Schedule constructor
 ---@return schedule
-function schedule()
+function schedule(name)
+   local function start(...)
+      log:trace("%s: Start", name)
+      return ...
+   end
+
+   local function finish(...)
+      log:trace("%s: Finish", name)
+      return ...
+   end
+
    return setmetatable(
       {
-         calls = {start, finish},
+         start = start,
+         finish = finish,
+         calls = {{start, {}, {}}, {finish, {}, {}}},
          rules = {{start, finish}},
          schedule = nil,
       },
@@ -55,21 +80,15 @@ function Schedule:invalidate()
    self.schedule = nil
 end
 
----@param f fun(any: any): any
+---@param f fun(...: any): any
+---@param inputs table<string, boolean|table>
+---@param outputs table<string, any>
 ---@return schedule
-function Schedule:add_call(f)
+function Schedule:add_call(f, inputs, outputs)
    log:trace("Schedule:add_call(%s)", f)
    assert(f ~= nil, "Invalid call")
    self:invalidate()
-   table.insert(self.calls, f)
-   return self
-end
-
-function Schedule:add_calls(...)
-   local args = {...}
-   for i=1,#args do
-      self:add_call(args[i])
-   end
+   table.insert(self.calls, {f, inputs, outputs})
    return self
 end
 
@@ -90,9 +109,11 @@ function Schedule:add_rules(...)
    local args = {...}
    for i=1,#args do
       local arg = args[i]
+      assert(type(arg) == "table", "Invalid rule")
       local acc = nil
       for j=1,#arg do
          local call = arg[j]
+         assert(type(call) == "function", "Invalid rule")
          if acc then
             self:add_rule(acc, call)
          end
@@ -104,7 +125,7 @@ end
 
 --- Return the number of elements for which F returns true
 function count(lst, f)
-   return fold(
+   return fold_list(
       lst,
       0,
       function(acc, next)
@@ -127,44 +148,52 @@ function ne(a)
    end
 end
 
-function Schedule:insert(calls, rules)
-   log:trace("Schedule:insert(%s, %s)", calls, rules)
+---@param call fun(any: any): any
+---@param after? (fun(any: any): any)[]
+---@param before? (fun(any: any): any)[]
+---@param inputs? table
+---@param outputs? table
+function Schedule:insert(call, after, before, inputs, outputs)
+   log:trace(
+      "Schedule:insert(%s, %s, %s, %s, %s)",
+      call,
+      after,
+      before,
+      inputs,
+      outputs
+   )
+
+   -- Typecheck inputs
+   assert(
+      type(call) == "function",
+      string.format("Invalid call: %s", call)
+   )
+
+   after = after or {}
+   before = before or {}
+   inputs = inputs or {}
+   outputs = outputs or {}
 
    assert(
-      type(calls) == "table",
-      string.format("Invalid calls: %s", calls)
-   )
-   assert(
-      type(rules) == "table",
-      string.format("Invalid rules: %s", rules)
-   )
-   assert(
-      #rules >= #calls + 2,
-      "Rules must include at least two non-associated calls"
+      count(after, eq(call)) == 0,
+      "After rules must not mention their associated call"
    )
 
-   for i=1,#calls do
-      local call = calls[i]
-      assert(
-         call ~= nil,
-         string.format("Invalid call at index %s", i)
-      )
-      assert(
-         count(rules, eq(call)) == 1,
-         "Rules must mention their associated calls exactly once each"
-      )
-      assert(
-         rules[1] ~= call,
-         "Rules must not begin with any of their associated calls"
-      )
-      assert(
-         rules[#rules] ~= call,
-         "Rules must not end with any of their associated calls"
-      )
-      self:add_call(call)
+   assert(
+      count(before, eq(call)) == 0,
+      "Before rules must not mention their associated call"
+   )
+
+   if #after == 0 then
+      table.insert(after, self.start)
    end
 
-   self:add_rules(rules)
+   if #before == 0 then
+      table.insert(before, self.finish)
+   end
+
+   self:add_call(call, inputs, outputs)
+   self:add_rules(concat_lists(after, {call}, before))
    return self
 end
 
@@ -181,7 +210,8 @@ function Schedule:build()
    local count = 0
    while count < #self.calls do
       log:trace("  count: %s", count)
-      for _,call in ipairs(self.calls) do
+      for _,tup in ipairs(self.calls) do
+         local call = tup[1]
          log:trace("  call: %s", call)
          if called[call] then
             log:trace("    already called")
@@ -189,30 +219,30 @@ function Schedule:build()
          end
 
          for _,rule in ipairs(self.rules) do
-            --log:debug("    rule: %s -> %s", rule[1], rule[2])
+            log:debug("    rule: %s -> %s", rule[1], rule[2])
 
             -- If the rule doen't mention the call, skip it
             if rule[2] ~= call then
-               --log:debug("      not relevant")
+               log:debug("      not relevant")
                goto next_rule
             end
 
             -- If the call is the target of the rule
             -- and its dependency is not met, skip it
             if not called[rule[1]] then
-               --log:debug("      not satisfied")
+               log:debug("      not satisfied")
                goto next_call
             end
 
-            --log:debug("      pass")
+            log:debug("      pass")
 
             ::next_rule::
          end
 
-         --log:debug("  pass")
+         log:debug("  pass")
 
          -- If all rules pass, call the function
-         table.insert(self.schedule, call)
+         table.insert(self.schedule, tup)
          called[call] = true
          count = count + 1
          goto next_iter
@@ -228,6 +258,103 @@ function Schedule:build()
    return self
 end
 
+---@param tbl table<any, any>
+---@param paths table<any, boolean|table>
+---@return table<any, any>
+function slice(tbl, paths)
+   log:trace("slice(%s, %s)", tbl, paths)
+
+   if paths == I_READ then
+      return tbl
+   end
+
+   assert(type(tbl) == "table", "Invalid table")
+   assert(type(paths) == "table", "Invalid paths")
+   return fold_table(
+      paths,
+      {},
+      function(acc, k, v)
+         local entry = tbl[k]
+
+         if v == I_EXIST or v == I_READ then
+            -- Ensure the value exists
+            assert(
+               entry ~= nil,
+               string.format("Missing data for key %s", k)
+            )
+         elseif v == I_NOT_EXIST then
+            -- Ensure the value does not exist
+            assert(
+               entry == nil,
+               string.format("Unexpected data present for key %s: %s", k, entry)
+            )
+         end
+
+         if v == I_EXIST or v == I_NOT_EXIST then
+            return acc
+         elseif v == I_READ or v == I_READ_MAYBE then
+            -- Read the value
+            acc[k] = entry
+         elseif type(v) == "table" then
+            -- A table means recursively slice the encountered value
+            acc[k] = slice(entry, v)
+         else
+            -- Anything else is invalid
+            assert(nil, string.format("Invalid path type: %s", v))
+         end
+
+         return acc
+      end
+   )
+end
+
+---@param tbl table<any, any>
+---@param vals table<any, any>
+---@return table<any, any>
+function merge(tbl, vals, paths)
+   log:trace("merge(%s, %s, %s)", tbl, vals, paths)
+
+   return fold_table(
+      paths,
+      tbl,
+      function(acc, k, path)
+         local v = vals[k]
+
+         log:debug("  path: %s", path)
+         log:debug("  v: %s", v)
+
+         if path == nil then
+            -- If there is no path, do nothing
+            return acc
+         end
+
+         if (path == O_WRITE_MAYBE or type(path) == "table") and v == nil then
+            -- If this is an optional write and there is no value, early-out
+            return acc
+         end
+
+         if type(path) == "table" then
+            assert(
+               v ~= nil,
+               string.format("Expected a table for key %s", k)
+            )
+            -- If the path is composite, recurse
+            acc[k] = merge(acc[k], v, path)
+         else
+            -- If the path represents a write, emplace by value
+            if acc[k] ~= nil and type(v) == "table" then
+               assert(type(acc[k]) == "table", "Type mismatch")
+               copy_table(acc[k], v)
+            else
+               acc[k] = v
+            end
+         end
+
+         return acc
+      end
+   )
+end
+
 --- Run the schedule with the given parameter and return its result
 ---@param p any
 ---@return any
@@ -238,10 +365,20 @@ function Schedule:run(p)
       self:build()
    end
 
-   return fold(
-      self.schedule, p,
-      function(acc, f)
-         return f(acc)
+   return fold_list(
+      self.schedule,
+      p,
+      function(acc, tup)
+         local f = tup[1]
+         local inputs = tup[2]
+         local outputs = tup[3]
+         if inputs then
+            local out = f(slice(acc, inputs))
+            assert(outputs, "Outputs must be specified with inputs")
+            return merge(acc, out, outputs)
+         else
+            return f(acc)
+         end
       end
    )
 end
@@ -262,11 +399,11 @@ end
 
 --- Produce a function to run the schedule,
 --- optionally overriding its input
----@param pa any
+---@param pf fun(): any
 ---@return fun(pb: any): any
-function Schedule:run_deferred(pa)
+function Schedule:run_deferred(pf)
    return function(pb)
-      return self:run(pa or pb)
+      return self:run(pf and pf() or pb)
    end
 end
 
@@ -274,8 +411,8 @@ end
 --- optionally overriding its input
 ---@param e fun(any: any): any
 ---@return fun(pb: any): any
-function Schedule:prun_deferred(e, pa)
-   return function(pb)
-      return self:prun(e, pa or pb)
+function Schedule:prun_deferred(e, pf)
+   return function(p)
+      return self:prun(e, pf and pf() or p)
    end
 end

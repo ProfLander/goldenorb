@@ -16,6 +16,18 @@ function map(tbl, f)
    return out
 end
 
+---@param tbl table<any, any>
+---@param init any
+---@param f fun(acc: any, key: any, val: any): any
+---@return any
+function fold(tbl, init, f)
+   local acc = init
+   for k,v in pairs(tbl) do
+      acc = f(acc, k, v)
+   end
+   return acc
+end
+
 ---@param tbl table
 ---@param f fun(k: any, v: any)
 ---@return nil

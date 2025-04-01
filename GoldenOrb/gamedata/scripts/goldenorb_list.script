@@ -62,3 +62,20 @@ function foreach(lst, f)
       f(lst[i], i)
    end
 end
+
+function concat(...)
+   local lists = {...}
+   local out = {}
+   for i=1,#lists do
+      local list = lists[i]
+      out = fold(
+         list,
+         out,
+         function(acc, next)
+            table.insert(acc, next)
+            return acc
+         end
+      )
+   end
+   return out
+end

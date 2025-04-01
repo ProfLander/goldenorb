@@ -6,6 +6,11 @@
 
 -- Imports
 
+--- Main
+local phase_build_state = goldenorb_main.phase_build_state
+local phase_modify_state = goldenorb_main.phase_modify_state
+local handle_error = goldenorb_main.handle_error
+
 --- Joint
 local joint = goldenorb_joint.joint
 
@@ -15,6 +20,18 @@ local List = mcm_builder.List
 
 --- Spring
 local mcm_spring = goldenorb_spring.mcm_spring
+
+--- Function
+local protected = goldenorb_function.protected
+
+--- Schedule
+local O_WRITE = goldenorb_schedule.O_WRITE
+
+--- Log
+local log = goldenorb_logging.logger(
+   "GoldenOrb/Aim",
+   goldenorb_logging.WARNING
+)
 
 -- Constants
 
@@ -46,7 +63,33 @@ aim_type = page:settings(
 )
 
 --- Angular joint
-joint_aim = joint()
+local joint_aim = joint()
 
 --- Spring force
-spring_aim = mcm_spring(page, SP_LINEAR, "6.0,4.5", "1.0, 1.0")
+local spring_aim = mcm_spring(page, SP_LINEAR, "6.0,4.5", "1.0, 1.0")
+
+function inject_joint_aim(state)
+   log:trace("inject_joint_aim(%s)", state)
+   return {
+      joint_aim = joint_aim,
+      spring_aim = spring_aim,
+   }
+end
+
+---@return nil
+on_game_start = protected(
+   handle_error,
+   function()
+      goldenorb_main.ACTOR_ON_UPDATE
+         :insert(
+            inject_joint_aim,
+            {phase_build_state},
+            {phase_modify_state},
+            {},
+            {
+               joint_aim = O_WRITE,
+               spring_aim = O_WRITE,
+            }
+         )
+   end
+)

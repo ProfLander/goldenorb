@@ -10,11 +10,38 @@ local LOG = false
 
 -- Implementation
 
+function val_to_string(t)
+   local out = nil
+
+   if type(t) == "table" then
+      out = "{"
+      for k,v in pairs(t) do
+         out = string.format("%s\n%s: %s", out, k, val_to_string(v))
+      end
+      out = out .. "\n}"
+   elseif type(t) == "userdata" and t.x and t.y and t.z then
+      out = string.format("[%s, %s, %s]", t.x, t.y, t.z)
+   elseif type(t) == "userdata" and t.x and t.y then
+      out = string.format("[%s, %s]", t.x, t.y)
+   elseif type(t) == "userdata" then
+      out = "userdata"
+   else
+      out = string.format("%s", t)
+   end
+
+   return out
+end
+
 ---@param s string
 ---@param ... any
 ---@return nil
 function log_impl(s, ...)
-   printf("RoboDolg: " .. s, ...)
+   local args = {...}
+   local strs = {}
+   for i=1,#args do
+      table.insert(strs, val_to_string(args[i]))
+   end
+   printf("RoboDolg: " .. s, unpack(strs))
 end
 
 --- If logging is enabled, print the given format string and arguments

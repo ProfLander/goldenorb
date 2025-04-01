@@ -43,8 +43,8 @@ function Joint:impulse_with(f)
    return self
 end
 
----@param state state
----@return state
+---@param state table
+---@return table
 function Joint:apply_hud_orientation(state)
    if not state.hud then
       return state
@@ -57,18 +57,6 @@ function Joint:apply_hud_orientation(state)
          deg(self.vec.z)
       )
    )
-
-   return state
-end
-
----@param state state
----@return state
-function Joint:apply_camera_rotation(state)
-   if not state.cam then
-      return state
-   end
-
-   state.cam.rot:add(self.vec)
 
    return state
 end

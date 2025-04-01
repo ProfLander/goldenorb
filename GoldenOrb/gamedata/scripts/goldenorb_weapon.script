@@ -26,10 +26,16 @@ local hpb_to_direction = lander_math.hpb_to_direction
 --- Function
 local protected = goldenorb_function.protected
 
+--- Schedule
+local I_READ = goldenorb_schedule.I_READ
+local I_NOT_EXIST = goldenorb_schedule.I_NOT_EXIST
+local O_WRITE = goldenorb_schedule.O_WRITE
+local O_WRITE_MAYBE = goldenorb_schedule.O_WRITE_MAYBE
+
 --- Logging
 local log = goldenorb_logging.logger(
    "GoldenOrb/Weapon",
-   goldenorb_logging.TRACE
+   goldenorb_logging.WARNING
 )
 
 -- Constants
@@ -204,7 +210,7 @@ function get_hands_rotation()
       return nil
    end
 
-   return actor:bone_direction("bip01", true)
+   return vector():set(actor:bone_direction("bip01", true))
 end
 
 ---@return vector?
@@ -236,18 +242,14 @@ function get_weapon_aim_point(wpn)
 end
 
 --- Inject the actor's weapon into the given state
----@param state state
----@return state
+---@param state table
+---@return table
 function inject_weapon(state)
    log:trace("inject_weapon(%s)", state)
 
-   if not state.actor then
-      return state
-   end
-
-   state.wpn = state.actor:active_item()
-
-   return state
+   return {
+      wpn = state.actor:active_item()
+   }
 end
 
 --- HUD param table class
@@ -275,18 +277,14 @@ end
 ---@field scope_zoom_factor_alt number
 
 --- Inject the weapon's HUD parameters into the given state
----@param state state
----@return state
+---@param state table
+---@return table
 function inject_weapon_hud(state)
    log:trace("inject_weapon_hud(%s)", state)
 
-   if not state.wpn then
-      return state
-   end
-
-   state.hud = get_hud_params(state.wpn)
-
-   return state
+   return {
+      hud = get_hud_params(state.wpn)
+   }
 end
 
 -- Implementation
@@ -333,20 +331,16 @@ function set_hud_params(hud)
 end
 
 
----@param state state
----@return state
+---@param state table
+---@return table
 function apply_weapon_hud(state)
    log:trace("apply_weapon_hud(%s)", state)
-
-   if not state.hud then
-      return state
-   end
 
    log:info("  Applying HUD parameters...")
    set_hud_params(state.hud)
    log:info("  Done.")
 
-   return state
+   return {}
 end
 
 ---@return nil
@@ -355,20 +349,41 @@ on_game_start = protected(
    function()
       goldenorb_main.ACTOR_ON_UPDATE
          :insert(
-            {
-               inject_weapon,
-               inject_weapon_hud,
-               apply_weapon_hud
-            },
+            inject_weapon,
             {
                phase_build_state,
                inject_actor,
+            },
+            {phase_modify_state},
+            {
+               actor = I_READ,
+               wpn = I_NOT_EXIST,
+            },
+            {
+               wpn = O_WRITE_MAYBE
+            }
+         )
+         :insert(
+            inject_weapon_hud,
+            {
+               phase_build_state,
                inject_weapon,
-               inject_weapon_hud,
-               phase_modify_state,
-               phase_apply_state,
-               apply_weapon_hud,
-               phase_done
+            },
+            {phase_modify_state},
+            {
+               wpn = I_READ,
+               hud = I_NOT_EXIST
+            },
+            {
+               hud = O_WRITE
+            }
+         )
+         :insert(
+            apply_weapon_hud,
+            {phase_apply_state},
+            {phase_done},
+            {
+               hud = I_READ
             }
          )
    end

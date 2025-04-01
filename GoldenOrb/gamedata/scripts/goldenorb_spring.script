@@ -28,7 +28,7 @@ local id = goldenorb_function.id
 --- Logging
 local log = goldenorb_logging.logger(
    "GoldenOrb/Spring",
-   goldenorb_logging.TRACE
+   goldenorb_logging.WARNING
 )
 
 -- Constants

@@ -24,9 +24,6 @@ local parse_vector = goldenorb_string.parse_vector
 --- Camera
 local get_camera_aim_point = goldenorb_camera_mcm.get_camera_aim_point
 
---- Aim
-local spring_aim = goldenorb_aim.spring_aim
-
 --- Shapes
 local draw_line = robodolg_shapes.draw_line
 local ui_2d = robodolg_shapes.ui_2d
@@ -39,7 +36,7 @@ local ImageWithText = mcm_builder.ImageWithText
 local Checkbox = mcm_builder.Checkbox
 
 --- Log
-local log = goldenorb_logging.log
+local log = robodolg_logging.log
 
 -- State
 
@@ -54,8 +51,8 @@ local should_draw = page:settings(
 -- Implementation
 
 --- Offset fire point slightly to prevent self-intersection
----@param state state
----@return state
+---@param state table
+---@return table
 function draw(state)
    log("draw_aim_spring(%s)", state)
 
@@ -63,7 +60,7 @@ function draw(state)
        return state
    end
 
-   local length = parse_vector(spring_aim.length:get()):mul(DEG2RAD)
+   local length = parse_vector(state.spring_aim.length:get()):mul(DEG2RAD)
    log("length: %s", length)
 
    --[[

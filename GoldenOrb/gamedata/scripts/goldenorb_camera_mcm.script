@@ -20,6 +20,11 @@ local handle_error = goldenorb_main.handle_error
 --- Function
 local protected = goldenorb_function.protected
 
+--- Schedule
+local I_NOT_EXIST = goldenorb_schedule.I_NOT_EXIST
+local I_READ = goldenorb_schedule.I_READ
+local O_WRITE = goldenorb_schedule.O_WRITE
+
 --- Level
 local set_cam_custom_position_direction = level.set_cam_custom_position_direction
 local remove_cam_custom_position_direction = level.remove_cam_custom_position_direction
@@ -31,7 +36,7 @@ local Trackbar = mcm_builder.Trackbar
 --- Logging
 local log = goldenorb_logging.logger(
    "GoldenOrb/Camera",
-    goldenorb_logging.TRACE
+    goldenorb_logging.WARNING
 )
 
 -- Constants
@@ -113,36 +118,33 @@ end
 ---@field affect_hud boolean
 
 --- Inject default camera parameters into the state
----@param state state
----@return state state
+---@param state table
+---@return table
 function inject_camera(state)
    log:trace("inject_camera(%s)", state)
 
-   state.cam = {
-      enable = false,
-      pos = vector(),
-      rot = vector(),
-      smoothing = smoothing:get(),
-      show_hud = true,
-      affect_hud = true,
+   return {
+      cam = {
+         enable = false,
+         pos = vector(),
+         rot = vector(),
+         smoothing = smoothing:get(),
+         show_hud = true,
+         affect_hud = true,
+      }
    }
-
-   return state
 end
 
 --- Update function
----@param state state
----@return state
+---@param state table
+---@return table
 function read_camera(state)
    log:trace("read_camera(%s)", state)
 
    local dev = device()
    local pos = dev.cam_pos
-   local dir = dev.cam_dir
 
-   delta_pos = vector()
-   delta_pos = delta_pos:set(pos)
-   delta_pos = delta_pos:sub(prev_pos)
+   delta_pos = vector():set(pos):sub(prev_pos)
    log:trace("  delta_pos: %s", delta_pos)
 
    local cam_rot = get_camera_rotation()
@@ -152,28 +154,17 @@ function read_camera(state)
    prev_pos = pos
    prev_rot = cam_rot
 
-   return state
+   return {}
 end
 
 ---Apply the state's camera values to the game
----@param state state
----@return state
+---@param state table
+---@return table
 function apply_camera(state)
    log:trace("apply_camera(%s)", state)
 
-   -- Apply camera state
-   if not state.cam then
-      return state
-   end
-
    if state.cam.enable then
-      log:info("  Applying camera state:")
-      log:debug("    pos: %s", state.cam.pos)
-      log:debug("    rot: %s", state.cam.rot)
-      log:debug("    smoothing: %s", state.cam.smoothing)
-      log:debug("    show_hud: %s", state.cam.show_hud)
-      log:debug("    affect_hud: %s", state.cam.affect_hud)
-
+      log:info("  Applying camera state")
       set_cam_custom_position_direction(
          state.cam.pos,
          state.cam.rot,
@@ -188,7 +179,7 @@ function apply_camera(state)
       cam_custom = false
    end
 
-   return state
+   return {}
 end
 
 ---Initialization handler
@@ -203,22 +194,24 @@ end
 on_game_start = protected(
    handle_error,
    function()
-      goldenorb_main.ACTOR_ON_UPDATE
+      ACTOR_ON_UPDATE
          :insert(
-            {
-               inject_camera,
-               read_camera,
-               apply_camera,
-            },
-            {
-               phase_build_state,
-               inject_camera,
-               read_camera,
-               phase_modify_state,
-               phase_apply_state,
-               apply_camera,
-               phase_done
-            }
+            inject_camera,
+            {phase_build_state},
+            {phase_modify_state},
+            {cam = I_NOT_EXIST},
+            {cam = O_WRITE}
+         )
+         :insert(
+            read_camera,
+            {inject_camera},
+            {phase_modify_state}
+         )
+         :insert(
+            apply_camera,
+            {phase_apply_state},
+            {phase_done},
+            {cam = I_READ}
          )
 
       RegisterScriptCallback("actor_on_first_update", init_camera)

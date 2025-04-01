@@ -18,10 +18,9 @@ local phase_build_state = goldenorb_main.phase_build_state
 local phase_modify_state = goldenorb_main.phase_modify_state
 local handle_error = goldenorb_main.handle_error
 
---- Reset Hands Orientation
-local reset_hands_orientation = goldenorb_mod_reset_hands_orientation.reset_hands_orientation
-
 --- Weapon
+local inject_weapon = goldenorb_weapon.inject_weapon
+local inject_weapon_hud = goldenorb_weapon.inject_weapon_hud
 local get_hud_number = goldenorb_weapon.get_hud_number
 
 --- Math
@@ -30,10 +29,14 @@ local deg = lander_math.deg
 --- Function
 local protected = goldenorb_function.protected
 
+--- Schedule
+local I_READ = goldenorb_schedule.I_READ
+local O_WRITE_MAYBE = goldenorb_schedule.O_WRITE_MAYBE
+
 --- Logging
 local log = goldenorb_logging.logger(
    "GoldenOrb/HUD Offset Rotation",
-   goldenorb_logging.TRACE
+   goldenorb_logging.WARNING
 )
 
 -- State
@@ -43,14 +46,10 @@ local zoom_fac = 0
 -- Implementation
 
 --- Apply HUD aim offset rotation with a lerp to account for ADS animation
----@param state state
----@return state
+---@param state table
+---@return table
 function apply_hud_offset_rot(state)
    log:trace("apply_hud_offset_rot(%s)", state)
-
-   if not state.wpn or not state.hud then
-      return state
-   end
 
    local zoom_duration = get_hud_number(state.wpn, "zoom_rotate_time")
    if zoom_duration == nil or
@@ -78,10 +77,12 @@ function apply_hud_offset_rot(state)
 
    log:debug("  zoom_fac: %s", zoom_fac)
 
-   state.hud.hands_orientation:add(ofs:mul(zoom_fac))
-
    -- Done
-   return state
+   return {
+      hud = {
+         hands_orientation = state.hud.hands_orientation:add(ofs:mul(zoom_fac))
+      }
+   }
 end
 
 ---@return nil
@@ -90,12 +91,24 @@ on_game_start = protected(
    function()
       goldenorb_main.ACTOR_ON_UPDATE
          :insert(
-            {apply_hud_offset_rot},
+            apply_hud_offset_rot,
             {
                phase_build_state,
-               reset_hands_orientation,
-               apply_hud_offset_rot,
-               phase_modify_state
+               inject_weapon,
+               inject_weapon_hud,
+            },
+            {phase_modify_state},
+            {
+               wpn = I_READ,
+               hud = {
+                  aim_hud_offset_rot = I_READ,
+                  hands_orientation = I_READ
+               },
+            },
+            {
+               hud = {
+                  hands_orientation = O_WRITE_MAYBE
+               }
             }
          )
    end

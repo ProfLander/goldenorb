@@ -6,37 +6,41 @@
 
 -- Imports
 
---- Weapon
+--- Main
+local phase_build_state = goldenorb_main.phase_build_state
 local phase_modify_state = goldenorb_main.phase_modify_state
-local phase_apply_state = goldenorb_main.phase_apply_state
+
+--- Weapon
+local inject_weapon_hud = goldenorb_weapon.inject_weapon_hud
 
 --- Function
 local protected = goldenorb_function.protected
 
+--- Schedule
+local I_EXIST = goldenorb_schedule.I_EXIST
+local O_WRITE = goldenorb_schedule.O_WRITE
+
 --- Logging
 local log = goldenorb_logging.logger(
    "GoldenOrb/Reset Zoom Factors",
-   goldenorb_logging.TRACE
+   goldenorb_logging.WARNING
 )
 
 -- Implementation
 
 --- Zero out the zoom factor components
----@param state state
----@return state
+---@param state table
+---@return table
 function reset_zoom_factors(state)
    log:trace("reset_zoom_factors(%s)", state)
 
-   if not state.hud then
-      log:trace("  no HUD, returning.")
-      return state
-   end
-
-   state.hud.scope_zoom_factor = 0
-   state.hud.gl_zoom_factor = 0
-   state.hud.scope_zoom_factor_alt = 0
-
-   return state
+   return {
+      hud = {
+         scope_zoom_factor = 0,
+         gl_zoom_factor = 0,
+         scope_zoom_factor_alt = 0,
+      }
+   }
 end
 
 ---@return nil
@@ -45,11 +49,23 @@ on_game_start = protected(
    function()
       goldenorb_main.ACTOR_ON_UPDATE
          :insert(
-            {reset_zoom_factors},
+            reset_zoom_factors,
             {
                phase_build_state,
-               reset_zoom_factors,
+               inject_weapon_hud,
+            },
+            {
                phase_modify_state
+            },
+            {
+               hud = I_EXIST,
+            },
+            {
+               hud = {
+                  scope_zoom_factor = O_WRITE,
+                  gl_zoom_factor = O_WRITE,
+                  scope_zoom_factor_alt = O_WRITE,
+               },
             }
          )
    end

@@ -12,22 +12,16 @@ local phase_apply_state = goldenorb_main.phase_apply_state
 local handle_error = goldenorb_main.handle_error
 
 --- Camera
+local get_hands_position = goldenorb_weapon.get_hands_position
 local get_hands_rotation = goldenorb_weapon.get_hands_rotation
 
---- Spring
-local spring = goldenorb_spring.spring
-
 --- Aim
-local page = goldenorb_aim.page
 local aim_type = goldenorb_aim.aim_type
 local AIM_FREE = goldenorb_aim.AIM_FREE
-local joint_aim = goldenorb_aim.joint_aim
-local spring_aim = goldenorb_aim.spring_aim
 
---- MCM Builder
-local Line = mcm_builder.Line
-local Title = mcm_builder.Title
-local Trackbar = mcm_builder.Trackbar
+--- Schedule
+local I_READ = goldenorb_schedule.I_READ
+local O_WRITE_MAYBE = goldenorb_schedule.O_WRITE_MAYBE
 
 --- Function
 local protected = goldenorb_function.protected
@@ -35,22 +29,8 @@ local protected = goldenorb_function.protected
 --- Logging
 local log = goldenorb_logging.logger(
    "GoldenOrb/Free Aim",
-   goldenorb_logging.TRACE
+   goldenorb_logging.WARNING
 )
-
--- State
-
-page:settings(
-   Line.new(),
-   Title.new("free_aim_title"):text("free_aim")
-)
-local eye_height =
-   page:settings(
-      Trackbar.new("eye_height")
-         :default(1.671)
-         :increment(0.001)
-         :minmax(1, 2)
-   )
 
 -- Implementation
 
@@ -59,39 +39,34 @@ function enabled()
    return aim_type:get() == AIM_FREE
 end
 
----@param state state
----@return state
+---@param state table
+---@return table
 function free_aim(state)
    log:trace("free_aim(%s)", state)
 
    if not enabled() then
-      return state
+      log:debug("  Not enabled, returning.")
+      return {}
    end
 
-   if not state.actor or not state.wpn then
-      return state
-   end
+   local ofs = get_hands_rotation():sub(state.joint_aim.vec):mul(-1)
+   log:trace("  ofs: %s", ofs)
 
-   joint_aim
-      :impulse(
-         spring_aim.spring(get_hands_rotation():sub(joint_aim.vec):mul(-1))
-      )
+   local force = state.spring_aim.spring(ofs)
+   log:trace("  force: %s", force)
 
-   state.cam.enable = true
-   state.cam.affect_hud = false
+   local joint_aim = state.joint_aim:impulse(force)
+   log:trace("  joint_aim: %s", joint_aim)
 
-   state.cam.pos = state.actor:position()
-      :add(vector():set(0, eye_height:get(), 0))
-
-   state = joint_aim:apply_camera_rotation(state)
-
-   if state.hud then
-      --state.hud.hands_position.z = state.hud.hands_position.z - 0.025
-      --state.hud.hands_position.z = state.hud.hands_position.z + 0.1
-      --state.hud.hands_orientation.x = state.hud.hands_orientation.x - 0.49
-   end
-
-   return state
+   return {
+      joint_aim = joint_aim,
+      cam = {
+         enable = true,
+         affect_hud = false,
+         pos = vector():set(state.cam.pos):add(get_hands_position()),
+         rot = vector():set(state.cam.rot):add(joint_aim.vec),
+      }
+   }
 end
 
 ---@return nil
@@ -100,8 +75,28 @@ on_game_start = protected(
    function()
       goldenorb_main.ACTOR_ON_UPDATE
          :insert(
-            {free_aim},
-            {phase_modify_state, free_aim, phase_apply_state}
+            free_aim,
+            {phase_modify_state},
+            {phase_apply_state},
+            {
+               actor = I_READ,
+               wpn = I_READ,
+               joint_aim = I_READ,
+               spring_aim = I_READ,
+               cam = {
+                  pos = I_READ,
+                  rot = I_READ,
+               },
+            },
+            {
+               joint_aim = O_WRITE_MAYBE,
+               cam = {
+                  enable = O_WRITE_MAYBE,
+                  affect_hud = O_WRITE_MAYBE,
+                  pos = O_WRITE_MAYBE,
+                  rot = O_WRITE_MAYBE,
+               },
+            }
          )
    end
 )

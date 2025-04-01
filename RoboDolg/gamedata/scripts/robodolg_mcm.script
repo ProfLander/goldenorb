@@ -18,6 +18,12 @@ local Checkbox = mcm_builder.Checkbox
 --- RoboDolg Shapes
 local reset = robodolg_shapes.reset
 
+--- GoldenOrb Schedule
+local I_READ = goldenorb_schedule.I_READ
+
+--- GoldenOrb Main
+local phase_done = goldenorb_main.phase_done
+
 --- Logging
 local log = robodolg_logging.log
 
@@ -49,9 +55,10 @@ function handle_error(e)
 end
 
 --- Intercept the state and cache it for later
----@param state state
----@return state
+---@param state table
+---@return table
 function cache_state(state)
+   log("cache_state(%s)", state)
    cache = state
    return state
 end
@@ -89,7 +96,12 @@ function on_game_start()
    AddScriptCallback("robodolg_on_draw")
 
    -- Register with GoldenOrb's update callback
-   goldenorb_main.ACTOR_ON_UPDATE:add_call(cache_state)
+   goldenorb_main.ACTOR_ON_UPDATE:insert(
+      cache_state,
+      {phase_done},
+      {},
+      I_READ
+   )
 
    -- Register a unique level call
    -- so we can draw in sync with the debug renderer

@@ -10,8 +10,6 @@
 
 --- Schedule
 local schedule = goldenorb_schedule.schedule
-local start = goldenorb_schedule.start
-local finish = goldenorb_schedule.finish
 
 --- Function
 local protected = goldenorb_function.protected
@@ -19,7 +17,7 @@ local protected = goldenorb_function.protected
 --- Logging
 local log = goldenorb_logging.logger(
    "GoldenOrb/Main",
-   goldenorb_logging.TRACE
+   goldenorb_logging.WARNING
 )
 
 -- Constants
@@ -49,29 +47,22 @@ function phase_done(...)
 end
 
 --- Actor update action
-ACTOR_ON_UPDATE = schedule()
+ACTOR_ON_UPDATE = schedule("Actor Update")
    :insert(
-      {
-         phase_build_state,
-         phase_modify_state,
-         phase_apply_state,
-         phase_done,
-      },
-      {
-         start,
-         phase_build_state,
-         phase_modify_state,
-         phase_apply_state,
-         phase_done,
-         finish
-      }
+      phase_build_state
    )
-
----@class state
----@field actor game_object?
----@field wpn game_object?
----@field cam state_cam?
----@field hud state_hud?
+   :insert(
+      phase_modify_state,
+      {phase_build_state}
+   )
+   :insert(
+      phase_apply_state,
+      {phase_modify_state}
+   )
+   :insert(
+      phase_done,
+      {phase_apply_state}
+   )
 
 -- Implementation
 
@@ -89,12 +80,14 @@ end
 on_game_start = protected(
    handle_error,
    function()
-      -- We use AddUniqueCall here instead of registering with actor_on_update
-      -- to make sure our updates are in sync with device().cam_*
-      --AddUniqueCall(goldenorb_update)
       RegisterScriptCallback(
          "actor_on_update",
-         ACTOR_ON_UPDATE:run_deferred({})
+         ACTOR_ON_UPDATE:prun_deferred(
+            handle_error,
+            function()
+               return {}
+            end
+         )
       )
    end
 )

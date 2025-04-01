@@ -25,6 +25,11 @@ local foreach = goldenorb_table.foreach
 local compose = goldenorb_function.compose
 local protected = goldenorb_function.protected
 
+--- Schedule
+local I_READ_MAYBE = goldenorb_schedule.I_READ_MAYBE
+local I_READ = goldenorb_schedule.I_READ
+local O_WRITE_MAYBE = goldenorb_schedule.O_WRITE_MAYBE
+
 --- Camera
 local get_camera_aim_point = goldenorb_camera_mcm.get_camera_aim_point
 
@@ -44,7 +49,7 @@ local InputField = mcm_builder.InputField
 --- Logging
 local log = goldenorb_logging.logger(
    "GoldenOrb/Bodycam",
-   goldenorb_logging.TRACE
+   goldenorb_logging.WARNING
 )
 
 -- Constants
@@ -154,17 +159,13 @@ function get_actor_rotation(wpn)
    return vector():set(yaw, pitch, 0)
 end
 
----@param state state
----@return state
+---@param state table
+---@return table
 function body_cam(state)
    log:trace("body_cam(%s)", state)
 
    if not enabled:get() then
-      return state
-   end
-
-   if not state.actor then
-      return state
+      return {}
    end
 
    local root_pos = state.actor:bone_position(BONE_ROOT)
@@ -202,29 +203,33 @@ function body_cam(state)
    pos:add(root_pos)
    rot:add(root_rot)
 
-   state.cam.enable = true
-   state.cam.pos = pos
-   state.cam.rot = vector():set(rot.x, rot.y, 0)
-   state.cam.affect_hud = true
+   local out = {
+      cam = {}
+   }
+
+   out.cam.enable = true
+   out.cam.affect_hud = true
+   out.cam.pos = pos
+   out.cam.rot = vector():set(rot.x, rot.y, 0)
 
    if not state.wpn or not state.hud then
-      return state
+      return out
    end
 
    local actor_rot = get_actor_rotation(state.wpn)
    if not actor_rot then
-      return state
+      return out
    end
 
-   state.hud.hands_orientation.x =
-      state.hud.hands_orientation.x
-      - deg(actor_rot.x)
+   out.hud = {
+      hands_orientation = vector():set(
+         state.hud.hands_orientation.x - deg(actor_rot.x),
+         state.hud.hands_orientation.y - deg(actor_rot.y),
+         state.hud.hands_orientation.z
+      )
+   }
 
-   state.hud.hands_orientation.y =
-      state.hud.hands_orientation.y
-      + deg(actor_rot.y)
-
-   return state
+   return out
 end
 
 ---@return nil
@@ -233,8 +238,27 @@ on_game_start = protected(
    function()
       goldenorb_main.ACTOR_ON_UPDATE
          :insert(
-            {body_cam},
-            {phase_modify_state, body_cam, phase_apply_state}
-      )
+            body_cam,
+            {phase_modify_state},
+            {phase_apply_state},
+            {
+               actor = I_READ,
+               wpn = I_READ_MAYBE,
+               hud = {
+                  hands_orientation = I_READ_MAYBE
+               },
+            },
+            {
+               cam = {
+                  enable = O_WRITE_MAYBE,
+                  affect_hud = O_WRITE_MAYBE,
+                  pos = O_WRITE_MAYBE,
+                  rot = O_WRITE_MAYBE,
+               },
+               hud = {
+                  hands_orientation = O_WRITE_MAYBE
+               }
+            }
+         )
    end
 )

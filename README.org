@@ -197,9 +197,45 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
 
 *** To Do
 **** Core
-- [ ] Formalize data access
+- [-] Formalize data access
   - All data must be obtained via the state to guarantee program soundness
-    - ex. Due to global state and differing entrypoints, various RoboDolg elements are currently using information that goes out of sync with GoldenOrb
+  - [X] Implement input / output spec for schedule functions
+  - [X] Correct merge behaviour
+    - Currently not using the provided output paths
+    - Needs to recursively follow path to its endpoint and do a deep copy if the target is a table
+      - i.e. Dispatch to a similar function minus path etc
+  - [X] Account for different access semantics
+    - Should these be encoded as functions for flexibility?
+    - Input
+      - Exists
+      - Doesn't exist
+      - Read
+      - Maybe Read
+    - Output
+      - Write
+      - Maybe Write
+      - Delete?
+        - Unnecessary, as one can Write a ~nil~
+  - [X] Schedule-local start / finish brackets
+    - Currently using module-local when they should be instance-local
+    - Opportunity for named schedules, more descriptive logging
+  - [X] Improve schedule insertion API
+    - [X] Separate specification of before / after functions
+    - [X] Use sensible defaults
+      - i.e.
+        - Rule starts with call -> bracket with Start
+        - Rule ends with call -> bracket with Finish
+        - No reads -> assume empty table
+        - No writes -> assume empty table
+  - [ ] Move ACTOR_ON_UPDATE into schedule module
+  - [ ] Implement LEVEL_CALL schedule
+    - [ ] Test bone reading behaviour w.r.t. camera stutter
+  - [ ] Implement builder pattern for ~Schedule:insert~
+    - Would make member names explicit for complex insertions
+    - Also improves type-safety with respect to accidentally-nil'd fields (i.e. due to a broken import)
+  - [ ] Address RoboDolg
+    - Currently using hacky state caching methodology w/3-arg insert
+      - Should probably do this outside of the schedule if anything
 - [ ] Inject time into state
   - Currently used by HUD Offset Rotation
 - [ ] matrix / fcolor usage pass
@@ -378,3 +414,10 @@ Vector debug UI framework.
   - ~WallmarksEngine.cpp~
   - ~AddSkeletonWallmark~
   - ~if (xf->c.distance_to_sqr(Device.vCameraPosition) > _sqr(50.f))~
+
+**** Misc
+- Preset names
+  - GoldenOrb
+  - Perfect Dolg
+  - Escape From Tukarev
+  - Zuke Nukem

@@ -4,6 +4,14 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
+-- Imports
+
+--- List
+local map_list = goldenorb_list.map
+
+--- Table
+local fold_table = goldenorb_table.fold
+
 -- Constants
 
 OFF = 0
@@ -40,11 +48,37 @@ function logger(mod, level)
    )
 end
 
+function val_to_string(t)
+   if type(t) == "table" then
+      return fold_table(
+         t,
+         "{",
+         function(acc, k, v)
+            return acc .. string.gsub(
+               string.format("\n%s: %s", k, val_to_string(v)),
+               "\n",
+               "\n   "
+            )
+         end
+      ) .. "\n}"
+   elseif type(t) == "userdata" then
+      if t.x and t.y and t.z then
+         return string.format("[\n   %s,\n   %s, \n   %s  \n]", t.x, t.y, t.z)
+      elseif t.x and t.y then
+         return string.format("[%s, %s]", t.x, t.y)
+      else
+         return string.format("userdata")
+      end
+   else
+      return string.format("%s", t)
+   end
+end
+
 ---@param s string
 ---@param ... any
 ---@return nil
 function Logger:log_impl(s, ...)
-   printf("%s: " .. s, self.mod, ...)
+   printf("%s: " .. s, self.mod, unpack(map_list({...}, val_to_string)))
 end
 
 --- If logging is enabled, print the given format string and arguments

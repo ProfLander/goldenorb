@@ -31,8 +31,15 @@ local spring_1d = goldenorb_spring.spring_1d
 --- Table
 local foreach = goldenorb_table.foreach
 
+--- Math
+local deg = lander_math.deg
+
 --- Function
 local protected = goldenorb_function.protected
+
+--- Schedule
+local I_READ = goldenorb_schedule.I_READ
+local O_WRITE = goldenorb_schedule.O_WRITE
 
 --- MCM Builder
 local Trackbar = mcm_builder.Trackbar
@@ -40,7 +47,7 @@ local Trackbar = mcm_builder.Trackbar
 --- Logging
 local log = goldenorb_logging.logger(
    "GoldenOrb/Recoil",
-   goldenorb_logging.TRACE
+   goldenorb_logging.WARNING
 )
 
 -- Constants
@@ -136,14 +143,10 @@ local control_fac = 0
 -- Implementation
 
 --- Cache a weapon's HUD data before setting it all to 0
----@param state state
----@return state
+---@param state table
+---@return table
 function consume_weapon(state)
    log:trace("consume_weapon(%s)", state)
-
-   if not state.wpn then
-      return state
-   end
 
    -- Fetch the weapon's section
    local sec = state.wpn:section()
@@ -152,13 +155,13 @@ function consume_weapon(state)
    -- Return with a warning if it's not valid
    if not sec then
       log:warning("  WARNING: Invalid weapon section")
-      return state
+      return {}
    end
 
    -- Return if it's already set
    if wpn_cache[sec] then
       log:info("  %s is already cached, returning.", sec)
-      return state
+      return {}
    end
 
    -- Fetch existing cache data
@@ -169,7 +172,7 @@ function consume_weapon(state)
 
    if not weapon then
       log:warning("  WARNING: Invalid weapon")
-      return state
+      return {}
    end
 
    -- Iterate over our parameter lenses
@@ -181,18 +184,13 @@ function consume_weapon(state)
       end
    )
 
-   return state
+   return {}
 end
 
 local joint_recoil = joint()
 
 function recoil_weapon(state)
    log:trace("recoil_weapon(%s)", state)
-
-   if not state.hud then
-      printf("  invalid HUD, returning")
-      return state
-   end
 
    control_fac = control_fac + spring_1d(
       0,
@@ -203,8 +201,17 @@ function recoil_weapon(state)
 
    joint_recoil:impulse_with(spring_recoil.spring)
 
-   state = joint_recoil:apply_hud_orientation(state)
-   return state
+   return {
+      hud = {
+         hands_orientation = state.hud.hands_orientation:add(
+            vector():set(
+               deg(joint_recoil.vec.x),
+               deg(joint_recoil.vec.y),
+               deg(joint_recoil.vec.z)
+            )
+         )
+      }
+   }
 end
 
 function actor_on_weapon_fired_impl(actor, wpn, ammo)
@@ -258,15 +265,15 @@ function actor_on_weapon_fired_impl(actor, wpn, ammo)
 
    -- Fetch silencer recoil stats
    local silencer = ini_sys:r_string_ex(sec, "silencer_name")
-   printf("  silencer: %s", silencer)
+   log:debug("  silencer: %s", silencer)
 
    local silencer_disp = silencer
       and ini_sys:r_string_ex(silencer, "cam_dispersion_k") or 1
    local silencer_inc = silencer
       and ini_sys:r_string_ex(silencer, "cam_dispersion_inc_k") or 1
 
-   printf("  silencer_disp: %s", silencer_disp)
-   printf("  silencer_inc: %s", silencer_inc)
+   log:debug("  silencer_disp: %s", silencer_disp)
+   log:debug("  silencer_inc: %s", silencer_inc)
 
    local disp = wpn_disp * silencer_disp * ammo_disp
    local inc = wpn_inc * silencer_inc * (control_fac + 1)
@@ -275,14 +282,14 @@ function actor_on_weapon_fired_impl(actor, wpn, ammo)
 
    local rnd = (math.random() - 1) * 2
    local recoil_y = ang * (wpn_frac + rnd * (1 - wpn_frac))
-   printf("  recoil_y: %s", recoil_y)
+   log:debug("  recoil_y: %s", recoil_y)
 
    rnd = (math.random() - 1) * 2
    local recoil_x = (joint_recoil.vec.y / wpn_max_vert) * rnd * wpn_step_horz
-   printf("  recoil_x: %s", recoil_x)
+   log:debug("  recoil_x: %s", recoil_x)
 
    joint_recoil:impulse(vector():set(recoil_x, recoil_y, 0))
-   printf("  joint: %s", joint_recoil.vec)
+   log:debug("  joint: %s", joint_recoil.vec)
 end
 
 function actor_on_weapon_fired(...)
@@ -299,15 +306,30 @@ on_game_start = protected(
    function()
       goldenorb_main.ACTOR_ON_UPDATE
          :insert(
-            {consume_weapon, recoil_weapon},
+            consume_weapon,
+            {phase_modify_state},
+            {phase_apply_state},
+            {wpn = I_READ}
+         )
+         :insert(
+            recoil_weapon,
             {
                phase_modify_state,
                consume_weapon,
                body_cam,
                free_aim,
                offset_aim,
-               recoil_weapon,
-               phase_apply_state
+            },
+            {phase_apply_state},
+            {
+               hud = {
+                  hands_orientation = I_READ
+               }
+            },
+            {
+               hud = {
+                  hands_orientation = O_WRITE
+               }
             }
          )
       RegisterScriptCallback("actor_on_weapon_fired", actor_on_weapon_fired)

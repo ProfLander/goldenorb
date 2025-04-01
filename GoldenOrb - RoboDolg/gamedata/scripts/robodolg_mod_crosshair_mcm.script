@@ -38,7 +38,7 @@ local curry_r = goldenorb_function.curry_r
 local vector_rotate_z = lander_math.vector_rotate_z
 
 --- Logging
-local log = goldenorb_logging.log
+local log = robodolg_logging.log
 
 -- Constants
 
@@ -113,8 +113,8 @@ function vert(v, cond, r)
       or out
 end
 
----@param state state
----@return state
+---@param state table
+---@return table
 function draw(state)
    log("draw_crosshair(%s)", state)
 

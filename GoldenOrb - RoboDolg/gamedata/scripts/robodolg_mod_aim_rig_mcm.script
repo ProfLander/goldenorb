@@ -33,7 +33,7 @@ local ImageWithText = mcm_builder.ImageWithText
 local Checkbox = mcm_builder.Checkbox
 
 --- Log
-local log = goldenorb_logging.log
+local log = robodolg_logging.log
 
 -- State
 
@@ -48,8 +48,8 @@ local should_draw = page:settings(
 -- Implementation
 
 --- Draw aim rig
----@param state state
----@return state
+---@param state table
+---@return table
 function draw(state)
    log("draw_aim_rig(%s)", state)
 
