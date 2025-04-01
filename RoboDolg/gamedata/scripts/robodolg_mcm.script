@@ -63,7 +63,7 @@ function cache_state(state)
    return state
 end
 
---- Use the cached stated to draw robodolg modules
+--- Use the cached state to draw robodolg modules
 ---@return nil
 function draw_robodolg_impl()
    log("draw_robodolg_impl()")

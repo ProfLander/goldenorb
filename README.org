@@ -230,12 +230,20 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
   - [ ] Move ACTOR_ON_UPDATE into schedule module
   - [ ] Implement LEVEL_CALL schedule
     - [ ] Test bone reading behaviour w.r.t. camera stutter
+  - [ ] Implement preconditions for schedule functions
+    - Intuitively, runtime checks versus I/O "static" checks
+      - In practice, user controllable versus built-in
+    - Needed for cases like weapons being non-equipped
+      - Preferable to be able to elide null checks in favor of static non-maybe semantics while retaining the ability to avoid invoking them if it's known that the reads don't need to happen
   - [ ] Implement builder pattern for ~Schedule:insert~
     - Would make member names explicit for complex insertions
     - Also improves type-safety with respect to accidentally-nil'd fields (i.e. due to a broken import)
   - [ ] Address RoboDolg
     - Currently using hacky state caching methodology w/3-arg insert
       - Should probably do this outside of the schedule if anything
+- [ ] Implement Logger:assert
+  - Thunk string concatenation for better performance
+  - Use ~val_to_string~ for more informative assertion messages
 - [ ] Inject time into state
   - Currently used by HUD Offset Rotation
 - [ ] matrix / fcolor usage pass
@@ -271,7 +279,9 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
 - [-] Reverse-engineer vanilla camera positioning
   - Can be reconstructed using ~bip01~ and HUD position / rotation data
   - [X] Initial position + rotation
-  - [ ] Refactor position / rotation reset modules into camera consumer
+  - [-] Refactor position / rotation reset modules into camera consumer
+  - [ ] Reconstruct actor -> ~bip01~ eye offset manually to avoid lag
+    - How to do this for rotation?
   - [ ] Implement roll
 - [ ] Implement custom smoothing
   - Built-in engine smoothing desynchronizes with the actor update

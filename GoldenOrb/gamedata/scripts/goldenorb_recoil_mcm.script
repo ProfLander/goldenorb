@@ -15,9 +15,9 @@ local phase_apply_state = goldenorb_main.phase_apply_state
 local handle_error = goldenorb_main.handle_error
 
 --- Modifiers
-local body_cam = goldenorb_mod_body_cam_mcm.body_cam
-local free_aim = goldenorb_mod_free_aim_mcm.free_aim
-local offset_aim = goldenorb_mod_offset_aim_mcm.offset_aim
+local body_cam = goldenorb_body_cam_mcm.body_cam
+local free_aim = goldenorb_free_aim_mcm.free_aim
+local offset_aim = goldenorb_offset_aim_mcm.offset_aim
 
 --- Joint
 local joint = goldenorb_joint.joint
