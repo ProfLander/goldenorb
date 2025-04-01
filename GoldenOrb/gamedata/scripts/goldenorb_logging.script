@@ -21,13 +21,14 @@ INFO = 3
 DEBUG = 4
 TRACE = 5
 
-local LEVEL = TRACE
+local LEVEL = WARNING
 
 -- Implementation
 
 ---@class logger
 ---@field mod string
 ---@field level number
+---@field log_impl fun(self: logger, s: string, ...: any): nil
 
 --- Logger Metatable
 Logger = {}
@@ -74,9 +75,6 @@ function val_to_string(t)
    end
 end
 
----@param s string
----@param ... any
----@return nil
 function Logger:log_impl(s, ...)
    printf("%s: " .. s, self.mod, unpack(map_list({...}, val_to_string)))
 end
@@ -97,3 +95,11 @@ Logger.warning = make_log(WARNING)
 Logger.debug = make_log(DEBUG)
 Logger.info = make_log(INFO)
 Logger.trace = make_log(TRACE)
+
+function Logger:unconditionally(f, ...)
+   local self_level = self.level
+   self.level = TRACE
+   local out = f(...)
+   self.level = self_level
+   return out
+end

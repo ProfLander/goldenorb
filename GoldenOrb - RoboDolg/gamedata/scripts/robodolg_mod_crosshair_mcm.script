@@ -9,7 +9,6 @@
 --- Aim Point
 local get_camera_aim_point = goldenorb_camera_mcm.get_camera_aim_point
 local get_camera_rotation = goldenorb_camera_mcm.get_camera_rotation
-local get_hands_aim_point = goldenorb_weapon.get_hands_aim_point
 local get_hands_rotation = goldenorb_weapon.get_hands_rotation
 local get_weapon_aim_point = goldenorb_weapon.get_weapon_aim_point
 local get_fire_bone_rotation = goldenorb_weapon.get_fire_bone_rotation
@@ -105,9 +104,9 @@ local
 
 -- Implementation
 
-function vert(v, cond, r)
+function vert(state, v, cond, r)
    log("vert(%s, %s, %s)", v, cond, r)
-   local out = ui_2d(v, true)
+   local out = ui_2d(state, v, true)
    return cond
       and advise_before(out, curry_r(vector_rotate_z, r))
       or out
@@ -126,7 +125,7 @@ function draw(state)
    local size_ring = ring_size:get()
    local segs_ring = ring_segs:get()
 
-   local cam_roll = get_camera_rotation().z
+   local cam_roll = get_camera_rotation(state).z
 
    -- Camera
    if draw_camera:get() then
@@ -135,7 +134,7 @@ function draw(state)
          size_ring,
          segs_ring,
          COLOR_CAMERA,
-         ui_2d(get_camera_aim_point(), true)
+         ui_2d(state, get_camera_aim_point(state), true)
       )
    end
 
@@ -147,7 +146,8 @@ function draw(state)
          segs_ring,
          COLOR_HANDS,
          vert(
-            get_hands_aim_point(),
+            state,
+            state.hands.aim,
             rotate_hands:get(),
             -(get_hands_rotation().z - cam_roll)
          )
@@ -162,6 +162,7 @@ function draw(state)
          segs_ring,
          COLOR_WEAPON,
          vert(
+            state,
             get_weapon_aim_point(state.wpn),
             rotate_weapon:get(),
             -(get_fire_bone_rotation(state.wpn).z - cam_roll)

@@ -15,11 +15,20 @@ local ACTOR_ON_UPDATE = goldenorb_main.ACTOR_ON_UPDATE
 --- Impure
 local inject_actor = goldenorb_impure.inject_actor
 
+--- Aim
+local aim_type = goldenorb_aim_mcm.aim_type
+local AIM_FREE = goldenorb_aim_mcm.AIM_FREE
+
 --- Camera
 local inject_camera = goldenorb_camera_mcm.inject_camera
 
 --- Weapon
+local get_hud_number = goldenorb_weapon.get_hud_number
+local inject_weapon = goldenorb_weapon.inject_weapon
 local inject_weapon_hud = goldenorb_weapon.inject_weapon_hud
+
+--- Math
+local deg = lander_math.deg
 
 --- Function
 local protected = goldenorb_function.protected
@@ -31,8 +40,12 @@ local O_WRITE = goldenorb_schedule.O_WRITE
 --- Logging
 local log = goldenorb_logging.logger(
    "GoldenOrb/Hands",
-   goldenorb_logging.WARNING
+   goldenorb_logging.TRACE
 )
+
+-- State
+
+local zoom_fac = 0
 
 --- Consume the HUD hand transforms and store them in the state
 ---@param state table
@@ -40,10 +53,13 @@ local log = goldenorb_logging.logger(
 function consume_hands_transform(state)
    log:trace("consume_hands_transform(%s)", state)
 
+   if aim_type:get() ~= AIM_FREE then
+      return {}
+   end
+
    local pos = state.hud.hands_position
    local rot = state.hud.hands_orientation
 
-   local dev = device()
    return {
       hud = {
          hands_position = vector(),
@@ -51,38 +67,106 @@ function consume_hands_transform(state)
       },
       cam = {
          pos = vector()
-            :add(dev.cam_right:mul(-pos.x))
-            :add(dev.cam_top:mul(-pos.y))
-            :add(dev.cam_dir:mul(-pos.z))
+            :add(vector():set(state.dev.cam_right):mul(-pos.x))
+            :add(vector():set(state.dev.cam_top):mul(-pos.y))
+            :add(vector():set(state.dev.cam_dir):mul(-pos.z)),
+         rot = vector(),
       }
    }
 end
 
----@return nil
-on_game_start = protected(
-   handle_error,
+--- Apply HUD aim offset rotation with a lerp to counteract ADS animation
+---@param state table
+---@return table
+function apply_hud_offset_rot(state)
+   log:trace("apply_hud_offset_rot(%s)", state)
+
+   local zoom_duration = get_hud_number(state.wpn, "zoom_rotate_time")
+   if zoom_duration == nil or
+      zoom_duration == 0
+   then
+      zoom_duration = 0.25
+   end
+   log:debug("  zoom_duration: %s", zoom_duration)
+
+   -- Apply HUD offset rotation based on zoom state
+   local rot_ofs = vector():set(
+      deg(state.hud.aim_hud_offset_rot.y),
+      deg(state.hud.aim_hud_offset_rot.x),
+      deg(state.hud.aim_hud_offset_rot.z)
+   )
+
+   local dt = (state.dev.time_delta / 1000) / zoom_duration
+   log:debug("  dt: %s", dt)
+   if not axr_main.weapon_is_zoomed then
+      dt = -dt
+   end
+   zoom_fac = zoom_fac + dt
+
+   zoom_fac = math.min(math.max(zoom_fac, 0), 1)
+
+   log:debug("  zoom_fac: %s", zoom_fac)
+
+   -- Done
+   return {
+      hud = {
+         hands_position = vector(),
+         hands_orientation = vector():set(state.hud.hands_orientation)
+            :add(rot_ofs:mul(-(1 - zoom_fac)))
+      }
+   }
+end
+
+ACTOR_ON_UPDATE:insert(
+   consume_hands_transform,
+   {
+      phase_build_state,
+      inject_actor,
+      inject_camera,
+      inject_weapon_hud,
+   },
+   {phase_modify_state},
+   {
+      dev = I_READ,
+      hud = {
+         hands_position = I_READ,
+         hands_orientation = I_READ,
+      },
+   },
+   {
+      hud = {
+         hands_position = O_WRITE,
+         hands_orientation = O_WRITE,
+      },
+      cam = {
+         pos = O_WRITE,
+         rot = O_WRITE
+      }
+   }
+)
+
+ACTOR_ON_UPDATE:insert(
+   apply_hud_offset_rot,
+   {
+      phase_build_state,
+      inject_weapon,
+      inject_weapon_hud,
+   },
+   {phase_modify_state},
+   {
+      dev = I_READ,
+      wpn = I_READ,
+      hud = {
+         aim_hud_offset_rot = I_READ,
+         hands_orientation = I_READ,
+      },
+   },
+   {
+      hud = {
+         hands_orientation = O_WRITE
+      }
+   },
    function()
-      ACTOR_ON_UPDATE
-         :insert(
-            consume_hands_transform,
-            {
-               phase_build_state,
-               inject_actor,
-               inject_camera,
-               inject_weapon_hud,
-            },
-            {phase_modify_state},
-            {
-               hud = {
-                  hands_position = I_READ,
-                  hands_orientation = I_READ,
-               },
-            },
-            {
-               cam = {
-                  pos = O_WRITE
-               }
-            }
-         )
+      return aim_type:get() == AIM_FREE
    end
 )

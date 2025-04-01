@@ -24,7 +24,7 @@ local O_WRITE = goldenorb_schedule.O_WRITE
 --- Logging
 local log = goldenorb_logging.logger(
    "GoldenOrb/Impure",
-    goldenorb_logging.WARNING
+    goldenorb_logging.TRACE
 )
 
 -- Implementation
@@ -50,21 +50,15 @@ end
 
 --- Entrypoint
 ---@return nil
-on_game_start = protected(
-   handle_error,
-   function()
-      goldenorb_main.ACTOR_ON_UPDATE
-         :insert(
-            inject_actor,
-            {phase_build_state},
-            {phase_apply_state},
-            {actor = I_NOT_EXIST},
-            {actor = O_WRITE}
-         )
-         :insert(
-            hud_adjust_enable,
-            {phase_apply_state},
-            {phase_done}
-         )
-   end
+goldenorb_main.ACTOR_ON_UPDATE:insert(
+   inject_actor,
+   {phase_build_state},
+   {phase_apply_state},
+   {actor = I_NOT_EXIST},
+   {actor = O_WRITE}
+)
+:insert(
+   hud_adjust_enable,
+   {phase_apply_state},
+   {phase_done}
 )

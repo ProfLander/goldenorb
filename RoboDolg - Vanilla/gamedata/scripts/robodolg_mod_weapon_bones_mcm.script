@@ -39,8 +39,8 @@ local should_draw = page:settings(
 
 -- Implementation
 
----@param state state
----@return state
+---@param state table
+---@return table
 function draw_weapon_bones(state)
    log("draw_weapon_bones(%s)", state)
 
@@ -53,6 +53,7 @@ function draw_weapon_bones(state)
    end
 
    draw_bones(
+      state,
       state.wpn,
       true,
       POLY_SIZE,

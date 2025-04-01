@@ -11,6 +11,12 @@
 --- Math
 local deg = lander_math.deg
 
+--- Logging
+local log = goldenorb_logging.logger(
+   "GoldenOrb/Joint",
+   goldenorb_logging.TRACE
+)
+
 -- Implementation
 
 --- Joint Metatable
@@ -30,7 +36,9 @@ end
 ---@param impulse vector
 ---@return joint
 function Joint:impulse(impulse)
-   assert(impulse, "Invalid impulse")
+   if not impulse then
+      assert(nil, string.format("Invalid impulse: %s", impulse))
+   end
    self.vec:add(impulse)
    return self
 end
@@ -38,7 +46,9 @@ end
 ---@param f fun(v: vector): vector
 ---@return joint
 function Joint:impulse_with(f)
-   assert(f, "Invalid impulse function")
+   if not f then
+      assert(nil, string.format("Invalid impulse function: %s", f))
+   end
    self.vec:add(f(self.vec))
    return self
 end

@@ -9,7 +9,7 @@
 --- HUD offset rotation
 local phase_modify_state = goldenorb_main.phase_modify_state
 local phase_apply_state = goldenorb_main.phase_apply_state
-local handle_error = goldenorb_main.handle_error
+local ACTOR_ON_UPDATE = goldenorb_main.ACTOR_ON_UPDATE
 
 --- Math
 local deg = lander_math.deg
@@ -33,9 +33,6 @@ local O_WRITE_MAYBE = goldenorb_schedule.O_WRITE_MAYBE
 --- Camera
 local get_camera_aim_point = goldenorb_camera_mcm.get_camera_aim_point
 
---- Weapon
-local get_hands_position = goldenorb_weapon.get_hands_position
-
 --- String
 local parse_vector = goldenorb_string.parse_vector
 local parse_call = goldenorb_string.parse_call
@@ -49,7 +46,7 @@ local InputField = mcm_builder.InputField
 --- Logging
 local log = goldenorb_logging.logger(
    "GoldenOrb/Bodycam",
-   goldenorb_logging.WARNING
+   goldenorb_logging.TRACE
 )
 
 -- Constants
@@ -109,33 +106,29 @@ end
 
 -- Implementation
 
----@param wpn game_object
+---@param state table
 ---@return vector?
-function get_actor_rotation(wpn)
+function get_actor_rotation(state)
    log:trace("get_actor_rotation")
-   local actor = db.actor
 
-   log:debug("  actor: %s", actor)
+   log:debug("  actor: %s", state.actor)
 
-   local cam_aim = get_camera_aim_point()
+   local cam_aim = get_camera_aim_point(state)
    log:debug("  cam_aim: %s", cam_aim)
 
-   local actor_pos = actor:position()
+   local actor_pos = state.actor:position()
    log:debug("  actor_pos: %s", actor_pos)
 
-   local actor_dir = actor:direction()
+   local actor_dir = state.actor:direction()
    log:debug("  actor_dir: %s", actor_dir)
 
    local actor_aim = vector()
-      :set(actor:position())
-      :add(actor:direction():mul(800))
+      :set(state.actor:position())
+      :add(state.actor:direction():mul(800))
    log:info("  actor_aim: %s", cam_aim)
 
-   local hands_pos = get_hands_position()
+   local hands_pos = state.hands.position
    log:debug("  hands_pos: %s", hands_pos)
-   if not hands_pos then
-      return nil
-   end
 
    local cam_loc = cam_aim:sub(hands_pos):normalize()
    log:debug("  cam_loc: %s", cam_loc)
@@ -163,10 +156,6 @@ end
 ---@return table
 function body_cam(state)
    log:trace("body_cam(%s)", state)
-
-   if not enabled:get() then
-      return {}
-   end
 
    local root_pos = state.actor:bone_position(BONE_ROOT)
    log:debug("root_pos: %s", root_pos)
@@ -216,7 +205,7 @@ function body_cam(state)
       return out
    end
 
-   local actor_rot = get_actor_rotation(state.wpn)
+   local actor_rot = get_actor_rotation(state)
    if not actor_rot then
       return out
    end
@@ -232,33 +221,30 @@ function body_cam(state)
    return out
 end
 
----@return nil
-on_game_start = protected(
-   handle_error,
-   function()
-      goldenorb_main.ACTOR_ON_UPDATE
-         :insert(
-            body_cam,
-            {phase_modify_state},
-            {phase_apply_state},
-            {
-               actor = I_READ,
-               wpn = I_READ_MAYBE,
-               hud = {
-                  hands_orientation = I_READ_MAYBE
-               },
-            },
-            {
-               cam = {
-                  enable = O_WRITE_MAYBE,
-                  affect_hud = O_WRITE_MAYBE,
-                  pos = O_WRITE_MAYBE,
-                  rot = O_WRITE_MAYBE,
-               },
-               hud = {
-                  hands_orientation = O_WRITE_MAYBE
-               }
-            }
-         )
-   end
-)
+ACTOR_ON_UPDATE
+   :insert(
+      body_cam,
+      {phase_modify_state},
+      {phase_apply_state},
+      {
+         actor = I_READ,
+         wpn = I_READ_MAYBE,
+         hud = {
+            hands_orientation = I_READ_MAYBE
+         },
+      },
+      {
+         cam = {
+            enable = O_WRITE,
+            affect_hud = O_WRITE,
+            pos = O_WRITE,
+            rot = O_WRITE,
+         },
+         hud = {
+            hands_orientation = O_WRITE_MAYBE
+         }
+      },
+      function()
+         return enabled:get()
+      end
+   )

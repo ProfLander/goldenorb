@@ -36,12 +36,12 @@ local Trackbar = mcm_builder.Trackbar
 --- Logging
 local log = goldenorb_logging.logger(
    "GoldenOrb/Camera",
-    goldenorb_logging.WARNING
+    goldenorb_logging.TRACE
 )
 
 -- Constants
 
-local DIST = 800
+local DIST = 1000
 
 -- State
 
@@ -60,8 +60,8 @@ local smoothing = page:settings(
 
 local cam_custom = false
 
-local prev_pos = vector()
-local prev_rot = vector()
+local prev_pos = nil
+local prev_rot = nil
 
 local delta_pos = vector()
 local delta_rot = vector()
@@ -70,23 +70,32 @@ local delta_rot = vector()
 
 --- Rotation getter
 ---@return vector
-function get_camera_position()
-   return device().cam_pos
+function get_camera_position(state)
+   return vector():set(state.dev.cam_pos)
 end
 
 ---@return vector
-function get_camera_direction()
-   return device().cam_dir
+function get_camera_direction(state)
+   return vector():set(state.dev.cam_dir)
 end
 
 ---@return vector
-function get_camera_rotation()
-   local dir = get_camera_direction()
+function get_camera_rotation(state)
+   local dir = get_camera_direction(state)
    return vector():set(
       math.atan2(dir.x, dir.z),
       math.sin(dir.y),
       0
    )
+end
+
+--- Aim point getter
+---@return vector
+function get_camera_aim_point(state)
+   log:trace("get_camera_aim_point(%s)", state)
+   return get_camera_direction(state)
+      :mul(DIST)
+      :add(get_camera_position(state))
 end
 
 --- Delta position getter
@@ -101,14 +110,6 @@ function get_camera_delta_rotation()
    return delta_rot
 end
 
---- Aim point getter
----@return vector
-function get_camera_aim_point()
-   log:trace("get_camera_aim_point(%s)")
-   local dev = device()
-   return dev.cam_dir:mul(DIST):add(dev.cam_pos)
-end
-
 ---@class state_cam
 ---@field enable boolean
 ---@field pos vector
@@ -116,6 +117,31 @@ end
 ---@field smoothing number
 ---@field show_hud boolean
 ---@field affect_hud boolean
+
+--- Inject device into the state
+---@param state table
+---@return table
+function inject_device(state)
+   log:trace("inject_device(%s)", state)
+
+   local dev = device()
+   return {
+      dev = {
+         width = dev.width,
+         height = dev.height,
+         aspect_ratio = dev.aspect_ratio,
+         fov = dev.fov,
+         frame = dev.frame,
+         precache_frame = dev.precache_frame,
+         time_delta = dev.time_delta,
+         f_time_delta = dev.f_time_delta,
+         cam_pos = vector():set(dev.cam_pos),
+         cam_right = vector():set(dev.cam_right):normalize(),
+         cam_top = vector():set(dev.cam_top):normalize(),
+         cam_dir = vector():set(dev.cam_dir):normalize(),
+      }
+   }
+end
 
 --- Inject default camera parameters into the state
 ---@param state table
@@ -141,17 +167,20 @@ end
 function read_camera(state)
    log:trace("read_camera(%s)", state)
 
-   local dev = device()
-   local pos = dev.cam_pos
+   local cam_pos = get_camera_position(state)
+   local cam_rot = get_camera_rotation(state)
 
-   delta_pos = vector():set(pos):sub(prev_pos)
-   log:trace("  delta_pos: %s", delta_pos)
+   if prev_pos then
+      delta_pos = vector():set(cam_pos):sub(prev_pos)
+      log:trace("  delta_pos: %s", delta_pos)
+   end
 
-   local cam_rot = get_camera_rotation()
-   delta_rot = vector():set(cam_rot):sub(prev_rot)
-   log:trace("  delta_rot: %s", delta_rot)
+   if prev_rot then
+      delta_rot = vector():set(cam_rot):sub(prev_rot)
+      log:trace("  delta_rot: %s", delta_rot)
+   end
 
-   prev_pos = pos
+   prev_pos = cam_pos
    prev_rot = cam_rot
 
    return {}
@@ -182,38 +211,34 @@ function apply_camera(state)
    return {}
 end
 
----Initialization handler
 ---@return nil
-function init_camera()
-   local dev = device()
-   prev_pos = dev.cam_pos
-   prev_rot = dev.cam_dir
-end
-
----@return nil
-on_game_start = protected(
-   handle_error,
-   function()
-      ACTOR_ON_UPDATE
-         :insert(
-            inject_camera,
-            {phase_build_state},
-            {phase_modify_state},
-            {cam = I_NOT_EXIST},
-            {cam = O_WRITE}
-         )
-         :insert(
-            read_camera,
-            {inject_camera},
-            {phase_modify_state}
-         )
-         :insert(
-            apply_camera,
-            {phase_apply_state},
-            {phase_done},
-            {cam = I_READ}
-         )
-
-      RegisterScriptCallback("actor_on_first_update", init_camera)
-   end
-)
+ACTOR_ON_UPDATE
+   :insert(
+      inject_device,
+      {phase_build_state},
+      {phase_modify_state},
+      {dev = I_NOT_EXIST},
+      {dev = O_WRITE}
+   )
+   :insert(
+      inject_camera,
+      {phase_build_state, inject_device},
+      {phase_modify_state},
+      {
+         dev = I_READ,
+         cam = I_NOT_EXIST
+      },
+      {cam = O_WRITE}
+   )
+   :insert(
+      read_camera,
+      {phase_build_state, inject_device, inject_camera},
+      {phase_modify_state},
+      {dev = I_READ}
+   )
+   :insert(
+      apply_camera,
+      {phase_apply_state},
+      {phase_done},
+      {cam = I_READ}
+   )

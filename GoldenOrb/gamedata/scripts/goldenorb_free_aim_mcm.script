@@ -9,19 +9,15 @@
 --- HUD offset rotation
 local phase_modify_state = goldenorb_main.phase_modify_state
 local phase_apply_state = goldenorb_main.phase_apply_state
-local handle_error = goldenorb_main.handle_error
-
---- Camera
-local get_hands_position = goldenorb_weapon.get_hands_position
-local get_hands_rotation = goldenorb_weapon.get_hands_rotation
+local ACTOR_ON_UPDATE = goldenorb_main.ACTOR_ON_UPDATE
 
 --- Aim
-local aim_type = goldenorb_aim.aim_type
-local AIM_FREE = goldenorb_aim.AIM_FREE
+local aim_type = goldenorb_aim_mcm.aim_type
+local AIM_FREE = goldenorb_aim_mcm.AIM_FREE
 
 --- Schedule
 local I_READ = goldenorb_schedule.I_READ
-local O_WRITE_MAYBE = goldenorb_schedule.O_WRITE_MAYBE
+local O_WRITE = goldenorb_schedule.O_WRITE
 
 --- Function
 local protected = goldenorb_function.protected
@@ -29,27 +25,17 @@ local protected = goldenorb_function.protected
 --- Logging
 local log = goldenorb_logging.logger(
    "GoldenOrb/Free Aim",
-   goldenorb_logging.WARNING
+   goldenorb_logging.TRACE
 )
 
 -- Implementation
-
----@return boolean
-function enabled()
-   return aim_type:get() == AIM_FREE
-end
 
 ---@param state table
 ---@return table
 function free_aim(state)
    log:trace("free_aim(%s)", state)
 
-   if not enabled() then
-      log:debug("  Not enabled, returning.")
-      return {}
-   end
-
-   local ofs = get_hands_rotation():sub(state.joint_aim.vec):mul(-1)
+   local ofs = state.hands.rot:sub(state.joint_aim.vec):mul(-1)
    log:trace("  ofs: %s", ofs)
 
    local force = state.spring_aim.spring(ofs)
@@ -63,40 +49,39 @@ function free_aim(state)
       cam = {
          enable = true,
          affect_hud = false,
-         pos = vector():set(state.cam.pos):add(get_hands_position()),
+         pos = vector():set(state.cam.pos):add(state.hands.pos),
          rot = vector():set(state.cam.rot):add(joint_aim.vec),
       }
    }
 end
 
 ---@return nil
-on_game_start = protected(
-   handle_error,
-   function()
-      goldenorb_main.ACTOR_ON_UPDATE
-         :insert(
-            free_aim,
-            {phase_modify_state},
-            {phase_apply_state},
-            {
-               actor = I_READ,
-               wpn = I_READ,
-               joint_aim = I_READ,
-               spring_aim = I_READ,
-               cam = {
-                  pos = I_READ,
-                  rot = I_READ,
-               },
-            },
-            {
-               joint_aim = O_WRITE_MAYBE,
-               cam = {
-                  enable = O_WRITE_MAYBE,
-                  affect_hud = O_WRITE_MAYBE,
-                  pos = O_WRITE_MAYBE,
-                  rot = O_WRITE_MAYBE,
-               },
-            }
-         )
-   end
-)
+ACTOR_ON_UPDATE
+   :insert(
+      free_aim,
+      {phase_modify_state},
+      {phase_apply_state},
+      {
+         actor = I_READ,
+         wpn = I_READ,
+         joint_aim = I_READ,
+         spring_aim = I_READ,
+         hands = I_READ,
+         cam = {
+            pos = I_READ,
+            rot = I_READ,
+         },
+      },
+      {
+         joint_aim = O_WRITE,
+         cam = {
+            enable = O_WRITE,
+            affect_hud = O_WRITE,
+            pos = O_WRITE,
+            rot = O_WRITE,
+         },
+      },
+      function()
+         return aim_type:get() == AIM_FREE
+      end
+   )

@@ -97,11 +97,11 @@ function draw(state)
    --]]
 
    local acc = nil
+   local pos = get_camera_aim_point(state)
    for i=1,32 do
       local t = i / 31
       local x = math.sin(t * TAU)
       local y = math.cos(t * TAU)
-      local pos = get_camera_aim_point()
       local v = vector():set(
          x * length.x,
          y * length.y,
@@ -109,8 +109,8 @@ function draw(state)
       )
       if acc then
          draw_line(
-            ui_2d(pos, true)(acc),
-            ui_2d(pos, true)(v)
+            ui_2d(state, pos, true)(acc),
+            ui_2d(state, pos, true)(v)
          )
       end
       acc = vector():set(v)

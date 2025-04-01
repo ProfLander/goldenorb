@@ -13,6 +13,14 @@ function id(...)
    return ...
 end
 
+--- Returns a function that returns the given parameters unconditionally
+function const(...)
+   local args = {...}
+   return function()
+      return unpack(args)
+   end
+end
+
 --- Produce a function that threads an input through the given functions
 ---@param ... fun(any: any): any
 ---@return fun(any: any): any

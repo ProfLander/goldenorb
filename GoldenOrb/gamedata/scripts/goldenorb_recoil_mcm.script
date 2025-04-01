@@ -47,7 +47,7 @@ local Trackbar = mcm_builder.Trackbar
 --- Logging
 local log = goldenorb_logging.logger(
    "GoldenOrb/Recoil",
-   goldenorb_logging.WARNING
+   goldenorb_logging.TRACE
 )
 
 -- Constants
@@ -261,15 +261,19 @@ function actor_on_weapon_fired_impl(actor, wpn, ammo)
    -- Gather weapon info
    local ammo_type = wpn:get_ammo_type()
    local ammo_sec = ammo_list_n[ammo_type + 1]
+   ---@diagnostic disable-next-line: undefined-field
    local ammo_disp = ini_sys:r_float_ex(ammo_sec, "k_cam_disp") or 1
 
    -- Fetch silencer recoil stats
+   ---@diagnostic disable-next-line: undefined-field
    local silencer = ini_sys:r_string_ex(sec, "silencer_name")
    log:debug("  silencer: %s", silencer)
 
    local silencer_disp = silencer
+      ---@diagnostic disable-next-line: undefined-field
       and ini_sys:r_string_ex(silencer, "cam_dispersion_k") or 1
    local silencer_inc = silencer
+      ---@diagnostic disable-next-line: undefined-field
       and ini_sys:r_string_ex(silencer, "cam_dispersion_inc_k") or 1
 
    log:debug("  silencer_disp: %s", silencer_disp)
@@ -300,38 +304,40 @@ function actor_on_weapon_fired(...)
    end
 end
 
+goldenorb_main.ACTOR_ON_UPDATE
+   :insert(
+      consume_weapon,
+      {phase_modify_state},
+      {phase_apply_state},
+      {wpn = I_READ}
+   )
+
+goldenorb_main.ACTOR_ON_UPDATE:insert(
+   recoil_weapon,
+   {
+      phase_modify_state,
+      consume_weapon,
+      body_cam,
+      free_aim,
+      offset_aim,
+   },
+   {phase_apply_state},
+   {
+      hud = {
+         hands_orientation = I_READ
+      }
+   },
+   {
+      hud = {
+         hands_orientation = O_WRITE
+      }
+   }
+)
+
 ---@return nil
 on_game_start = protected(
    handle_error,
    function()
-      goldenorb_main.ACTOR_ON_UPDATE
-         :insert(
-            consume_weapon,
-            {phase_modify_state},
-            {phase_apply_state},
-            {wpn = I_READ}
-         )
-         :insert(
-            recoil_weapon,
-            {
-               phase_modify_state,
-               consume_weapon,
-               body_cam,
-               free_aim,
-               offset_aim,
-            },
-            {phase_apply_state},
-            {
-               hud = {
-                  hands_orientation = I_READ
-               }
-            },
-            {
-               hud = {
-                  hands_orientation = O_WRITE
-               }
-            }
-         )
       RegisterScriptCallback("actor_on_weapon_fired", actor_on_weapon_fired)
    end
 )

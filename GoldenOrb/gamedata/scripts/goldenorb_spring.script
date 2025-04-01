@@ -28,7 +28,7 @@ local id = goldenorb_function.id
 --- Logging
 local log = goldenorb_logging.logger(
    "GoldenOrb/Spring",
-   goldenorb_logging.WARNING
+   goldenorb_logging.TRACE
 )
 
 -- Constants
@@ -43,7 +43,10 @@ SP_ANGULAR = 1
 ---@param f number
 ---@return number
 function spring_1d(length, strength, f)
-   assert(f, "Invalid spring input")
+   if f == nil then
+      assert(nil, string.format("Invalid spring input: %s", f))
+   end
+   ---@cast f number
    return -math.max(math.abs(f) - length, 0)
       * sign(f)
       * strength
@@ -97,19 +100,25 @@ end
 ---@param strength vector
 ---@return fun(vec: vector): vector
 function spring(ty, length, strength)
-   assert(
-      type(ty) == "number",
-      string.format("Invalid spring type %s", ty)
-   )
-   assert(
-      type(length) == "userdata",
-      string.format("Invalid spring length %s", ty)
-   )
+   if type(ty) ~= "number" then
+      assert(
+         nil,
+         string.format("Invalid spring type %s", ty)
+      )
+   end
+   if type(length) ~= "userdata" then
+      assert(
+         nil,
+         string.format("Invalid spring length %s", ty)
+      )
+   end
    ---@cast length vector
-   assert(
-      type(strength) == "userdata",
-      string.format("Invalid spring strength %s", ty)
-   )
+   if type(strength) ~= "userdata" then
+      assert(
+         nil,
+         string.format("Invalid spring strength %s", ty)
+      )
+   end
    ---@cast strength vector
    if ty == SP_LINEAR then
       return spring_3d_linear(length, strength)
@@ -117,7 +126,7 @@ function spring(ty, length, strength)
       return spring_3d_angular(length, strength)
    end
 
-   assert(nil, string.format("Invalid spring type %s", ty))
+   assert(nil, "Invalid spring type %s", ty)
    return id
 end
 

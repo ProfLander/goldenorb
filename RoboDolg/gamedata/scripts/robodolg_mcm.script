@@ -22,7 +22,10 @@ local reset = robodolg_shapes.reset
 local I_READ = goldenorb_schedule.I_READ
 
 --- GoldenOrb Main
+local phase_apply_state = goldenorb_main.phase_apply_state
 local phase_done = goldenorb_main.phase_done
+local apply_camera = goldenorb_camera_mcm.apply_camera
+local apply_weapon_hud = goldenorb_weapon.apply_weapon_hud
 
 --- Logging
 local log = robodolg_logging.log
@@ -40,9 +43,6 @@ local enabled = page:settings(
    Checkbox.new("enabled"):default(true)
 )
 
---- Cache of state from actor update
-local cache = nil
-
 -- Implementation
 
 --- Error handler
@@ -54,33 +54,24 @@ function handle_error(e)
    actor_menu.set_msg(1, msg, 10000)
 end
 
---- Intercept the state and cache it for later
----@param state table
----@return table
-function cache_state(state)
-   log("cache_state(%s)", state)
-   cache = state
-   return state
-end
-
 --- Use the cached state to draw robodolg modules
 ---@return nil
-function draw_robodolg_impl()
-   log("draw_robodolg_impl()")
+function draw_robodolg_impl(state)
+   log("draw_robodolg_impl(%s)", state)
+
    reset()
 
    if not enabled:get() then
+      log("  not enabled, returning")
       return
    end
 
-   if cache then
-      SendScriptCallback("robodolg_on_draw", cache)
-   end
+   SendScriptCallback("robodolg_on_draw", state)
 end
 
-function draw_robodolg()
-   log("draw_robodolg()")
-   local res, err = pcall(draw_robodolg_impl)
+function draw_robodolg(state)
+   log("draw_robodolg(%s)", state)
+   local res, err = pcall(draw_robodolg_impl, state)
    if not res then
       ---@cast err string
       handle_error(err)
@@ -97,15 +88,11 @@ function on_game_start()
 
    -- Register with GoldenOrb's update callback
    goldenorb_main.ACTOR_ON_UPDATE:insert(
-      cache_state,
+      draw_robodolg,
       {phase_done},
       {},
       I_READ
    )
-
-   -- Register a unique level call
-   -- so we can draw in sync with the debug renderer
-   AddUniqueCall(draw_robodolg)
 end
 
 --- Build the MCM tree on load

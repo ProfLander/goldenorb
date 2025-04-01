@@ -16,11 +16,13 @@ function val_to_string(t)
    if type(t) == "table" then
       out = "{"
       for k,v in pairs(t) do
-         out = string.format("%s\n%s: %s", out, k, val_to_string(v))
+         out = out .. ("\n%s: %s")
+            :format(k, val_to_string(v))
+            :gsub("\n", "\n   ")
       end
       out = out .. "\n}"
    elseif type(t) == "userdata" and t.x and t.y and t.z then
-      out = string.format("[%s, %s, %s]", t.x, t.y, t.z)
+      out = string.format("[\n   %s,\n   %s,\n   %s\n]", t.x, t.y, t.z)
    elseif type(t) == "userdata" and t.x and t.y then
       out = string.format("[%s, %s]", t.x, t.y)
    elseif type(t) == "userdata" then

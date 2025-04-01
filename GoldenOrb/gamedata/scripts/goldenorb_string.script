@@ -8,6 +8,12 @@
 
 local map = goldenorb_list.map
 
+-- Logging
+local log = goldenorb_logging.logger(
+    "GoldenOrb/String",
+    goldenorb_logging.TRACE
+)
+
 -- Implementation
 
 ---@param str string
@@ -20,21 +26,32 @@ end
 ---@param str string
 ---@return table<number, string>
 function parse_call(str)
-   assert(
-      type(str) == "string",
-      string.format("Input is not a string: %s", str)
-   )
-   assert(str:gmatch("%)$"), string.format("Not a call: %s", str))
+   if type(str) == "string" then
+      assert(
+         nil,
+         string.format("Input is not a string: %s", str)
+      )
+   end
+
+   if not str:gmatch("%)$") then
+      assert(
+         nil,
+         string.format("Not a call: %s", str)
+      )
+   end
+
    return map(str_explode(str, "%("), trim_ws)
 end
 
 ---@param str string
 ---@return vector
 function parse_vector(str)
-   assert(
-      type(str) == "string",
-      string.format("Input is not a string: %s", str)
-   )
+   if type(str) ~= "string" then
+      assert(
+         nil,
+         string.format("Input is not a string: %s", str)
+      )
+   end
 
    ---@diagnostic disable-next-line: deprecated
    local x, y, z = unpack(str_explode(str, ","))

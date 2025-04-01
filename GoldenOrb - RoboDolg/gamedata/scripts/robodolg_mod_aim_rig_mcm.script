@@ -10,7 +10,6 @@
 local hpb_to_direction = lander_math.hpb_to_direction
 
 --- Weapon
-local get_hands_aim_point = goldenorb_weapon.get_hands_aim_point
 local get_weapon_aim_point = goldenorb_weapon.get_weapon_aim_point
 local get_fire_bone_position = goldenorb_weapon.get_fire_bone_position
 
@@ -57,12 +56,12 @@ function draw(state)
        return state
    end
 
-   local cam_aim = get_camera_aim_point()
+   local cam_aim = get_camera_aim_point(state)
 
    if state.wpn then
-      local hands_aim = ui_2d(get_hands_aim_point(), true)(vector())
-      local wpn_aim = ui_2d(get_weapon_aim_point(state.wpn), true)(vector())
-      local fire_pos = ui_2d(get_fire_bone_position(state.wpn), true)(vector())
+      local hands_aim = ui_2d(state, state.hands.aim, true)(vector())
+      local wpn_aim = ui_2d(state, get_weapon_aim_point(state.wpn), true)(vector())
+      local fire_pos = ui_2d(state, get_fire_bone_position(state.wpn), true)(vector())
 
       draw_line(
          cam_aim,
@@ -92,12 +91,12 @@ function draw(state)
          0.02,
          8,
          vector():set(0, 1, 0),
-         ui_2d(pos, true)
+         ui_2d(state, pos, true)
       )
 
       draw_line(
-         ui_2d(pos, true)(vector()),
-         ui_2d(vector():set(pos):add(dir:mul(1000)), true)(vector()),
+         ui_2d(state, pos, true)(vector()),
+         ui_2d(state, vector():set(pos):add(dir:mul(1000)), true)(vector()),
          vector():set(0, 1, 0)
       )
    end

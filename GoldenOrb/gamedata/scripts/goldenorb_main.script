@@ -46,6 +46,7 @@ function phase_done(...)
    return ...
 end
 
+
 --- Actor update action
 ACTOR_ON_UPDATE = schedule("Actor Update")
    :insert(
@@ -69,8 +70,8 @@ ACTOR_ON_UPDATE = schedule("Actor Update")
 --- Error handler
 ---@param e string
 ---@return nil
-function handle_error(e)
-   local msg = string.format("GoldenOrb: ERROR: %s", e)
+function handle_error(e, stack)
+   local msg = string.format("GoldenOrb: ERROR: %s\n%s", e, stack)
    printf(msg)
    actor_menu.set_msg(1, msg, 10000)
 end
@@ -82,12 +83,9 @@ on_game_start = protected(
    function()
       RegisterScriptCallback(
          "actor_on_update",
-         ACTOR_ON_UPDATE:prun_deferred(
-            handle_error,
-            function()
-               return {}
-            end
-         )
+         function()
+            ACTOR_ON_UPDATE:prun(handle_error, {})
+         end
       )
    end
 )

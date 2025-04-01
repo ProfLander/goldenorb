@@ -23,7 +23,7 @@ local O_WRITE = goldenorb_schedule.O_WRITE
 --- Logging
 local log = goldenorb_logging.logger(
    "GoldenOrb/Reset Zoom Factors",
-   goldenorb_logging.WARNING
+   goldenorb_logging.TRACE
 )
 
 -- Implementation
@@ -43,30 +43,23 @@ function reset_zoom_factors(state)
    }
 end
 
----@return nil
-on_game_start = protected(
-   handle_error,
-   function()
-      goldenorb_main.ACTOR_ON_UPDATE
-         :insert(
-            reset_zoom_factors,
-            {
-               phase_build_state,
-               inject_weapon_hud,
-            },
-            {
-               phase_modify_state
-            },
-            {
-               hud = I_EXIST,
-            },
-            {
-               hud = {
-                  scope_zoom_factor = O_WRITE,
-                  gl_zoom_factor = O_WRITE,
-                  scope_zoom_factor_alt = O_WRITE,
-               },
-            }
-         )
-   end
+goldenorb_main.ACTOR_ON_UPDATE:insert(
+   reset_zoom_factors,
+   {
+      phase_build_state,
+      inject_weapon_hud,
+   },
+   {
+      phase_modify_state
+   },
+   {
+      hud = I_EXIST,
+   },
+   {
+      hud = {
+         scope_zoom_factor = O_WRITE,
+         gl_zoom_factor = O_WRITE,
+         scope_zoom_factor_alt = O_WRITE,
+      },
+   }
 )

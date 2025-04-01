@@ -27,15 +27,14 @@ local hpb_to_direction = lander_math.hpb_to_direction
 local protected = goldenorb_function.protected
 
 --- Schedule
-local I_READ = goldenorb_schedule.I_READ
 local I_NOT_EXIST = goldenorb_schedule.I_NOT_EXIST
+local I_READ = goldenorb_schedule.I_READ
 local O_WRITE = goldenorb_schedule.O_WRITE
-local O_WRITE_MAYBE = goldenorb_schedule.O_WRITE_MAYBE
 
 --- Logging
 local log = goldenorb_logging.logger(
    "GoldenOrb/Weapon",
-   goldenorb_logging.WARNING
+   goldenorb_logging.TRACE
 )
 
 -- Constants
@@ -287,6 +286,22 @@ function inject_weapon_hud(state)
    }
 end
 
+--- Inject hands data into the given state
+---@param state table
+---@return table
+function inject_hands(state)
+   log:trace("inject_hands(%s)", state)
+
+   return {
+      hands = {
+         pos = get_hands_position(),
+         rot = get_hands_rotation(),
+         dir = get_hands_direction(),
+         aim = get_hands_aim_point()
+      }
+   }
+end
+
 -- Implementation
 
 ---@param key string
@@ -320,7 +335,7 @@ function set_hud_value(key, value)
       ---@cast value vector
       set_hud_vector(key, value)
    else
-      assert(nil, "Invalid HUD data for key %s: %s", key, value)
+      assert(nil, string.format("Invalid HUD data for key %s: %s", key, value))
    end
 end
 
@@ -343,48 +358,59 @@ function apply_weapon_hud(state)
    return {}
 end
 
----@return nil
-on_game_start = protected(
-   handle_error,
-   function()
-      goldenorb_main.ACTOR_ON_UPDATE
-         :insert(
-            inject_weapon,
-            {
-               phase_build_state,
-               inject_actor,
-            },
-            {phase_modify_state},
-            {
-               actor = I_READ,
-               wpn = I_NOT_EXIST,
-            },
-            {
-               wpn = O_WRITE_MAYBE
-            }
-         )
-         :insert(
-            inject_weapon_hud,
-            {
-               phase_build_state,
-               inject_weapon,
-            },
-            {phase_modify_state},
-            {
-               wpn = I_READ,
-               hud = I_NOT_EXIST
-            },
-            {
-               hud = O_WRITE
-            }
-         )
-         :insert(
-            apply_weapon_hud,
-            {phase_apply_state},
-            {phase_done},
-            {
-               hud = I_READ
-            }
-         )
-   end
+goldenorb_main.ACTOR_ON_UPDATE:insert(
+   inject_hands,
+   {
+      phase_build_state,
+      inject_actor,
+   },
+   {phase_modify_state},
+   {
+      actor = I_READ,
+      hands = I_NOT_EXIST,
+   },
+   {
+      hands = O_WRITE
+   }
+)
+
+goldenorb_main.ACTOR_ON_UPDATE:insert(
+   inject_weapon,
+   {
+      phase_build_state,
+      inject_actor,
+   },
+   {phase_modify_state},
+   {
+      actor = I_READ,
+      wpn = I_NOT_EXIST,
+   },
+   {
+      wpn = O_WRITE
+   }
+)
+
+goldenorb_main.ACTOR_ON_UPDATE:insert(
+   inject_weapon_hud,
+   {
+      phase_build_state,
+      inject_weapon,
+   },
+   {phase_modify_state},
+   {
+      wpn = I_READ,
+      hud = I_NOT_EXIST
+   },
+   {
+      hud = O_WRITE
+   }
+)
+
+goldenorb_main.ACTOR_ON_UPDATE:insert(
+   apply_weapon_hud,
+   {phase_apply_state},
+   {phase_done},
+   {
+      hud = I_READ
+   }
 )

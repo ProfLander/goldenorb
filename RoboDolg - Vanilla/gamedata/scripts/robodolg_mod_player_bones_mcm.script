@@ -40,8 +40,8 @@ local should_draw = page:settings(
 
 -- Implementation
 
----@param state state
----@return state
+---@param state table
+---@return table
 function draw_player_bones(state)
    if not should_draw:get() then
       return state
@@ -49,6 +49,7 @@ function draw_player_bones(state)
 
    log("draw_player_bones(%s)", state)
    draw_bones(
+      state,
       db.actor,
       HUD,
       POLY_SIZE,
