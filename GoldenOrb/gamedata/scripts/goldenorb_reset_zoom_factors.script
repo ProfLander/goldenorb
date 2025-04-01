@@ -7,17 +7,15 @@
 -- Imports
 
 --- Main
+local ACTOR_ON_UPDATE = goldenorb_main.ACTOR_ON_UPDATE
 local phase_build_state = goldenorb_main.phase_build_state
 local phase_modify_state = goldenorb_main.phase_modify_state
 
 --- Weapon
 local inject_weapon_hud = goldenorb_weapon.inject_weapon_hud
 
---- Function
-local protected = goldenorb_function.protected
-
 --- Schedule
-local I_EXIST = goldenorb_schedule.I_EXIST
+local system = goldenorb_schedule.system
 local O_WRITE = goldenorb_schedule.O_WRITE
 
 --- Logging
@@ -29,37 +27,27 @@ local log = goldenorb_logging.logger(
 -- Implementation
 
 --- Zero out the zoom factor components
----@param state table
----@return table
-function reset_zoom_factors(state)
-   log:trace("reset_zoom_factors(%s)", state)
-
-   return {
-      hud = {
-         scope_zoom_factor = 0,
-         gl_zoom_factor = 0,
-         scope_zoom_factor_alt = 0,
-      }
-   }
-end
-
-goldenorb_main.ACTOR_ON_UPDATE:insert(
-   reset_zoom_factors,
-   {
-      phase_build_state,
-      inject_weapon_hud,
-   },
-   {
-      phase_modify_state
-   },
-   {
-      hud = I_EXIST,
-   },
-   {
+reset_zoom_factors = system("reset_zoom_factors")
+   :runs_after(phase_build_state, inject_weapon_hud)
+   :runs_before(phase_modify_state)
+   :exist("hud")
+   :outputs({
       hud = {
          scope_zoom_factor = O_WRITE,
          gl_zoom_factor = O_WRITE,
          scope_zoom_factor_alt = O_WRITE,
       },
-   }
-)
+   })
+   :body(function(state)
+      log:trace("reset_zoom_factors(%s)", state)
+
+      return {
+         hud = {
+            scope_zoom_factor = 0,
+            gl_zoom_factor = 0,
+            scope_zoom_factor_alt = 0,
+         }
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)
+

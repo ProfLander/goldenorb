@@ -26,6 +26,7 @@ local SP_LINEAR = goldenorb_spring.SP_LINEAR
 local protected = goldenorb_function.protected
 
 --- Schedule
+local system = goldenorb_schedule.system
 local O_WRITE = goldenorb_schedule.O_WRITE
 
 --- Log
@@ -69,21 +70,15 @@ local joint_aim = joint()
 --- Spring force
 local spring_aim = mcm_spring(page, SP_LINEAR, "6.0,4.5", "1.0, 1.0")
 
-function inject_joint_aim(state)
-   log:trace("inject_joint_aim(%s)", state)
-   return {
-      joint_aim = joint_aim,
-      spring_aim = spring_aim,
-   }
-end
-
-ACTOR_ON_UPDATE:insert(
-   inject_joint_aim,
-   {phase_build_state},
-   {phase_modify_state},
-   {},
-   {
-      joint_aim = O_WRITE,
-      spring_aim = O_WRITE,
-   }
-)
+inject_joint_aim = system("inject_joint_aim")
+   :runs_after(phase_build_state)
+   :runs_before(phase_modify_state)
+   :writes("joint_aim", "spring_aim")
+   :body(function(state)
+      log:trace("inject_joint_aim(%s)", state)
+      return {
+         joint_aim = joint_aim,
+         spring_aim = spring_aim,
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)

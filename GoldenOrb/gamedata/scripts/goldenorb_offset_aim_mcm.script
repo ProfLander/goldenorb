@@ -9,7 +9,6 @@
 --- HUD offset rotation
 local phase_modify_state = goldenorb_main.phase_modify_state
 local phase_apply_state = goldenorb_main.phase_apply_state
-local handle_error = goldenorb_main.handle_error
 
 --- Aim
 local page = goldenorb_aim_mcm.page
@@ -22,10 +21,11 @@ local get_camera_delta_rotation = goldenorb_camera_mcm.get_camera_delta_rotation
 --- String
 local parse_vector = goldenorb_string.parse_vector
 
---- Function
-local protected = goldenorb_function.protected
+--- Main
+local ACTOR_ON_UPDATE = goldenorb_main.ACTOR_ON_UPDATE
 
 --- Schedule
+local system = goldenorb_schedule.system
 local I_READ = goldenorb_schedule.I_READ
 local O_WRITE = goldenorb_schedule.O_WRITE
 
@@ -59,47 +59,41 @@ local sensitivity = page:settings(
 
 -- Implementation
 
----@param state table
----@return table
-function offset_aim(state)
-   log:trace("offset_aim(%s)", state)
-
-   local joint_aim = state.joint_aim
-      :impulse(
-         get_camera_delta_rotation()
-         :mul(parse_vector(sensitivity:get()))
-         :mul(vector():set(-1, 1, 1))
-      )
-      :impulse_with(state.spring_aim.spring)
-
-   return {
-      joint_aim = joint_aim,
-      hud = {
-         hands_orientation = vector():set(state.hud.hands_orientation)
-            :add(vector():set(joint_aim.vec):mul(RAD2DEG))
-      }
-   }
-end
-
----@return nil
-goldenorb_main.ACTOR_ON_UPDATE:insert(
-   offset_aim,
-   {phase_modify_state},
-   {phase_apply_state},
-   {
-      joint_aim = I_READ,
-      spring_aim = I_READ,
+offset_aim = system("offset_aim")
+   :runs_after(phase_modify_state)
+   :runs_before(phase_apply_state)
+   :reads("joint_aim", "spring_aim")
+   :inputs({
       hud = {
          hands_orientation = I_READ,
-      },
-   },
-   {
-      joint_aim = O_WRITE,
+      }
+   })
+   :writes("joint_aim")
+   :outputs({
       hud = {
          hands_orientation = O_WRITE,
       }
-   },
-   function()
+   })
+   :when(function()
       return aim_type:get() == AIM_OFFSET
-   end
-)
+   end)
+   :body(function(state)
+      log:trace("offset_aim(%s)", state)
+
+      local joint_aim = state.joint_aim
+         :impulse(
+            get_camera_delta_rotation()
+            :mul(parse_vector(sensitivity:get()))
+            :mul(vector():set(-1, 1, 1))
+         )
+         :impulse_with(state.spring_aim.spring)
+
+      return {
+         joint_aim = joint_aim,
+         hud = {
+            hands_orientation = vector():set(state.hud.hands_orientation)
+               :add(vector():set(joint_aim.vec):mul(RAD2DEG))
+         }
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)

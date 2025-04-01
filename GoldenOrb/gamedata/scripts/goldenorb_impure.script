@@ -9,17 +9,13 @@
 -- Imports
 
 --- Main
+local ACTOR_ON_UPDATE = goldenorb_main.ACTOR_ON_UPDATE
 local phase_build_state = goldenorb_main.phase_build_state
 local phase_apply_state = goldenorb_main.phase_apply_state
 local phase_done = goldenorb_main.phase_done
-local handle_error = goldenorb_main.handle_error
-
---- Function
-local protected = goldenorb_function.protected
 
 --- Schedule
-local I_NOT_EXIST = goldenorb_schedule.I_NOT_EXIST
-local O_WRITE = goldenorb_schedule.O_WRITE
+local system = goldenorb_schedule.system
 
 --- Logging
 local log = goldenorb_logging.logger(
@@ -29,36 +25,26 @@ local log = goldenorb_logging.logger(
 
 -- Implementation
 
---- Set HUD adjustment
----@param state table
----@return table
-function hud_adjust_enable(state)
-   log:trace("hud_adjust_enable(%s)", state)
-   hud_adjust.enabled(true)
-   return {}
-end
+--- Inject the player actor into the state
+inject_actor = system("inject_actor")
+   :runs_after(phase_build_state)
+   :runs_before(phase_apply_state)
+   :not_exist("actor")
+   :writes("actor")
+   :body(function(state)
+      log:trace("inject_actor(%s)", state)
+      return {
+         actor = db.actor
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)
 
---- Inject the actor into the given state
----@param state table
----@return table
-function inject_actor(state)
-   log:trace("inject_actor(%s)", state)
-   return {
-      actor = db.actor
-   }
-end
-
---- Entrypoint
----@return nil
-goldenorb_main.ACTOR_ON_UPDATE:insert(
-   inject_actor,
-   {phase_build_state},
-   {phase_apply_state},
-   {actor = I_NOT_EXIST},
-   {actor = O_WRITE}
-)
-:insert(
-   hud_adjust_enable,
-   {phase_apply_state},
-   {phase_done}
-)
+--- Enable HUD adjust mode
+hud_adjust_enable = system("hud_adjust_enable")
+   :runs_after(phase_apply_state)
+   :runs_before(phase_done)
+   :body(function(state)
+      log:trace("hud_adjust_enable(%s)", state)
+      hud_adjust.enabled(true)
+      return {}
+   end)

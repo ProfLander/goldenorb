@@ -16,11 +16,9 @@ local aim_type = goldenorb_aim_mcm.aim_type
 local AIM_FREE = goldenorb_aim_mcm.AIM_FREE
 
 --- Schedule
+local system = goldenorb_schedule.system
 local I_READ = goldenorb_schedule.I_READ
 local O_WRITE = goldenorb_schedule.O_WRITE
-
---- Function
-local protected = goldenorb_function.protected
 
 --- Logging
 local log = goldenorb_logging.logger(
@@ -30,58 +28,44 @@ local log = goldenorb_logging.logger(
 
 -- Implementation
 
----@param state table
----@return table
-function free_aim(state)
-   log:trace("free_aim(%s)", state)
-
-   local ofs = state.hands.rot:sub(state.joint_aim.vec):mul(-1)
-   log:trace("  ofs: %s", ofs)
-
-   local force = state.spring_aim.spring(ofs)
-   log:trace("  force: %s", force)
-
-   local joint_aim = state.joint_aim:impulse(force)
-   log:trace("  joint_aim: %s", joint_aim)
-
-   return {
-      joint_aim = joint_aim,
+free_aim = system("free_aim")
+   :runs_after(phase_modify_state)
+   :runs_before(phase_apply_state)
+   :reads("actor", "wpn", "joint_aim", "spring_aim", "hands")
+   :inputs({ cam = { pos = I_READ, rot = I_READ }})
+   :writes("joint_aim")
+   :outputs({
       cam = {
-         enable = true,
-         affect_hud = false,
-         pos = vector():set(state.cam.pos):add(state.hands.pos),
-         rot = vector():set(state.cam.rot):add(joint_aim.vec),
+         enable = O_WRITE,
+         affect_hud = O_WRITE,
+         pos = O_WRITE,
+         rot = O_WRITE,
       }
-   }
-end
+   })
+   :when(function()
+      return aim_type:get() == AIM_FREE
+   end)
+   :body(function(state)
+      log:trace("free_aim(%s)", state)
 
----@return nil
-ACTOR_ON_UPDATE
-   :insert(
-      free_aim,
-      {phase_modify_state},
-      {phase_apply_state},
-      {
-         actor = I_READ,
-         wpn = I_READ,
-         joint_aim = I_READ,
-         spring_aim = I_READ,
-         hands = I_READ,
+      local ofs = state.hands.rot:sub(state.joint_aim.vec):mul(-1)
+      log:trace("  ofs: %s", ofs)
+
+      local force = state.spring_aim.spring(ofs)
+      log:trace("  force: %s", force)
+
+      local joint_aim = state.joint_aim:impulse(force)
+      log:trace("  joint_aim: %s", joint_aim)
+
+      return {
+         joint_aim = joint_aim,
          cam = {
-            pos = I_READ,
-            rot = I_READ,
-         },
-      },
-      {
-         joint_aim = O_WRITE,
-         cam = {
-            enable = O_WRITE,
-            affect_hud = O_WRITE,
-            pos = O_WRITE,
-            rot = O_WRITE,
-         },
-      },
-      function()
-         return aim_type:get() == AIM_FREE
-      end
-   )
+            enable = true,
+            affect_hud = false,
+            pos = vector():set(state.cam.pos):add(state.hands.pos),
+            rot = vector():set(state.cam.rot):add(joint_aim.vec),
+         }
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)
+

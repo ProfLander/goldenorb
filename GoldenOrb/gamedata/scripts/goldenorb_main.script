@@ -10,6 +10,7 @@
 
 --- Schedule
 local schedule = goldenorb_schedule.schedule
+local system = goldenorb_schedule.system
 
 --- Function
 local protected = goldenorb_function.protected
@@ -49,21 +50,37 @@ end
 
 --- Actor update action
 ACTOR_ON_UPDATE = schedule("Actor Update")
-   :insert(
-      phase_build_state
-   )
-   :insert(
-      phase_modify_state,
-      {phase_build_state}
-   )
-   :insert(
-      phase_apply_state,
-      {phase_modify_state}
-   )
-   :insert(
-      phase_done,
-      {phase_apply_state}
-   )
+
+phase_build_state = system("phase_build_state")
+   :body(function()
+      log:info("Phase: Build State")
+      return {}
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+phase_modify_state = system("phase_modify_state")
+   :runs_after(phase_build_state)
+   :body(function()
+      log:info("Phase: Modify State")
+      return {}
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+phase_apply_state = system("phase_apply_state")
+   :runs_after(phase_modify_state)
+   :body(function()
+      log:info("Phase: Apply State")
+      return {}
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+phase_done = system("phase_done")
+   :runs_after(phase_apply_state)
+   :body(function()
+      log:info("Phase: Done")
+      return {}
+   end)
+   :during(ACTOR_ON_UPDATE)
 
 -- Implementation
 

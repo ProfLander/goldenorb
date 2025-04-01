@@ -10,6 +10,7 @@
 local tree = goldenorb_mcm.tree
 
 --- Main
+local ACTOR_ON_UPDATE = goldenorb_main.ACTOR_ON_UPDATE
 local phase_modify_state = goldenorb_main.phase_modify_state
 local phase_apply_state = goldenorb_main.phase_apply_state
 local handle_error = goldenorb_main.handle_error
@@ -38,6 +39,7 @@ local deg = lander_math.deg
 local protected = goldenorb_function.protected
 
 --- Schedule
+local system = goldenorb_schedule.system
 local I_READ = goldenorb_schedule.I_READ
 local O_WRITE = goldenorb_schedule.O_WRITE
 
@@ -140,79 +142,10 @@ local wpn_cache = {}
 --- How under-control the weapon is
 local control_fac = 0
 
--- Implementation
-
---- Cache a weapon's HUD data before setting it all to 0
----@param state table
----@return table
-function consume_weapon(state)
-   log:trace("consume_weapon(%s)", state)
-
-   -- Fetch the weapon's section
-   local sec = state.wpn:section()
-   log:debug("  section(%s)", sec)
-
-   -- Return with a warning if it's not valid
-   if not sec then
-      log:warning("  WARNING: Invalid weapon section")
-      return {}
-   end
-
-   -- Return if it's already set
-   if wpn_cache[sec] then
-      log:info("  %s is already cached, returning.", sec)
-      return {}
-   end
-
-   -- Fetch existing cache data
-   wpn_cache[sec] = {}
-
-   -- Cast our weapon to a CWeapon
-   local weapon = state.wpn:cast_Weapon()
-
-   if not weapon then
-      log:warning("  WARNING: Invalid weapon")
-      return {}
-   end
-
-   -- Iterate over our parameter lenses
-   foreach(
-      lenses,
-      function(k, l)
-         wpn_cache[sec][k] = l:get(weapon)
-         l:set(weapon, 0)
-      end
-   )
-
-   return {}
-end
-
+--- Recoil joint
 local joint_recoil = joint()
 
-function recoil_weapon(state)
-   log:trace("recoil_weapon(%s)", state)
-
-   control_fac = control_fac + spring_1d(
-      0,
-      control_strength:get(),
-      control_fac
-   )
-   log:debug("  control_fac: %s", control_fac)
-
-   joint_recoil:impulse_with(spring_recoil.spring)
-
-   return {
-      hud = {
-         hands_orientation = state.hud.hands_orientation:add(
-            vector():set(
-               deg(joint_recoil.vec.x),
-               deg(joint_recoil.vec.y),
-               deg(joint_recoil.vec.z)
-            )
-         )
-      }
-   }
-end
+-- Implementation
 
 function actor_on_weapon_fired_impl(actor, wpn, ammo)
    log:trace("actor_on_weapon_fired(%s, %s, %s)", actor, wpn, ammo)
@@ -304,35 +237,99 @@ function actor_on_weapon_fired(...)
    end
 end
 
-goldenorb_main.ACTOR_ON_UPDATE
-   :insert(
-      consume_weapon,
-      {phase_modify_state},
-      {phase_apply_state},
-      {wpn = I_READ}
-   )
+--- Cache a weapon's HUD data before setting it all to 0
+consume_weapon = system("consume_weapon")
+   :runs_after(phase_modify_state)
+   :runs_before(phase_apply_state)
+   :reads("wpn")
+   :body(function(state)
+      log:trace("consume_weapon(%s)", state)
 
-goldenorb_main.ACTOR_ON_UPDATE:insert(
-   recoil_weapon,
-   {
+      -- Fetch the weapon's section
+      local sec = state.wpn:section()
+      log:debug("  section(%s)", sec)
+
+      -- Return with a warning if it's not valid
+      if not sec then
+         log:warning("  WARNING: Invalid weapon section")
+         return {}
+      end
+
+      -- Return if it's already set
+      if wpn_cache[sec] then
+         log:info("  %s is already cached, returning.", sec)
+         return {}
+      end
+
+      -- Fetch existing cache data
+      wpn_cache[sec] = {}
+
+      -- Cast our weapon to a CWeapon
+      local weapon = state.wpn:cast_Weapon()
+
+      if not weapon then
+         log:warning("  WARNING: Invalid weapon")
+         return {}
+      end
+
+      -- Iterate over our parameter lenses
+      foreach(
+         lenses,
+         function(k, l)
+            wpn_cache[sec][k] = l:get(weapon)
+            l:set(weapon, 0)
+         end
+      )
+
+      return {}
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+--- Integrate recoil forces and apply to the HUD
+recoil_weapon = system("recoil_weapon")
+   :runs_after(
       phase_modify_state,
       consume_weapon,
       body_cam,
       free_aim,
-      offset_aim,
-   },
-   {phase_apply_state},
-   {
+      offset_aim
+   )
+   :runs_before(phase_apply_state)
+   :inputs({
       hud = {
          hands_orientation = I_READ
       }
-   },
-   {
+   })
+   :outputs({
       hud = {
          hands_orientation = O_WRITE
       }
-   }
-)
+   })
+   :body(function(state)
+      log:trace("recoil_weapon(%s)", state)
+
+      control_fac = control_fac + spring_1d(
+         0,
+         control_strength:get(),
+         control_fac
+      )
+      log:debug("  control_fac: %s", control_fac)
+
+      joint_recoil:impulse_with(spring_recoil.spring)
+
+      return {
+         hud = {
+            hands_orientation = state.hud.hands_orientation:add(
+               vector():set(
+                  deg(joint_recoil.vec.x),
+                  deg(joint_recoil.vec.y),
+                  deg(joint_recoil.vec.z)
+               )
+            )
+         }
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)
 
 ---@return nil
 on_game_start = protected(

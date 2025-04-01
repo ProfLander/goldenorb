@@ -10,6 +10,9 @@
 
 --- List
 local fold_list = goldenorb_list.fold
+local concat_lists = goldenorb_list.concat
+
+--- Table
 local fold_table = goldenorb_table.fold
 
 --- Function
@@ -145,6 +148,130 @@ function ne(a)
    return function(b)
       return a ~= b
    end
+end
+
+---@class system
+---@field sys_name string
+---@field sys_after (fun(any: any): any)[]
+---@field sys_before (fun(any: any): any)[]
+---@field sys_inputs table<string, number|table>
+---@field sys_outputs table<string, number|table>
+---@field sys_precondition (fun(table): boolean)
+---@field sys_body fun(state: table): table
+local System = {}
+
+function system(name)
+   return setmetatable(
+      {
+         sys_name = name,
+         sys_after = {},
+         sys_before = {},
+         sys_inputs = {},
+         sys_outputs = {},
+         sys_precondition = const(true),
+         sys_body = nil,
+      },
+      { __index = System }
+   )
+end
+
+function System:runs_after(...)
+   self.sys_after = concat_lists(self.sys_after, {...})
+   return self
+end
+
+function System:runs_before(...)
+   self.sys_before = concat_lists(self.sys_before, {...})
+   return self
+end
+
+function System:inputs(inputs)
+   copy_table(self.sys_inputs, inputs)
+   return self
+end
+
+function System:outputs(outputs)
+   copy_table(self.sys_outputs, outputs)
+   return self
+end
+
+---@param input string
+---@return system
+function System:exist(input)
+   self.sys_inputs[input] = I_EXIST
+   return self
+end
+
+---@param input string
+---@return system
+function System:not_exist(input)
+   self.sys_inputs[input] = I_NOT_EXIST
+   return self
+end
+
+---@param ... string
+---@return system
+function System:reads(...)
+   local args = {...}
+   for i=1,#args do
+      self.sys_inputs[args[i]] = I_READ
+   end
+   return self
+end
+
+---@param ... string
+---@return system
+function System:maybe_reads(...)
+   local args = {...}
+   for i=1,#args do
+      self.sys_inputs[args[i]] = I_READ_MAYBE
+   end
+   return self
+end
+
+---@param ... string
+---@return system
+function System:writes(...)
+   local args = {...}
+   for i=1,#args do
+      self.sys_outputs[args[i]] = O_WRITE
+   end
+   return self
+end
+
+---@param ... string
+---@return system
+function System:maybe_writes(...)
+   local args = {...}
+   for i=1,#args do
+      self.sys_outputs[args[i]] = O_WRITE_MAYBE
+   end
+   return self
+end
+
+function System:when(f)
+   self.sys_precondition = f
+   return self
+end
+
+function System:body(f)
+   self.sys_body = f
+   return self
+end
+
+function System:during(schedule)
+   assert(self.sys_body ~= nil, "Systems must have a body")
+
+   schedule:insert(
+      self.sys_body,
+      self.sys_after,
+      self.sys_before,
+      self.sys_inputs,
+      self.sys_outputs,
+      self.sys_precondition
+   )
+
+   return self.sys_body
 end
 
 ---@param call fun(any: any): any

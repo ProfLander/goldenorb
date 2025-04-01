@@ -9,7 +9,6 @@
 --- Main
 local phase_build_state = goldenorb_main.phase_build_state
 local phase_modify_state = goldenorb_main.phase_modify_state
-local handle_error = goldenorb_main.handle_error
 local ACTOR_ON_UPDATE = goldenorb_main.ACTOR_ON_UPDATE
 
 --- Impure
@@ -30,10 +29,8 @@ local inject_weapon_hud = goldenorb_weapon.inject_weapon_hud
 --- Math
 local deg = lander_math.deg
 
---- Function
-local protected = goldenorb_function.protected
-
 --- Schedule
+local system = goldenorb_schedule.system
 local I_READ = goldenorb_schedule.I_READ
 local O_WRITE = goldenorb_schedule.O_WRITE
 
@@ -45,128 +42,120 @@ local log = goldenorb_logging.logger(
 
 -- State
 
+--- Current zoom factor
 local zoom_fac = 0
 
---- Consume the HUD hand transforms and store them in the state
----@param state table
----@return table
-function consume_hands_transform(state)
-   log:trace("consume_hands_transform(%s)", state)
-
-   if aim_type:get() ~= AIM_FREE then
-      return {}
-   end
-
-   local pos = state.hud.hands_position
-   local rot = state.hud.hands_orientation
-
-   return {
-      hud = {
-         hands_position = vector(),
-         hands_orientation = vector(),
-      },
-      cam = {
-         pos = vector()
-            :add(vector():set(state.dev.cam_right):mul(-pos.x))
-            :add(vector():set(state.dev.cam_top):mul(-pos.y))
-            :add(vector():set(state.dev.cam_dir):mul(-pos.z)),
-         rot = vector(),
-      }
-   }
-end
-
---- Apply HUD aim offset rotation with a lerp to counteract ADS animation
----@param state table
----@return table
-function apply_hud_offset_rot(state)
-   log:trace("apply_hud_offset_rot(%s)", state)
-
-   local zoom_duration = get_hud_number(state.wpn, "zoom_rotate_time")
-   if zoom_duration == nil or
-      zoom_duration == 0
-   then
-      zoom_duration = 0.25
-   end
-   log:debug("  zoom_duration: %s", zoom_duration)
-
-   -- Apply HUD offset rotation based on zoom state
-   local rot_ofs = vector():set(
-      deg(state.hud.aim_hud_offset_rot.y),
-      deg(state.hud.aim_hud_offset_rot.x),
-      deg(state.hud.aim_hud_offset_rot.z)
-   )
-
-   local dt = (state.dev.time_delta / 1000) / zoom_duration
-   log:debug("  dt: %s", dt)
-   if not axr_main.weapon_is_zoomed then
-      dt = -dt
-   end
-   zoom_fac = zoom_fac + dt
-
-   zoom_fac = math.min(math.max(zoom_fac, 0), 1)
-
-   log:debug("  zoom_fac: %s", zoom_fac)
-
-   -- Done
-   return {
-      hud = {
-         hands_position = vector(),
-         hands_orientation = vector():set(state.hud.hands_orientation)
-            :add(rot_ofs:mul(-(1 - zoom_fac)))
-      }
-   }
-end
-
-ACTOR_ON_UPDATE:insert(
-   consume_hands_transform,
-   {
+---- Consume the HUD hand transforms and store them in the state
+consume_hands_transform = system("consume_hands_transform")
+   :runs_after(
       phase_build_state,
       inject_actor,
       inject_camera,
-      inject_weapon_hud,
-   },
-   {phase_modify_state},
-   {
-      dev = I_READ,
+      inject_weapon_hud
+   )
+   :runs_before(phase_modify_state)
+   :reads("dev")
+   :inputs({
       hud = {
          hands_position = I_READ,
          hands_orientation = I_READ,
       },
-   },
-   {
+   })
+   :outputs({
       hud = {
          hands_position = O_WRITE,
          hands_orientation = O_WRITE,
       },
       cam = {
          pos = O_WRITE,
-         rot = O_WRITE
+         rot = O_WRITE,
       }
-   }
-)
+   })
+   :when(function()
+      return aim_type:get() == AIM_FREE
+   end)
+   :body(function(state)
+      log:trace("consume_hands_transform(%s)", state)
 
-ACTOR_ON_UPDATE:insert(
-   apply_hud_offset_rot,
-   {
+      local pos = state.hud.hands_position
+      local rot = state.hud.hands_orientation
+
+      return {
+         hud = {
+            hands_position = vector(),
+            hands_orientation = vector(),
+         },
+         cam = {
+            pos = vector()
+               :add(vector():set(state.dev.cam_right):mul(-pos.x))
+               :add(vector():set(state.dev.cam_top):mul(-pos.y))
+               :add(vector():set(state.dev.cam_dir):mul(-pos.z)),
+            rot = vector(),
+         }
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+--- Apply HUD aim offset rotation with a lerp to counteract ADS animation
+apply_hud_offset_rot = system("apply_hud_offset_rot")
+   :runs_after(
       phase_build_state,
       inject_weapon,
-      inject_weapon_hud,
-   },
-   {phase_modify_state},
-   {
-      dev = I_READ,
-      wpn = I_READ,
+      inject_weapon_hud
+   )
+   :runs_before(phase_modify_state)
+   :reads("dev", "wpn")
+   :inputs({
       hud = {
          aim_hud_offset_rot = I_READ,
          hands_orientation = I_READ,
-      },
-   },
-   {
-      hud = {
-         hands_orientation = O_WRITE
       }
-   },
-   function()
+   })
+   :outputs({
+      hud = {
+         hands_position = O_WRITE,
+         hands_orientation = O_WRITE,
+      }
+   })
+   :when(function()
       return aim_type:get() == AIM_FREE
-   end
-)
+   end)
+   :body(function(state)
+      log:trace("apply_hud_offset_rot(%s)", state)
+
+      local zoom_duration = get_hud_number(state.wpn, "zoom_rotate_time")
+      if zoom_duration == nil or
+         zoom_duration == 0
+      then
+         zoom_duration = 0.25
+      end
+      log:debug("  zoom_duration: %s", zoom_duration)
+
+      -- Apply HUD offset rotation based on zoom state
+      local rot_ofs = vector():set(
+         deg(state.hud.aim_hud_offset_rot.y),
+         deg(state.hud.aim_hud_offset_rot.x),
+         deg(state.hud.aim_hud_offset_rot.z)
+      )
+
+      local dt = (state.dev.time_delta / 1000) / zoom_duration
+      log:debug("  dt: %s", dt)
+      if not axr_main.weapon_is_zoomed then
+         dt = -dt
+      end
+      zoom_fac = zoom_fac + dt
+
+      zoom_fac = math.min(math.max(zoom_fac, 0), 1)
+
+      log:debug("  zoom_fac: %s", zoom_fac)
+
+      -- Done
+      return {
+         hud = {
+            hands_position = vector(),
+            hands_orientation = vector():set(state.hud.hands_orientation)
+               :add(rot_ofs:mul(-(1 - zoom_fac)))
+         }
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)

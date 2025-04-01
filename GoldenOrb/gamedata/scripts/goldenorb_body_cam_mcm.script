@@ -23,11 +23,10 @@ local foreach = goldenorb_table.foreach
 
 --- Function
 local compose = goldenorb_function.compose
-local protected = goldenorb_function.protected
 
 --- Schedule
+local system = goldenorb_schedule.system
 local I_READ_MAYBE = goldenorb_schedule.I_READ_MAYBE
-local I_READ = goldenorb_schedule.I_READ
 local O_WRITE_MAYBE = goldenorb_schedule.O_WRITE_MAYBE
 
 --- Camera
@@ -152,99 +151,91 @@ function get_actor_rotation(state)
    return vector():set(yaw, pitch, 0)
 end
 
----@param state table
----@return table
-function body_cam(state)
-   log:trace("body_cam(%s)", state)
+body_cam = system("body_cam")
+   :runs_after(phase_modify_state)
+   :runs_before(phase_apply_state)
+   :reads("actor")
+   :maybe_reads("wpn")
+   :inputs({ hud = { hands_orientation = I_READ_MAYBE }})
+   :outputs({
+      cam = {
+         enable = O_WRITE,
+         affect_hud = O_WRITE,
+         pos = O_WRITE,
+         rot = O_WRITE,
+      },
+      hud = {
+         hands_orientation = O_WRITE_MAYBE
+      }
+   })
+   :when(function()
+      return enabled:get()
+   end)
+   :body(function(state)
+      log:trace("body_cam(%s)", state)
 
-   local root_pos = state.actor:bone_position(BONE_ROOT)
-   log:debug("root_pos: %s", root_pos)
+      local root_pos = state.actor:bone_position(BONE_ROOT)
+      log:debug("root_pos: %s", root_pos)
 
-   local root_rot = state.actor:bone_direction(BONE_ROOT)
-   log:debug("root_rot: %s", root_rot)
+      local root_rot = state.actor:bone_direction(BONE_ROOT)
+      log:debug("root_rot: %s", root_rot)
 
-   local pos = vector()
-   local rot = vector()
-   local bone_translate = parse_bone_vectors(bone_positions:get())
-   foreach(
-      bone_translate,
-      function(bone, fac)
-         pos:add(
-            state.actor:bone_position(bone)
-            :sub(root_pos)
-            :mul(fac)
-         )
-      end
-   )
-
-   local bone_rotate = parse_bone_vectors(bone_rotations:get())
-   foreach(
-      bone_rotate,
-      function(bone, fac)
-         rot:add(
-            state.actor:bone_direction(bone)
-            :sub(root_rot)
-            :mul(fac)
-         )
-      end
-   )
-
-   pos:add(root_pos)
-   rot:add(root_rot)
-
-   local out = {
-      cam = {}
-   }
-
-   out.cam.enable = true
-   out.cam.affect_hud = true
-   out.cam.pos = pos
-   out.cam.rot = vector():set(rot.x, rot.y, 0)
-
-   if not state.wpn or not state.hud then
-      return out
-   end
-
-   local actor_rot = get_actor_rotation(state)
-   if not actor_rot then
-      return out
-   end
-
-   out.hud = {
-      hands_orientation = vector():set(
-         state.hud.hands_orientation.x - deg(actor_rot.x),
-         state.hud.hands_orientation.y - deg(actor_rot.y),
-         state.hud.hands_orientation.z
+      local pos = vector()
+      local rot = vector()
+      local bone_translate = parse_bone_vectors(bone_positions:get())
+      foreach(
+         bone_translate,
+         function(bone, fac)
+            pos:add(
+               state.actor:bone_position(bone)
+               :sub(root_pos)
+               :mul(fac)
+            )
+         end
       )
-   }
 
-   return out
-end
+      local bone_rotate = parse_bone_vectors(bone_rotations:get())
+      foreach(
+         bone_rotate,
+         function(bone, fac)
+            rot:add(
+               state.actor:bone_direction(bone)
+               :sub(root_rot)
+               :mul(fac)
+            )
+         end
+      )
 
-ACTOR_ON_UPDATE
-   :insert(
-      body_cam,
-      {phase_modify_state},
-      {phase_apply_state},
-      {
-         actor = I_READ,
-         wpn = I_READ_MAYBE,
-         hud = {
-            hands_orientation = I_READ_MAYBE
-         },
-      },
-      {
-         cam = {
-            enable = O_WRITE,
-            affect_hud = O_WRITE,
-            pos = O_WRITE,
-            rot = O_WRITE,
-         },
-         hud = {
-            hands_orientation = O_WRITE_MAYBE
-         }
-      },
-      function()
-         return enabled:get()
+      pos:add(root_pos)
+      rot:add(root_rot)
+
+      local out = {
+         cam = {}
+      }
+
+      out.cam.enable = true
+      out.cam.affect_hud = true
+      out.cam.pos = pos
+      out.cam.rot = vector():set(rot.x, rot.y, 0)
+
+      if not state.wpn or not state.hud then
+         return out
       end
-   )
+
+      local actor_rot = get_actor_rotation(state)
+      if not actor_rot then
+         return out
+      end
+
+      out.hud = {
+         hands_orientation = vector():set(
+            state.hud.hands_orientation.x - deg(actor_rot.x),
+            state.hud.hands_orientation.y - deg(actor_rot.y),
+            state.hud.hands_orientation.z
+         )
+      }
+
+      return out
+   end)
+   :during(ACTOR_ON_UPDATE)
+

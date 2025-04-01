@@ -7,11 +7,11 @@
 -- Imports
 
 --- Main
+local ACTOR_ON_UPDATE = goldenorb_main.ACTOR_ON_UPDATE
 local phase_build_state = goldenorb_main.phase_build_state
 local phase_modify_state = goldenorb_main.phase_modify_state
 local phase_apply_state = goldenorb_main.phase_apply_state
 local phase_done = goldenorb_main.phase_done
-local handle_error = goldenorb_main.handle_error
 
 --- Impure
 local inject_actor = goldenorb_impure.inject_actor
@@ -23,13 +23,8 @@ foreach = goldenorb_table.foreach
 --- Math
 local hpb_to_direction = lander_math.hpb_to_direction
 
---- Function
-local protected = goldenorb_function.protected
-
 --- Schedule
-local I_NOT_EXIST = goldenorb_schedule.I_NOT_EXIST
-local I_READ = goldenorb_schedule.I_READ
-local O_WRITE = goldenorb_schedule.O_WRITE
+local system = goldenorb_schedule.system
 
 --- Logging
 local log = goldenorb_logging.logger(
@@ -240,17 +235,6 @@ function get_weapon_aim_point(wpn)
       )
 end
 
---- Inject the actor's weapon into the given state
----@param state table
----@return table
-function inject_weapon(state)
-   log:trace("inject_weapon(%s)", state)
-
-   return {
-      wpn = state.actor:active_item()
-   }
-end
-
 --- HUD param table class
 ---@class state_hud
 ---@field hands_position vector
@@ -275,32 +259,6 @@ end
 ---@field gl_zoom_factor number
 ---@field scope_zoom_factor_alt number
 
---- Inject the weapon's HUD parameters into the given state
----@param state table
----@return table
-function inject_weapon_hud(state)
-   log:trace("inject_weapon_hud(%s)", state)
-
-   return {
-      hud = get_hud_params(state.wpn)
-   }
-end
-
---- Inject hands data into the given state
----@param state table
----@return table
-function inject_hands(state)
-   log:trace("inject_hands(%s)", state)
-
-   return {
-      hands = {
-         pos = get_hands_position(),
-         rot = get_hands_rotation(),
-         dir = get_hands_direction(),
-         aim = get_hands_aim_point()
-      }
-   }
-end
 
 -- Implementation
 
@@ -345,72 +303,71 @@ function set_hud_params(hud)
    foreach(hud, set_hud_value)
 end
 
+--- Inject hands data into the given state
+inject_hands = system("inject_hands")
+   :runs_after(phase_build_state, inject_actor)
+   :runs_before(phase_modify_state)
+   :reads("actor")
+   :not_exist("hands")
+   :writes("hands")
+   :body(function(state)
+      log:trace("inject_hands(%s)", state)
 
----@param state table
----@return table
-function apply_weapon_hud(state)
-   log:trace("apply_weapon_hud(%s)", state)
+      return {
+         hands = {
+            pos = get_hands_position(),
+            rot = get_hands_rotation(),
+            dir = get_hands_direction(),
+            aim = get_hands_aim_point()
+         }
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)
 
-   log:info("  Applying HUD parameters...")
-   set_hud_params(state.hud)
-   log:info("  Done.")
+--- Inject the actor's active weapon into the state
+inject_weapon = system("inject_weapon")
+   :runs_after(phase_build_state, inject_actor)
+   :runs_before(phase_modify_state)
+   :reads("actor")
+   :not_exist("wpn")
+   :writes("wpn")
+   :body(function(state)
+      log:trace("inject_weapon(%s)", state)
 
-   return {}
-end
+      return {
+         wpn = state.actor:active_item()
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)
 
-goldenorb_main.ACTOR_ON_UPDATE:insert(
-   inject_hands,
-   {
-      phase_build_state,
-      inject_actor,
-   },
-   {phase_modify_state},
-   {
-      actor = I_READ,
-      hands = I_NOT_EXIST,
-   },
-   {
-      hands = O_WRITE
-   }
-)
+--- Inject the weapon's HUD parameters into the state
+inject_weapon_hud = system("inject_weapon_hud")
+   :runs_after(phase_build_state, inject_weapon)
+   :runs_before(phase_modify_state)
+   :reads("wpn")
+   :not_exist("hud")
+   :writes("hud")
+   :body(function(state)
+      log:trace("inject_weapon_hud(%s)", state)
 
-goldenorb_main.ACTOR_ON_UPDATE:insert(
-   inject_weapon,
-   {
-      phase_build_state,
-      inject_actor,
-   },
-   {phase_modify_state},
-   {
-      actor = I_READ,
-      wpn = I_NOT_EXIST,
-   },
-   {
-      wpn = O_WRITE
-   }
-)
+      return {
+         hud = get_hud_params(state.wpn)
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)
 
-goldenorb_main.ACTOR_ON_UPDATE:insert(
-   inject_weapon_hud,
-   {
-      phase_build_state,
-      inject_weapon,
-   },
-   {phase_modify_state},
-   {
-      wpn = I_READ,
-      hud = I_NOT_EXIST
-   },
-   {
-      hud = O_WRITE
-   }
-)
+--- Apply aggregated state values to the HUD adjuster
+apply_weapon_hud = system("apply_weapon_hud")
+   :runs_after(phase_apply_state)
+   :runs_before(phase_done)
+   :reads("hud")
+   :body(function(state)
+      log:trace("apply_weapon_hud(%s)", state)
 
-goldenorb_main.ACTOR_ON_UPDATE:insert(
-   apply_weapon_hud,
-   {phase_apply_state},
-   {phase_done},
-   {
-      hud = I_READ
-   }
-)
+      log:info("  Applying HUD parameters...")
+      set_hud_params(state.hud)
+      log:info("  Done.")
+
+      return {}
+   end)
+   :during(ACTOR_ON_UPDATE)

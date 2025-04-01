@@ -9,15 +9,13 @@
 --- Main
 local phase_build_state = goldenorb_main.phase_build_state
 local phase_modify_state = goldenorb_main.phase_modify_state
-local handle_error = goldenorb_main.handle_error
+local ACTOR_ON_UPDATE = goldenorb_main.ACTOR_ON_UPDATE
 
 --- Weapon
 local inject_weapon_hud = goldenorb_weapon.inject_weapon_hud
 
---- Function
-local protected = goldenorb_function.protected
-
 --- Schedule
+local system = goldenorb_schedule.system
 local I_READ = goldenorb_schedule.I_READ
 local O_WRITE = goldenorb_schedule.O_WRITE
 
@@ -36,40 +34,30 @@ local OFFSET = vector():set(0, 0, EPSILON)
 
 -- Implementation
 
---- Offset fire point slightly to prevent self-intersection
----@param state table
----@return table
-function offset_fire_point(state)
-   log:trace("offset_fire_point(%s)", state)
-
-   return {
+--- Offset fire point slightly to prevent bullet spawn failure
+offset_fire_point = system("offset_fire_point")
+   :runs_after(phase_build_state, inject_weapon_hud)
+   :runs_before(phase_modify_state)
+   :inputs({
       hud = {
-         fire_point = vector():set(state.hud.fire_point):add(OFFSET),
-         fire_point2 = vector():set(state.hud.fire_point2):add(OFFSET),
+         fire_point = I_READ,
+         fire_point2 = I_READ,
       }
-   }
-end
+   })
+   :outputs({
+      hud = {
+         fire_point = O_WRITE,
+         fire_point2 = O_WRITE,
+      }
+   })
+   :body(function(state)
+      log:trace("offset_fire_point(%s)", state)
 
-goldenorb_main.ACTOR_ON_UPDATE
-   :insert(
-      offset_fire_point,
-      {
-         phase_build_state,
-         inject_weapon_hud,
-      },
-      {
-         phase_modify_state,
-      },
-      {
+      return {
          hud = {
-            fire_point = I_READ,
-            fire_point2 = I_READ,
-         }
-      },
-      {
-         hud = {
-            fire_point = O_WRITE,
-            fire_point2 = O_WRITE,
+            fire_point = vector():set(state.hud.fire_point):add(OFFSET),
+            fire_point2 = vector():set(state.hud.fire_point2):add(OFFSET),
          }
       }
-   )
+   end)
+   :during(ACTOR_ON_UPDATE)
