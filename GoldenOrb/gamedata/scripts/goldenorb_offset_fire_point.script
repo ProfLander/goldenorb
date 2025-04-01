@@ -50,7 +50,7 @@ offset_fire_point = system("offset_fire_point")
          fire_point2 = O_WRITE,
       }
    })
-   :body(function(state)
+   :via(function(state)
       log:trace("offset_fire_point(%s)", state)
 
       return {

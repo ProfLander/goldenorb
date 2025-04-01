@@ -74,7 +74,7 @@ consume_hands_transform = system("consume_hands_transform")
    :when(function()
       return aim_type:get() == AIM_FREE
    end)
-   :body(function(state)
+   :via(function(state)
       log:trace("consume_hands_transform(%s)", state)
 
       local pos = state.hud.hands_position
@@ -120,7 +120,7 @@ apply_hud_offset_rot = system("apply_hud_offset_rot")
    :when(function()
       return aim_type:get() == AIM_FREE
    end)
-   :body(function(state)
+   :via(function(state)
       log:trace("apply_hud_offset_rot(%s)", state)
 
       local zoom_duration = get_hud_number(state.wpn, "zoom_rotate_time")

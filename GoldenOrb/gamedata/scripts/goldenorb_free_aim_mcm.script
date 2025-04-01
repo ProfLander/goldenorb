@@ -45,7 +45,7 @@ free_aim = system("free_aim")
    :when(function()
       return aim_type:get() == AIM_FREE
    end)
-   :body(function(state)
+   :via(function(state)
       log:trace("free_aim(%s)", state)
 
       local ofs = state.hands.rot:sub(state.joint_aim.vec):mul(-1)

@@ -310,7 +310,7 @@ inject_hands = system("inject_hands")
    :reads("actor")
    :not_exist("hands")
    :writes("hands")
-   :body(function(state)
+   :via(function(state)
       log:trace("inject_hands(%s)", state)
 
       return {
@@ -331,7 +331,7 @@ inject_weapon = system("inject_weapon")
    :reads("actor")
    :not_exist("wpn")
    :writes("wpn")
-   :body(function(state)
+   :via(function(state)
       log:trace("inject_weapon(%s)", state)
 
       return {
@@ -347,7 +347,7 @@ inject_weapon_hud = system("inject_weapon_hud")
    :reads("wpn")
    :not_exist("hud")
    :writes("hud")
-   :body(function(state)
+   :via(function(state)
       log:trace("inject_weapon_hud(%s)", state)
 
       return {
@@ -361,7 +361,7 @@ apply_weapon_hud = system("apply_weapon_hud")
    :runs_after(phase_apply_state)
    :runs_before(phase_done)
    :reads("hud")
-   :body(function(state)
+   :via(function(state)
       log:trace("apply_weapon_hud(%s)", state)
 
       log:info("  Applying HUD parameters...")

@@ -74,7 +74,7 @@ inject_joint_aim = system("inject_joint_aim")
    :runs_after(phase_build_state)
    :runs_before(phase_modify_state)
    :writes("joint_aim", "spring_aim")
-   :body(function(state)
+   :via(function(state)
       log:trace("inject_joint_aim(%s)", state)
       return {
          joint_aim = joint_aim,

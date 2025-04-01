@@ -242,7 +242,7 @@ consume_weapon = system("consume_weapon")
    :runs_after(phase_modify_state)
    :runs_before(phase_apply_state)
    :reads("wpn")
-   :body(function(state)
+   :via(function(state)
       log:trace("consume_weapon(%s)", state)
 
       -- Fetch the weapon's section
@@ -305,7 +305,7 @@ recoil_weapon = system("recoil_weapon")
          hands_orientation = O_WRITE
       }
    })
-   :body(function(state)
+   :via(function(state)
       log:trace("recoil_weapon(%s)", state)
 
       control_fac = control_fac + spring_1d(

@@ -31,7 +31,7 @@ inject_actor = system("inject_actor")
    :runs_before(phase_apply_state)
    :not_exist("actor")
    :writes("actor")
-   :body(function(state)
+   :via(function(state)
       log:trace("inject_actor(%s)", state)
       return {
          actor = db.actor
@@ -43,7 +43,7 @@ inject_actor = system("inject_actor")
 hud_adjust_enable = system("hud_adjust_enable")
    :runs_after(phase_apply_state)
    :runs_before(phase_done)
-   :body(function(state)
+   :via(function(state)
       log:trace("hud_adjust_enable(%s)", state)
       hud_adjust.enabled(true)
       return {}

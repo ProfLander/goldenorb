@@ -254,7 +254,7 @@ function System:when(f)
    return self
 end
 
-function System:body(f)
+function System:via(f)
    self.sys_body = f
    return self
 end

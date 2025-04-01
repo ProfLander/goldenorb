@@ -52,7 +52,7 @@ end
 ACTOR_ON_UPDATE = schedule("Actor Update")
 
 phase_build_state = system("phase_build_state")
-   :body(function()
+   :via(function()
       log:info("Phase: Build State")
       return {}
    end)
@@ -60,7 +60,7 @@ phase_build_state = system("phase_build_state")
 
 phase_modify_state = system("phase_modify_state")
    :runs_after(phase_build_state)
-   :body(function()
+   :via(function()
       log:info("Phase: Modify State")
       return {}
    end)
@@ -68,7 +68,7 @@ phase_modify_state = system("phase_modify_state")
 
 phase_apply_state = system("phase_apply_state")
    :runs_after(phase_modify_state)
-   :body(function()
+   :via(function()
       log:info("Phase: Apply State")
       return {}
    end)
@@ -76,7 +76,7 @@ phase_apply_state = system("phase_apply_state")
 
 phase_done = system("phase_done")
    :runs_after(phase_apply_state)
-   :body(function()
+   :via(function()
       log:info("Phase: Done")
       return {}
    end)

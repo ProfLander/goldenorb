@@ -38,7 +38,7 @@ reset_zoom_factors = system("reset_zoom_factors")
          scope_zoom_factor_alt = O_WRITE,
       },
    })
-   :body(function(state)
+   :via(function(state)
       log:trace("reset_zoom_factors(%s)", state)
 
       return {

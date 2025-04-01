@@ -77,7 +77,7 @@ offset_aim = system("offset_aim")
    :when(function()
       return aim_type:get() == AIM_OFFSET
    end)
-   :body(function(state)
+   :via(function(state)
       log:trace("offset_aim(%s)", state)
 
       local joint_aim = state.joint_aim
