@@ -7,8 +7,10 @@
 -- Imports
 
 --- HUD offset rotation
-local phase_modify_state = goldenorb_main.phase_modify_state
-local phase_apply_state = goldenorb_main.phase_apply_state
+local goldenorb_before_modify_state = goldenorb_main.goldenorb_before_modify_state
+local goldenorb_after_modify_state = goldenorb_main.goldenorb_after_modify_state
+local goldenorb_before_apply_state = goldenorb_main.goldenorb_before_apply_state
+local goldenorb_after_apply_state = goldenorb_main.goldenorb_after_apply_state
 
 --- Aim
 local page = goldenorb_aim_mcm.page
@@ -58,8 +60,8 @@ local sensitivity = page:settings(
 -- Implementation
 
 offset_aim = system("offset_aim")
-   :runs_after(phase_modify_state)
-   :runs_before(phase_apply_state)
+   :runs_after(goldenorb_before_modify_state)
+   :runs_before(goldenorb_after_apply_state)
    :reads("joint_aim", "spring_aim")
    :inputs({
       hud = {

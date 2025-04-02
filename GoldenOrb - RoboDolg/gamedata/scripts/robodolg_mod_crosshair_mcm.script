@@ -30,6 +30,14 @@ local Trackbar = mcm_builder.Trackbar
 --- Robodolg
 local tree = robodolg_goldenorb_mcm.tree
 
+--- Schedule
+local system = goldenorb_schedule.system
+local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
+local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
+
+--- Main
+local goldenorb_after_apply_state = goldenorb_main.goldenorb_after_apply_state
+
 --- Function
 local advise_before = goldenorb_function.advise_before
 local curry_r = goldenorb_function.curry_r
@@ -113,69 +121,55 @@ function vert(v, cond, r)
       or out
 end
 
----@param state table
-function draw(state)
-   log("draw_crosshair(%s)", state)
+draw = system("draw")
+   :reads("wpn", "dev", "hands")
+   :runs_after(goldenorb_after_apply_state)
+   :via(function(state)
+      local size_cross = cross_size:get()
+      local size_ring = ring_size:get()
+      local segs_ring = ring_segs:get()
 
-   if not state.wpn then
-      return
-   end
+      local cam_roll = get_camera_rotation(state).z
 
-   local size_cross = cross_size:get()
-   local size_ring = ring_size:get()
-   local segs_ring = ring_segs:get()
-
-   local cam_roll = get_camera_rotation(state).z
-
-   -- Camera
-   if draw_camera:get() then
-      draw_crosshair(
-         size_cross,
-         size_ring,
-         segs_ring,
-         COLOR_CAMERA,
-         ui_2d(get_camera_aim_point(state), true)
-      )
-   end
-
-   -- Hands
-   if draw_hands:get() then
-      draw_crosshair(
-         size_cross,
-         size_ring,
-         segs_ring,
-         COLOR_HANDS,
-         vert(
-            get_hands_aim_point(),
-            rotate_hands:get(),
-            -(get_hands_rotation().z - cam_roll)
+      -- Camera
+      if draw_camera:get() then
+         draw_crosshair(
+            size_cross,
+            size_ring,
+            segs_ring,
+            COLOR_CAMERA,
+            ui_2d(get_camera_aim_point(state), true)
          )
-      )
-   end
+      end
 
-   -- Weapon
-   if draw_weapon:get() then
-      draw_crosshair(
-         size_cross,
-         size_ring,
-         segs_ring,
-         COLOR_WEAPON,
-         vert(
-            get_weapon_aim_point(state.wpn),
-            rotate_weapon:get(),
-            -(get_fire_bone_rotation(state.wpn).z - cam_roll)
+      -- Hands
+      if draw_hands:get() then
+         draw_crosshair(
+            size_cross,
+            size_ring,
+            segs_ring,
+            COLOR_HANDS,
+            vert(
+               state.hands.aim,
+               rotate_hands:get(),
+               -(state.hands.rot.z - cam_roll)
+            )
          )
-      )
-   end
-end
+      end
 
--- Entrypoint
-
----@return nil
-function on_game_start()
-   log("robodolg_crosshair.on_game_start")
-   RegisterScriptCallback(
-      "robodolg_on_draw",
-      draw
-   )
-end
+      -- Weapon
+      if draw_weapon:get() then
+         draw_crosshair(
+            size_cross,
+            size_ring,
+            segs_ring,
+            COLOR_WEAPON,
+            vert(
+               get_weapon_aim_point(state.wpn),
+               rotate_weapon:get(),
+               -(get_fire_bone_rotation(state.wpn).z - cam_roll)
+            )
+         )
+      end
+   end)
+   :during(LEVEL_CALL)

@@ -15,12 +15,8 @@ local ACTOR_ON_WEAPON_FIRED = goldenorb_schedule.ACTOR_ON_WEAPON_FIRED
 local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
 
 --- Main
-local phase_apply_state = goldenorb_main.phase_apply_state
-
---- Modifiers
-local body_cam = goldenorb_body_cam_mcm.body_cam
-local free_aim = goldenorb_free_aim_mcm.free_aim
-local offset_aim = goldenorb_offset_aim_mcm.offset_aim
+local goldenorb_after_modify_state = goldenorb_main.goldenorb_after_modify_state
+local goldenorb_before_apply_state = goldenorb_main.goldenorb_before_apply_state
 
 --- Joint
 local joint = goldenorb_joint.joint
@@ -279,12 +275,8 @@ recoil_weapon = system("recoil_weapon")
 
 --- Integrate recoil forces and apply to the HUD
 integrate_recoil = system("integrate_recoil")
-   :runs_after(
-      body_cam,
-      free_aim,
-      offset_aim
-   )
-   :runs_before(phase_apply_state)
+      :runs_after(goldenorb_after_modify_state)
+   :runs_before(goldenorb_before_apply_state)
    :inputs({
       hud = {
          hands_orientation = I_READ

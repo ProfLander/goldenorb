@@ -10,7 +10,7 @@
 local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
 
 --- Main
-local phase_build_state = goldenorb_main.phase_build_state
+local goldenorb_before_build_state = goldenorb_main.goldenorb_before_build_state
 
 --- Joint
 local joint = goldenorb_joint.joint
@@ -68,7 +68,7 @@ local joint_aim = joint()
 local spring_aim = mcm_spring(page, SP_LINEAR, "6.0,4.5", "1.0, 1.0")
 
 inject_joint_aim = system("inject_joint_aim")
-   :runs_after(phase_build_state)
+   :runs_after(goldenorb_before_build_state)
    :without("joint_aim", "spring_aim")
    :writes("joint_aim", "spring_aim")
    :via(function()

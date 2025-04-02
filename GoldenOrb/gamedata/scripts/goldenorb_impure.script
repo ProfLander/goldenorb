@@ -13,9 +13,10 @@ local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
 local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
 
 --- Main
-local phase_build_state = goldenorb_main.phase_build_state
-local phase_apply_state = goldenorb_main.phase_apply_state
-local phase_done = goldenorb_main.phase_done
+local goldenorb_before_build_state = goldenorb_main.goldenorb_before_build_state
+local goldenorb_after_build_state = goldenorb_main.goldenorb_after_build_state
+local goldenorb_before_apply_state = goldenorb_main.goldenorb_before_apply_state
+local goldenorb_after_apply_state = goldenorb_main.goldenorb_after_apply_state
 
 --- Schedule
 local system = goldenorb_schedule.system
@@ -30,7 +31,8 @@ local log = goldenorb_logging.logger(
 
 --- Inject the player actor into the state
 inject_actor = system("inject_actor")
-   :runs_after(phase_build_state)
+   :runs_after(goldenorb_before_build_state)
+   :runs_before(goldenorb_after_build_state)
    :writes("actor")
    :via(function()
       return {
@@ -41,8 +43,8 @@ inject_actor = system("inject_actor")
 
 --- Enable HUD adjust mode
 hud_adjust_enable = system("hud_adjust_enable")
-   :runs_after(phase_apply_state)
-   :runs_before(phase_done)
+   :runs_after(goldenorb_before_apply_state)
+   :runs_before(goldenorb_after_apply_state)
    :via(function()
       hud_adjust.enabled(true)
    end)

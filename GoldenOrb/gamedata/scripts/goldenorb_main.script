@@ -16,57 +16,35 @@ local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
 --- Function
 local const = goldenorb_function.const
 
---- Logging
-local log = goldenorb_logging.logger(
-   "GoldenOrb/Main",
-   goldenorb_logging.WARNING
-)
-
 -- Constants
 
---- State build barrier
-function phase_build_state(...)
-   log:info("Phase: Build State")
-   return ...
-end
-
---- State modify barrier
-function phase_modify_state(...)
-   log:info("Phase: Modify State")
-   return ...
-end
-
---- State apply barrier
-function phase_apply_state(...)
-   log:info("Phase: Apply State")
-   return ...
-end
-
---- State apply barrier
-function phase_done(...)
-   log:info("Phase: Done")
-   return ...
-end
-
-
---- Bracket for beginning to build state
-phase_build_state = system("phase_build_state")
+--- State build barriers
+goldenorb_before_build_state = system("goldenorb_before_build_state")
    :via(const(nil))
    :during(ACTOR_ON_UPDATE)
 
---- Bracket for modifying built state
-phase_modify_state = system("phase_modify_state")
+goldenorb_after_build_state = system("goldenorb_after_build_state")
+   :runs_after(goldenorb_before_build_state)
+   :via(const(nil))
+   :during(ACTOR_ON_UPDATE)
+
+--- State modify barriers
+goldenorb_before_modify_state = system("goldenorb_before_modify_state")
    :via(const(nil))
    :during(LEVEL_CALL)
 
---- Bracket for applying built state to the environment
-phase_apply_state = system("phase_apply_state")
-   :runs_after(phase_modify_state)
+goldenorb_after_modify_state = system("goldenorb_after_modify_state")
+   :runs_after(goldenorb_before_modify_state)
    :via(const(nil))
    :during(LEVEL_CALL)
 
---- Bracket for finishing the update
-phase_done = system("phase_done")
-   :runs_after(phase_apply_state)
+--- State apply barriers
+goldenorb_before_apply_state = system("goldenorb_before_apply_state")
+   :runs_after(goldenorb_after_modify_state)
+   :via(const(nil))
+   :during(LEVEL_CALL)
+
+goldenorb_after_apply_state = system("goldenorb_after_apply_state")
+   :runs_after(goldenorb_before_apply_state)
    :via(const(nil))
    :during(LEVEL_CALL)

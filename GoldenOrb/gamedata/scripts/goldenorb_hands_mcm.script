@@ -11,7 +11,7 @@ local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
 local LEVEL_CALL = goldenorb_schedule.ACTOR_ON_UPDATE
 
 --- Main
-local phase_modify_state = goldenorb_main.phase_modify_state
+local goldenorb_before_modify_state = goldenorb_main.goldenorb_before_modify_state
 
 --- Impure
 local inject_actor = goldenorb_impure.inject_actor
@@ -118,7 +118,7 @@ consume_hands_transform = system("consume_hands_transform")
       inject_camera,
       inject_weapon_hud
    )
-   :runs_before(phase_modify_state)
+   :runs_before(goldenorb_before_modify_state)
    :reads("dev")
    :inputs({
       hud = {
@@ -161,7 +161,7 @@ consume_hands_transform = system("consume_hands_transform")
 
 --- Apply HUD aim offset rotation with a lerp to counteract ADS animation
 apply_hud_offset_rot = system("apply_hud_offset_rot")
-   :runs_before(phase_modify_state)
+   :runs_before(goldenorb_before_modify_state)
    :reads("dev", "wpn")
    :inputs({
       hud = {

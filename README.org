@@ -193,6 +193,8 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
   - Should be possible by scaling positions etc based on the HUD FOV factor, though may involve nasty projection erro 
 - [X] Formalize dependency graph branch / join points
   - ex. Need singular 'before modifiers' / 'after modifiers' points instead of having to explicitly name everything 
+- [X] Formalize hands module
+  - Need to move hands-specific methods out of weapon
 
 *** To Do
 **** Core
@@ -295,8 +297,6 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
   - Can probably indirect camera position / rotation through a simple spring
 
 **** Hands
-- [ ] Formalize hands module
-  - Need to move hands-specific methods out of weapon
 - [-] Visualize cursor restriction with RoboDolg
   - [X] Implement box drawing for linear spring
   - [X] Manually billboard rotated vectors for correct sizing

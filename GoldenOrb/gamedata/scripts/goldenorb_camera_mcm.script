@@ -14,10 +14,10 @@ local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
 local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
 
 --- Main
-local phase_build_state = goldenorb_main.phase_build_state
-local phase_modify_state = goldenorb_main.phase_modify_state
-local phase_apply_state = goldenorb_main.phase_apply_state
-local phase_done = goldenorb_main.phase_done
+local goldenorb_before_build_state = goldenorb_main.goldenorb_before_build_state
+local goldenorb_after_build_state = goldenorb_main.goldenorb_after_build_state
+local goldenorb_before_apply_state = goldenorb_main.goldenorb_before_apply_state
+local goldenorb_after_apply_state = goldenorb_main.goldenorb_after_apply_state
 
 --- Schedule
 local system = goldenorb_schedule.system
@@ -117,7 +117,8 @@ end
 
 --- Inject device into the state
 inject_device = system("inject_device")
-   :runs_after(phase_build_state)
+   :runs_after(goldenorb_before_build_state)
+   :runs_before(goldenorb_after_build_state)
    :writes("dev")
    :via(function(state)
       local dev = device()
@@ -184,8 +185,8 @@ read_camera = system("read_camera")
 
 --- Apply camera parameters to the game state
 apply_camera = system("apply_camera")
-   :runs_after(phase_apply_state)
-   :runs_before(phase_done)
+   :runs_after(goldenorb_before_apply_state)
+   :runs_before(goldenorb_after_apply_state)
    :reads("cam")
    :via(function(state)
       if state.cam.enable then

@@ -11,8 +11,8 @@ local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
 local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
 
 --- Main
-local phase_apply_state = goldenorb_main.phase_apply_state
-local phase_done = goldenorb_main.phase_done
+local goldenorb_before_apply_state = goldenorb_main.goldenorb_before_apply_state
+local goldenorb_after_apply_state = goldenorb_main.goldenorb_after_apply_state
 
 --- Impure
 local inject_actor = goldenorb_impure.inject_actor
@@ -292,8 +292,8 @@ inject_weapon_hud = system("inject_weapon_hud")
 
 --- Apply aggregated state values to the HUD adjuster
 apply_weapon_hud = system("apply_weapon_hud")
-   :runs_after(phase_apply_state)
-   :runs_before(phase_done)
+   :runs_after(goldenorb_before_apply_state)
+   :runs_before(goldenorb_after_apply_state)
    :reads("hud")
    :via(function(state)
       set_hud_params(state.hud)

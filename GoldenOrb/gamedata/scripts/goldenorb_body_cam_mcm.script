@@ -10,8 +10,8 @@
 local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
 
 --- Main
-local phase_modify_state = goldenorb_main.phase_modify_state
-local phase_apply_state = goldenorb_main.phase_apply_state
+local goldenorb_before_modify_state = goldenorb_main.goldenorb_before_modify_state
+local goldenorb_after_modify_state = goldenorb_main.goldenorb_after_modify_state
 
 --- Math
 local deg = lander_math.deg
@@ -154,8 +154,8 @@ function get_actor_rotation(state)
 end
 
 body_cam = system("body_cam")
-   :runs_after(phase_modify_state)
-   :runs_before(phase_apply_state)
+   :runs_after(goldenorb_before_modify_state)
+   :runs_before(goldenorb_after_modify_state)
    :reads("actor")
    :maybe_reads("wpn")
    :inputs({ hud = { hands_orientation = I_READ_MAYBE }})
