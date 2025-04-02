@@ -9,11 +9,12 @@
 -- Imports
 
 --- Schedule
-local schedule = goldenorb_schedule.schedule
 local system = goldenorb_schedule.system
+local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
+local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
 
 --- Function
-local protected = goldenorb_function.protected
+local const = goldenorb_function.const
 
 --- Logging
 local log = goldenorb_logging.logger(
@@ -48,61 +49,24 @@ function phase_done(...)
 end
 
 
---- Actor update action
-ACTOR_ON_UPDATE = schedule("Actor Update")
-
+--- Bracket for beginning to build state
 phase_build_state = system("phase_build_state")
-   :via(function()
-      log:info("Phase: Build State")
-      return {}
-   end)
+   :via(const(nil))
    :during(ACTOR_ON_UPDATE)
 
+--- Bracket for modifying built state
 phase_modify_state = system("phase_modify_state")
-   :runs_after(phase_build_state)
-   :via(function()
-      log:info("Phase: Modify State")
-      return {}
-   end)
-   :during(ACTOR_ON_UPDATE)
+   :via(const(nil))
+   :during(LEVEL_CALL)
 
+--- Bracket for applying built state to the environment
 phase_apply_state = system("phase_apply_state")
    :runs_after(phase_modify_state)
-   :via(function()
-      log:info("Phase: Apply State")
-      return {}
-   end)
-   :during(ACTOR_ON_UPDATE)
+   :via(const(nil))
+   :during(LEVEL_CALL)
 
+--- Bracket for finishing the update
 phase_done = system("phase_done")
    :runs_after(phase_apply_state)
-   :via(function()
-      log:info("Phase: Done")
-      return {}
-   end)
-   :during(ACTOR_ON_UPDATE)
-
--- Implementation
-
---- Error handler
----@param e string
----@return nil
-function handle_error(e, stack)
-   local msg = string.format("GoldenOrb: ERROR: %s\n%s", e, stack)
-   printf(msg)
-   actor_menu.set_msg(1, msg, 10000)
-end
-
---- Entrypoint
----@return nil
-on_game_start = protected(
-   handle_error,
-   function()
-      RegisterScriptCallback(
-         "actor_on_update",
-         function()
-            ACTOR_ON_UPDATE:prun(handle_error, {})
-         end
-      )
-   end
-)
+   :via(const(nil))
+   :during(LEVEL_CALL)

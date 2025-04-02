@@ -6,10 +6,8 @@
 
 -- Imports
 
---- Main
-local ACTOR_ON_UPDATE = goldenorb_main.ACTOR_ON_UPDATE
-local phase_build_state = goldenorb_main.phase_build_state
-local phase_modify_state = goldenorb_main.phase_modify_state
+--- Schedule
+local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
 
 --- Weapon
 local inject_weapon_hud = goldenorb_weapon.inject_weapon_hud
@@ -28,8 +26,7 @@ local log = goldenorb_logging.logger(
 
 --- Zero out the zoom factor components
 reset_zoom_factors = system("reset_zoom_factors")
-   :runs_after(phase_build_state, inject_weapon_hud)
-   :runs_before(phase_modify_state)
+   :runs_after(inject_weapon_hud)
    :with("hud")
    :outputs({
       hud = {
@@ -38,9 +35,7 @@ reset_zoom_factors = system("reset_zoom_factors")
          scope_zoom_factor_alt = O_WRITE,
       },
    })
-   :via(function(state)
-      log:trace("reset_zoom_factors(%s)", state)
-
+   :via(function()
       return {
          hud = {
             scope_zoom_factor = 0,

@@ -8,10 +8,18 @@
 
 --- Shapes
 local CYAN = robodolg_shapes.CYAN
-local draw_bones = robodolg_shapes.draw_bones
+local draw_ngon = robodolg_shapes.draw_ngon
+local draw_line = robodolg_shapes.draw_line
+local ui_2d = robodolg_shapes.ui_2d
+
+--- Math
+local hpb_to_direction = lander_math.hpb_to_direction
 
 --- RoboDolg
 local tree = robodolg_vanilla_mcm.tree
+
+--- Table
+local foreach = goldenorb_table.foreach
 
 --- MCM Builder
 local ImageWithText = mcm_builder.ImageWithText
@@ -39,37 +47,90 @@ local should_draw = page:settings(
 
 -- Implementation
 
----@param state table
----@return table
-function draw_weapon_bones(state)
-   log("draw_weapon_bones(%s)", state)
+local cache = {}
+
+function cache_bones()
+   log("cache_bones()")
 
    if not should_draw:get() then
-        return state
+        return
     end
 
-   if not state.wpn then
-      return state
+   local actor = db.actor
+   if not db.actor then
+      return
    end
 
-   draw_bones(
-      state,
-      state.wpn,
-      true,
-      POLY_SIZE,
-      POLY_SIDES,
-      LINE_LENGTH,
-      COLOR
-   )
+   log("  actor: %s", actor)
 
-   return state
+   local wpn = actor:active_item()
+   if not wpn then
+      return
+   end
+
+   log("  wpn: %s", actor)
+
+   cache = {}
+   local keys = wpn:list_bones(true)
+   for i=1,#keys do
+      local key = keys[i]
+      log("  key: %s", key)
+      local id = wpn:bone_id(key, true)
+      cache[id] = {
+         pos = wpn:bone_position(key, true),
+         rot = wpn:bone_direction(key, true),
+         parent = wpn:bone_parent(key, true),
+      }
+   end
+end
+
+function draw_bones()
+   log("draw_bones()")
+
+   foreach(
+      cache,
+      function(_, bone)
+         log("bone: %s", bone)
+         draw_ngon(
+            POLY_SIZE,
+            POLY_SIDES,
+            COLOR,
+            ui_2d(bone.pos, true)
+         )
+
+         local dir = hpb_to_direction(bone.rot)
+         draw_line(
+            ui_2d(bone.pos, true)(vector()),
+            ui_2d(
+               vector():set(bone.pos)
+                  :add(dir:mul(LINE_LENGTH)),
+               true
+            )(vector()),
+            COLOR
+         )
+
+         local parent = cache[bone.parent]
+         if parent then
+            draw_line(
+               ui_2d(bone.pos, true)(vector()),
+               ui_2d(parent.pos, true)(vector()),
+               COLOR
+            )
+         end
+      end
+   )
 end
 
 ---@return nil
 function on_game_start()
    log("robodolg_weapon_bones.on_game_start")
+
    RegisterScriptCallback(
-      "robodolg_on_draw",
-      draw_weapon_bones
+      "actor_on_update",
+      cache_bones
+   )
+
+   AddUniqueCall(
+      draw_bones
    )
 end

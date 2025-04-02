@@ -6,10 +6,12 @@
 
 -- Imports
 
+--- Schedule
+local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
+local LEVEL_CALL = goldenorb_schedule.ACTOR_ON_UPDATE
+
 --- Main
-local phase_build_state = goldenorb_main.phase_build_state
 local phase_modify_state = goldenorb_main.phase_modify_state
-local ACTOR_ON_UPDATE = goldenorb_main.ACTOR_ON_UPDATE
 
 --- Impure
 local inject_actor = goldenorb_impure.inject_actor
@@ -23,11 +25,11 @@ local inject_camera = goldenorb_camera_mcm.inject_camera
 
 --- Weapon
 local get_hud_number = goldenorb_weapon.get_hud_number
-local inject_weapon = goldenorb_weapon.inject_weapon
 local inject_weapon_hud = goldenorb_weapon.inject_weapon_hud
 
 --- Math
 local deg = lander_math.deg
+local hpb_to_direction = lander_math.hpb_to_direction
 
 --- Schedule
 local system = goldenorb_schedule.system
@@ -40,15 +42,78 @@ local log = goldenorb_logging.logger(
    goldenorb_logging.TRACE
 )
 
+-- Constants
+
+--- Aim projection distance
+local DIST = 1000
+
 -- State
 
 --- Current zoom factor
 local zoom_fac = 0
 
+-- Implementation
+
+---@return vector?
+function get_hands_position()
+   local actor = db.actor
+   if not actor then
+      log:warning("WARNING: No actor")
+      return nil
+   end
+
+   return actor:bone_position("bip01", true)
+end
+
+---@return vector?
+function get_hands_rotation()
+   local actor = db.actor
+   if not actor then
+      log:warning("WARNING: No actor")
+      return nil
+   end
+
+   return vector():set(actor:bone_direction("bip01", true))
+end
+
+---@return vector?
+function get_hands_direction()
+   local rot = get_hands_rotation()
+   return rot and hpb_to_direction(rot)
+end
+
+---@return vector
+function get_hands_aim_point()
+   log:trace("get_hands_aim_point()")
+   return get_hands_position()
+      :add(
+         get_hands_direction()
+         :mul(DIST)
+      )
+end
+
+--- Inject hands data into the given state
+inject_hands = system("inject_hands")
+   :runs_after(inject_actor)
+   :reads("actor")
+   :writes("hands")
+   :via(function(state)
+      log:trace("inject_hands(%s)", state)
+
+      return {
+         hands = {
+            pos = get_hands_position(),
+            rot = get_hands_rotation(),
+            dir = get_hands_direction(),
+            aim = get_hands_aim_point()
+         }
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)
+
 ---- Consume the HUD hand transforms and store them in the state
 consume_hands_transform = system("consume_hands_transform")
    :runs_after(
-      phase_build_state,
       inject_actor,
       inject_camera,
       inject_weapon_hud
@@ -75,8 +140,6 @@ consume_hands_transform = system("consume_hands_transform")
       return aim_type:get() == AIM_FREE
    end)
    :via(function(state)
-      log:trace("consume_hands_transform(%s)", state)
-
       local pos = state.hud.hands_position
       local rot = state.hud.hands_orientation
 
@@ -98,11 +161,6 @@ consume_hands_transform = system("consume_hands_transform")
 
 --- Apply HUD aim offset rotation with a lerp to counteract ADS animation
 apply_hud_offset_rot = system("apply_hud_offset_rot")
-   :runs_after(
-      phase_build_state,
-      inject_weapon,
-      inject_weapon_hud
-   )
    :runs_before(phase_modify_state)
    :reads("dev", "wpn")
    :inputs({
@@ -113,16 +171,10 @@ apply_hud_offset_rot = system("apply_hud_offset_rot")
    })
    :outputs({
       hud = {
-         hands_position = O_WRITE,
          hands_orientation = O_WRITE,
       }
    })
-   :when(function()
-      return aim_type:get() == AIM_FREE
-   end)
    :via(function(state)
-      log:trace("apply_hud_offset_rot(%s)", state)
-
       local zoom_duration = get_hud_number(state.wpn, "zoom_rotate_time")
       if zoom_duration == nil or
          zoom_duration == 0
@@ -152,10 +204,9 @@ apply_hud_offset_rot = system("apply_hud_offset_rot")
       -- Done
       return {
          hud = {
-            hands_position = vector(),
             hands_orientation = vector():set(state.hud.hands_orientation)
                :add(rot_ofs:mul(-(1 - zoom_fac)))
          }
       }
    end)
-   :during(ACTOR_ON_UPDATE)
+   :during(LEVEL_CALL)

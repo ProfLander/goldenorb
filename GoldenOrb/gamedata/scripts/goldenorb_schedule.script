@@ -17,6 +17,7 @@ local fold_table = goldenorb_table.fold
 
 --- Function
 local const = goldenorb_function.const
+local protected = goldenorb_function.protected
 
 --- Logging
 local log = goldenorb_logging.logger(
@@ -226,17 +227,23 @@ function System:outputs(outputs)
    return self
 end
 
----@param input string
+---@param ... string
 ---@return system
-function System:with(input)
-   self.sys_inputs[input] = I_EXIST
+function System:with(...)
+   local args = {...}
+   for i=1,#args do
+      self.sys_inputs[args[i]] = I_NOT_EXIST
+   end
    return self
 end
 
----@param input string
+---@param ... string
 ---@return system
-function System:without(input)
-   self.sys_inputs[input] = I_NOT_EXIST
+function System:without(...)
+   local args = {...}
+   for i=1,#args do
+      self.sys_inputs[args[i]] = I_NOT_EXIST
+   end
    return self
 end
 
@@ -540,13 +547,8 @@ function merge(tbl, vals, paths)
             -- If the path is composite, recurse
             acc[k] = merge(acc[k], v, path)
          else
-            -- If the path represents a write, emplace by value
-            if acc[k] ~= nil and type(v) == "table" then
-               assert(type(acc[k]) == "table", "Type mismatch")
-               copy_table(acc[k], v)
-            else
-               acc[k] = v
-            end
+            -- If the path represents a write, emplace
+            acc[k] = v
          end
 
          return acc
@@ -587,6 +589,11 @@ function Schedule:run(p)
 
          local output = sys.body(input)
          log:trace("  output: %s", output)
+
+         if output == nil then
+            -- Early-out if the function returned nothing
+            return acc
+         end
 
          -- If the slice succeeded,
          -- invoke the function and merge its results with the state
@@ -630,3 +637,45 @@ function Schedule:prun_deferred(e, pf)
       return self:prun(e, pf and pf() or p)
    end
 end
+
+ACTOR_ON_UPDATE = schedule("Actor Update")
+ACTOR_ON_WEAPON_FIRED = schedule("Actor Weapon Fired")
+LEVEL_CALL = schedule("Level Call")
+
+--- Error handler
+---@param e string
+---@return nil
+function handle_error(e, stack)
+   local msg = string.format("ERROR: %s\n%s", e, stack)
+   printf(msg)
+   actor_menu.set_msg(1, msg, 10000)
+end
+
+local state = {}
+
+--- Entrypoint
+---@return nil
+on_game_start = protected(
+   handle_error,
+   function()
+      RegisterScriptCallback(
+         "actor_on_update",
+         function()
+            ACTOR_ON_UPDATE:prun(handle_error, state)
+         end
+      )
+
+      RegisterScriptCallback(
+         "actor_on_weapon_fired",
+         function()
+            ACTOR_ON_WEAPON_FIRED:prun(handle_error, state)
+         end
+      )
+
+      AddUniqueCall(
+         function()
+            LEVEL_CALL:prun(handle_error, state)
+         end
+      )
+   end
+)

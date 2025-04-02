@@ -21,10 +21,8 @@ local get_camera_delta_rotation = goldenorb_camera_mcm.get_camera_delta_rotation
 --- String
 local parse_vector = goldenorb_string.parse_vector
 
---- Main
-local ACTOR_ON_UPDATE = goldenorb_main.ACTOR_ON_UPDATE
-
 --- Schedule
+local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
 local system = goldenorb_schedule.system
 local I_READ = goldenorb_schedule.I_READ
 local O_WRITE = goldenorb_schedule.O_WRITE
@@ -78,8 +76,6 @@ offset_aim = system("offset_aim")
       return aim_type:get() == AIM_OFFSET
    end)
    :via(function(state)
-      log:trace("offset_aim(%s)", state)
-
       local joint_aim = state.joint_aim
          :impulse(
             get_camera_delta_rotation()
@@ -96,4 +92,4 @@ offset_aim = system("offset_aim")
          }
       }
    end)
-   :during(ACTOR_ON_UPDATE)
+   :during(LEVEL_CALL)

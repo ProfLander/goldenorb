@@ -123,7 +123,6 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
   - Toggle?
   - Allow gun to follow aim
 
-
 ** Progress
 *** Done
 - [X] Fix 3DSS distortion when displayed off-center
@@ -227,21 +226,28 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
         - Rule ends with call -> bracket with Finish
         - No reads -> assume empty table
         - No writes -> assume empty table
-  - [ ] Move ACTOR_ON_UPDATE into schedule module
-  - [ ] Implement LEVEL_CALL schedule
-    - [ ] Test bone reading behaviour w.r.t. camera stutter
-  - [ ] Implement preconditions for schedule functions
+  - [X] Move ACTOR_ON_UPDATE into schedule module
+  - [X] Implement LEVEL_CALL schedule
+    - [X] Test bone reading behaviour w.r.t. camera stutter
+  - [X] Implement preconditions for schedule functions
     - Intuitively, runtime checks versus I/O "static" checks
       - In practice, user controllable versus built-in
     - Needed for cases like weapons being non-equipped
       - Preferable to be able to elide null checks in favor of static non-maybe semantics while retaining the ability to avoid invoking them if it's known that the reads don't need to happen
-  - [ ] Implement builder pattern for ~Schedule:insert~
+  - [X] Implement builder pattern for ~Schedule:insert~
     - Would make member names explicit for complex insertions
     - Also improves type-safety with respect to accidentally-nil'd fields (i.e. due to a broken import)
-  - [ ] Address RoboDolg
+  - [X] Address RoboDolg
     - Currently using hacky state caching methodology w/3-arg insert
       - Should probably do this outside of the schedule if anything
-- [ ] Implement Logger:assert
+  - [ ] Fix stutter
+    - Need to rework existing systems to ensure all elements are stutter-free
+      - Should be possible given that the HUD bones are now fixed
+    - [ ] Aim Rig
+    - [ ] Crosshair
+    - [ ] Aim Spring
+    - [ ] Custom Camera
+- [X] Implement Logger:assert
   - Thunk string concatenation for better performance
   - Use ~val_to_string~ for more informative assertion messages
 - [ ] Inject time into state
@@ -357,9 +363,9 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
 **** RoboDolg
 Vector debug UI framework.
 
-- [ ] Setup pcall for drawing callback
+- [ ] Setup pcall for non-GoldenOrb modules
 - [ ] Further separation from GoldenOrb
-  - RoboDolg main currently calls into GoldenOrb main
+  - Various dependencies that need to be separated out
 - [ ] Offset reticle roll by camera roll
   - Alternately, offset camera roll by inverse
     - Option for either?
@@ -432,4 +438,5 @@ Vector debug UI framework.
   - GoldenOrb
   - Perfect Dolg
   - Escape From Tukarev
+  - TimeSidders
   - Zuke Nukem

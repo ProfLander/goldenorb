@@ -170,10 +170,11 @@ function draw_sphere(pos, scale, color)
    )
 end
 
-function project(state, vec, hud, allow_offscreen)
-   log("project(%s, %s, %s, %s)", state, vec, hud, allow_offscreen)
+function project(vec, hud, allow_offscreen)
+   log("project(%s, %s, %s, %s)", vec, hud, allow_offscreen)
    local ui = game.world2ui(vec, hud, allow_offscreen)
-   local aspect = state.dev.width / state.dev.height
+   local dev = device()
+   local aspect = dev.width / dev.height
    return vector():set(
       ((ui.x / 1024) - 0.5) * 2 * aspect,
       ((ui.y / 768) - 0.5) * -2,
@@ -183,40 +184,38 @@ end
 
 ---@param vec vector
 ---@return vector
-function billboard(state, vec)
-   log("billboard(%s, %s)", state, vec)
+function billboard(vec)
+   log("billboard(%s)", vec)
+   local dev = device()
    return vector()
-      :set(state.dev.cam_right)
+      :set(dev.cam_right)
       :mul(vec.x)
       :add(
          vector()
-         :set(state.dev.cam_top)
+         :set(dev.cam_top)
          :mul(vec.y)
       ):add(
          vector()
-         :set(state.dev.cam_dir)
+         :set(dev.cam_dir)
          :mul(vec.z)
       )
 end
 
 ---@param vec vector
 ---@return vector
-function camera_relative(state, vec)
-   log("camera_relative(%s, %s)", state, vec)
-   return vec:add(state.dev.cam_pos)
+function camera_relative(vec)
+   log("camera_relative(%s, %s)", vec)
+   return vec:add(device().cam_pos)
 end
 
-function ui_2d(state, pos, hud, allow_offscreen)
+function ui_2d(pos, hud, allow_offscreen)
    allow_offscreen = allow_offscreen ~= nil and allow_offscreen or true
 
    local correction = hud and CORRECTION_HUD or CORRECTION
    return function(v)
       return camera_relative(
-         state,
          billboard(
-            state,
             project(
-               state,
                pos,
                hud,
                allow_offscreen
@@ -264,7 +263,7 @@ end
 ---@param f? fun(v: vector): vector
 ---@return nil
 function draw_ngon(rad, sides, color, f)
-   log("draw_billboard_ngon(%s, %s, %s, %s)", rad, sides, color, f)
+   log("draw_ngon(%s, %s, %s, %s)", rad, sides, color, f)
    draw_line_strip(color, f)(
       unpack(
          map(
@@ -285,7 +284,7 @@ end
 ---@param f? fun(v: vector): vector
 ---@return nil
 function draw_cross(extent, color, f)
-   log("draw_billboard_cross(%s, %s, %s)", extent, color, f)
+   log("draw_cross(%s, %s, %s)", extent, color, f)
    draw_line_list(color, f)(
       {
          vector():set(-extent.x, 0, 0),
@@ -316,42 +315,6 @@ function draw_crosshair(cross_size, ring_size, ring_segs, color, f)
       ring_segs,
       color,
       f
-   )
-end
-
----@param state table
----@param obj game_object
----@param hud boolean
----@param poly_size number
----@param poly_sides number
----@param line_length number
----@param color? vector
-function draw_bones(state, obj, hud, poly_size, poly_sides, line_length, color)
-   log("draw_bones(%s)", obj)
-   f = f or id
-
-   local bones = obj:list_bones(hud)
-
-   foreach_list(
-      range(1, #bones),
-      function(i)
-         local name = bones[i]
-         local pos = obj:bone_position(name, hud)
-         draw_ngon(
-            poly_size,
-            poly_sides,
-            color,
-            ui_2d(state, pos, true)
-         )
-
-         local dir = hpb_to_direction(obj:bone_direction(name, hud))
-
-         draw_line(
-            ui_2d(state, pos, true)(vector()),
-            ui_2d(state, vector():set(pos):add(dir:mul(line_length)), true)(vector()),
-            color
-         )
-      end
    )
 end
 

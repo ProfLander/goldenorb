@@ -9,11 +9,13 @@
 --- Goldenorb
 local tree = goldenorb_mcm.tree
 
+--- Schedule
+local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
+local ACTOR_ON_WEAPON_FIRED = goldenorb_schedule.ACTOR_ON_WEAPON_FIRED
+local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
+
 --- Main
-local ACTOR_ON_UPDATE = goldenorb_main.ACTOR_ON_UPDATE
-local phase_modify_state = goldenorb_main.phase_modify_state
 local phase_apply_state = goldenorb_main.phase_apply_state
-local handle_error = goldenorb_main.handle_error
 
 --- Modifiers
 local body_cam = goldenorb_body_cam_mcm.body_cam
@@ -23,20 +25,21 @@ local offset_aim = goldenorb_offset_aim_mcm.offset_aim
 --- Joint
 local joint = goldenorb_joint.joint
 
+--- Weapon
+local inject_weapon = goldenorb_weapon.inject_weapon
+
 --- Lens
 local lens = goldenorb_lens.lens
 
 --- Spring
 local spring_1d = goldenorb_spring.spring_1d
+local SP_ANGULAR = goldenorb_spring.SP_ANGULAR
 
 --- Table
 local foreach = goldenorb_table.foreach
 
 --- Math
 local deg = lander_math.deg
-
---- Function
-local protected = goldenorb_function.protected
 
 --- Schedule
 local system = goldenorb_schedule.system
@@ -147,104 +150,11 @@ local joint_recoil = joint()
 
 -- Implementation
 
-function actor_on_weapon_fired_impl(actor, wpn, ammo)
-   log:trace("actor_on_weapon_fired(%s, %s, %s)", actor, wpn, ammo)
-
-   control_fac = control_fac + kick_multiplier:get()
-
-   local id = wpn:id()
-   log:debug("  id: %s", id)
-
-   local sec = wpn:section()
-   log:debug("  sec: %s", sec)
-
-   local cache = wpn_cache[sec]
-   if not cache then
-      log:info("No cached recoil information")
-      return
-   end
-
-   -- Fetch weapon recoil stats
-   local wpn_disp = nil
-   local wpn_frac = nil
-   local wpn_inc = nil
-   local wpn_max_vert = nil
-   local wpn_max_horz = nil
-   local wpn_step_horz = nil
-
-   if axr_main.weapon_is_zoomed then
-      wpn_disp = cache.zoom_cam_dispersion
-      wpn_frac = cache.zoom_cam_dispersion_frac
-      wpn_inc = cache.zoom_cam_dispersion_inc
-      wpn_max_vert = cache.zoom_cam_max_angle_vert
-      wpn_max_horz = cache.zoom_cam_max_angle_horz
-      wpn_step_horz = cache.zoom_cam_step_angle_horz
-   else
-      wpn_disp = cache.cam_dispersion
-      wpn_frac = cache.cam_dispersion_frac
-      wpn_inc = cache.cam_dispersion_inc
-      wpn_max_vert = cache.cam_max_angle_vert
-      wpn_max_horz = cache.cam_max_angle_horz
-      wpn_step_horz = cache.cam_step_angle_horz
-   end
-
-   -- Gather ammo box list
-   local ammo_list_n = utils_item.get_ammo(sec, id)
-
-   -- Gather weapon info
-   local ammo_type = wpn:get_ammo_type()
-   local ammo_sec = ammo_list_n[ammo_type + 1]
-   ---@diagnostic disable-next-line: undefined-field
-   local ammo_disp = ini_sys:r_float_ex(ammo_sec, "k_cam_disp") or 1
-
-   -- Fetch silencer recoil stats
-   ---@diagnostic disable-next-line: undefined-field
-   local silencer = ini_sys:r_string_ex(sec, "silencer_name")
-   log:debug("  silencer: %s", silencer)
-
-   local silencer_disp = silencer
-      ---@diagnostic disable-next-line: undefined-field
-      and ini_sys:r_string_ex(silencer, "cam_dispersion_k") or 1
-   local silencer_inc = silencer
-      ---@diagnostic disable-next-line: undefined-field
-      and ini_sys:r_string_ex(silencer, "cam_dispersion_inc_k") or 1
-
-   log:debug("  silencer_disp: %s", silencer_disp)
-   log:debug("  silencer_inc: %s", silencer_inc)
-
-   local disp = wpn_disp * silencer_disp * ammo_disp
-   local inc = wpn_inc * silencer_inc * (control_fac + 1)
-
-   local ang = disp + inc
-
-   local rnd = (math.random() - 1) * 2
-   local recoil_y = ang * (wpn_frac + rnd * (1 - wpn_frac))
-   log:debug("  recoil_y: %s", recoil_y)
-
-   rnd = (math.random() - 1) * 2
-   local recoil_x = (joint_recoil.vec.y / wpn_max_vert) * rnd * wpn_step_horz
-   log:debug("  recoil_x: %s", recoil_x)
-
-   joint_recoil:impulse(vector():set(recoil_x, recoil_y, 0))
-   log:debug("  joint: %s", joint_recoil.vec)
-end
-
-function actor_on_weapon_fired(...)
-   local res, out = pcall(actor_on_weapon_fired_impl, ...)
-   if not res then
-      ---@cast out string
-      handle_error(out)
-   end
-end
-
 --- Cache a weapon's HUD data before setting it all to 0
 consume_weapon = system("consume_weapon")
-   :runs_after(phase_modify_state)
-   :runs_before(phase_apply_state)
+   :runs_after(inject_weapon)
    :reads("wpn")
    :via(function(state)
-      log:trace("consume_weapon(%s)", state)
-
       -- Fetch the weapon's section
       local sec = state.wpn:section()
       log:debug("  section(%s)", sec)
@@ -252,13 +162,13 @@ consume_weapon = system("consume_weapon")
       -- Return with a warning if it's not valid
       if not sec then
          log:warning("  WARNING: Invalid weapon section")
-         return {}
+         return
       end
 
       -- Return if it's already set
       if wpn_cache[sec] then
          log:info("  %s is already cached, returning.", sec)
-         return {}
+         return
       end
 
       -- Fetch existing cache data
@@ -269,7 +179,7 @@ consume_weapon = system("consume_weapon")
 
       if not weapon then
          log:warning("  WARNING: Invalid weapon")
-         return {}
+         return
       end
 
       -- Iterate over our parameter lenses
@@ -280,16 +190,96 @@ consume_weapon = system("consume_weapon")
             l:set(weapon, 0)
          end
       )
-
-      return {}
    end)
    :during(ACTOR_ON_UPDATE)
 
---- Integrate recoil forces and apply to the HUD
+--- Apply recoil forces on weapon discharge
 recoil_weapon = system("recoil_weapon")
+   :reads("wpn")
+   :via(function(state)
+      control_fac = control_fac + kick_multiplier:get()
+
+      local id = state.wpn:id()
+      log:debug("  id: %s", id)
+
+      local sec = state.wpn:section()
+      log:debug("  sec: %s", sec)
+
+      local cache = wpn_cache[sec]
+      if not cache then
+         log:info("No cached recoil information")
+         return
+      end
+
+      -- Fetch weapon recoil stats
+      local wpn_disp = nil
+      local wpn_frac = nil
+      local wpn_inc = nil
+      local wpn_max_vert = nil
+      local wpn_max_horz = nil
+      local wpn_step_horz = nil
+
+      if axr_main.weapon_is_zoomed then
+         wpn_disp = cache.zoom_cam_dispersion
+         wpn_frac = cache.zoom_cam_dispersion_frac
+         wpn_inc = cache.zoom_cam_dispersion_inc
+         wpn_max_vert = cache.zoom_cam_max_angle_vert
+         wpn_max_horz = cache.zoom_cam_max_angle_horz
+         wpn_step_horz = cache.zoom_cam_step_angle_horz
+      else
+         wpn_disp = cache.cam_dispersion
+         wpn_frac = cache.cam_dispersion_frac
+         wpn_inc = cache.cam_dispersion_inc
+         wpn_max_vert = cache.cam_max_angle_vert
+         wpn_max_horz = cache.cam_max_angle_horz
+         wpn_step_horz = cache.cam_step_angle_horz
+      end
+
+      -- Gather ammo box list
+      local ammo_list_n = utils_item.get_ammo(sec, id)
+
+      -- Gather weapon info
+      local ammo_type = state.wpn:get_ammo_type()
+      local ammo_sec = ammo_list_n[ammo_type + 1]
+      ---@diagnostic disable-next-line: undefined-field
+      local ammo_disp = ini_sys:r_float_ex(ammo_sec, "k_cam_disp") or 1
+
+      -- Fetch silencer recoil stats
+      ---@diagnostic disable-next-line: undefined-field
+      local silencer = ini_sys:r_string_ex(sec, "silencer_name")
+      log:debug("  silencer: %s", silencer)
+
+      local silencer_disp = silencer
+         ---@diagnostic disable-next-line: undefined-field
+         and ini_sys:r_string_ex(silencer, "cam_dispersion_k") or 1
+      local silencer_inc = silencer
+         ---@diagnostic disable-next-line: undefined-field
+         and ini_sys:r_string_ex(silencer, "cam_dispersion_inc_k") or 1
+
+      log:debug("  silencer_disp: %s", silencer_disp)
+      log:debug("  silencer_inc: %s", silencer_inc)
+
+      local disp = wpn_disp * silencer_disp * ammo_disp
+      local inc = wpn_inc * silencer_inc * (control_fac + 1)
+
+      local ang = disp + inc
+
+      local rnd = (math.random() - 1) * 2
+      local recoil_y = ang * (wpn_frac + rnd * (1 - wpn_frac))
+      log:debug("  recoil_y: %s", recoil_y)
+
+      rnd = (math.random() - 1) * 2
+      local recoil_x = (joint_recoil.vec.y / wpn_max_vert) * rnd * wpn_step_horz
+      log:debug("  recoil_x: %s", recoil_x)
+
+      joint_recoil:impulse(vector():set(recoil_x, recoil_y, 0))
+      log:debug("  joint: %s", joint_recoil.vec)
+   end)
+   :during(ACTOR_ON_WEAPON_FIRED)
+
+--- Integrate recoil forces and apply to the HUD
+integrate_recoil = system("integrate_recoil")
    :runs_after(
-      phase_modify_state,
-      consume_weapon,
       body_cam,
       free_aim,
       offset_aim
@@ -306,8 +296,6 @@ recoil_weapon = system("recoil_weapon")
       }
    })
    :via(function(state)
-      log:trace("recoil_weapon(%s)", state)
-
       control_fac = control_fac + spring_1d(
          0,
          control_strength:get(),
@@ -316,6 +304,7 @@ recoil_weapon = system("recoil_weapon")
       log:debug("  control_fac: %s", control_fac)
 
       joint_recoil:impulse_with(spring_recoil.spring)
+      log:debug("  joint_recoil.vec: %s", joint_recoil.vec)
 
       return {
          hud = {
@@ -329,12 +318,4 @@ recoil_weapon = system("recoil_weapon")
          }
       }
    end)
-   :during(ACTOR_ON_UPDATE)
-
----@return nil
-on_game_start = protected(
-   handle_error,
-   function()
-      RegisterScriptCallback("actor_on_weapon_fired", actor_on_weapon_fired)
-   end
-)
+   :during(LEVEL_CALL)

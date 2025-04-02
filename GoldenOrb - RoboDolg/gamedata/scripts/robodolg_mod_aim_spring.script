@@ -6,17 +6,9 @@
 
 -- Imports
 
---- Goldenorb Aim
-local SP_LINEAR = goldenorb_spring.SP_LINEAR
-local SP_ANGULAR = goldenorb_spring.SP_ANGULAR
-
 --- Math
 local DEG2RAD = lander_math.DEG2RAD
 local TAU = lander_math.TAU
-local hpb_to_direction = lander_math.hpb_to_direction
-
---- Function
-local compose = goldenorb_function.compose
 
 --- String
 local parse_vector = goldenorb_string.parse_vector
@@ -52,12 +44,11 @@ local should_draw = page:settings(
 
 --- Offset fire point slightly to prevent self-intersection
 ---@param state table
----@return table
 function draw(state)
    log("draw_aim_spring(%s)", state)
 
    if not should_draw:get() then
-       return state
+       return
    end
 
    local length = parse_vector(state.spring_aim.length:get()):mul(DEG2RAD)
@@ -109,15 +100,12 @@ function draw(state)
       )
       if acc then
          draw_line(
-            ui_2d(state, pos, true)(acc),
-            ui_2d(state, pos, true)(v)
+            ui_2d(pos, true)(acc),
+            ui_2d(pos, true)(v)
          )
       end
       acc = vector():set(v)
    end
-
-
-   return state
 end
 
 ---@return nil

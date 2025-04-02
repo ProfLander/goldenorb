@@ -9,8 +9,11 @@
 --- Goldenorb
 local tree = goldenorb_mcm.tree
 
+--- Schedule
+local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
+local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
+
 --- Main
-local ACTOR_ON_UPDATE = goldenorb_main.ACTOR_ON_UPDATE
 local phase_build_state = goldenorb_main.phase_build_state
 local phase_modify_state = goldenorb_main.phase_modify_state
 local phase_apply_state = goldenorb_main.phase_apply_state
@@ -87,9 +90,9 @@ end
 ---@return vector
 function get_camera_aim_point(state)
    log:trace("get_camera_aim_point(%s)", state)
-   return get_camera_direction(state)
+   return device().cam_dir
       :mul(DIST)
-      :add(get_camera_position(state))
+      :add(device().cam_pos)
 end
 
 --- Delta position getter
@@ -115,12 +118,8 @@ end
 --- Inject device into the state
 inject_device = system("inject_device")
    :runs_after(phase_build_state)
-   :runs_before(phase_modify_state)
-   :without("dev")
    :writes("dev")
    :via(function(state)
-      log:trace("inject_device(%s)", state)
-
       local dev = device()
       return {
          dev = {
@@ -143,14 +142,10 @@ inject_device = system("inject_device")
 
 --- Inject default camera parameters into the state
 inject_camera = system("inject_camera")
-   :runs_after(phase_build_state, inject_device)
-   :runs_before(phase_modify_state)
+   :runs_after(inject_device)
    :reads("dev")
-   :without("cam")
    :writes("cam")
    :via(function(state)
-      log:trace("inject_camera(%s)", state)
-
       return {
          cam = {
             enable = false,
@@ -166,12 +161,9 @@ inject_camera = system("inject_camera")
 
 --- Cache camera parameters into module variables
 read_camera = system("read_camera")
-   :runs_after(phase_build_state, inject_device, inject_camera)
-   :runs_before(phase_modify_state)
+   :runs_after(inject_device, inject_camera)
    :reads("dev")
    :via(function(state)
-      log:trace("read_camera(%s)", state)
-
       local cam_pos = get_camera_position(state)
       local cam_rot = get_camera_rotation(state)
 
@@ -187,8 +179,6 @@ read_camera = system("read_camera")
 
       prev_pos = cam_pos
       prev_rot = cam_rot
-
-      return {}
    end)
    :during(ACTOR_ON_UPDATE)
 
@@ -198,8 +188,6 @@ apply_camera = system("apply_camera")
    :runs_before(phase_done)
    :reads("cam")
    :via(function(state)
-      log:trace("apply_camera(%s)", state)
-
       if state.cam.enable then
          log:info("  Applying camera state")
          set_cam_custom_position_direction(
@@ -215,8 +203,6 @@ apply_camera = system("apply_camera")
          remove_cam_custom_position_direction()
          cam_custom = false
       end
-
-      return {}
    end)
-   :during(ACTOR_ON_UPDATE)
+   :during(LEVEL_CALL)
 

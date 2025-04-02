@@ -79,5 +79,6 @@
         "utils_xml",
         "utils_item",
         "goldenorb_table",
+        "goldenorb_camera_mcm",
     ],
 }

@@ -6,10 +6,11 @@
 
 -- Imports
 
+--- Schedule
+local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
+
 --- Main
 local phase_build_state = goldenorb_main.phase_build_state
-local phase_modify_state = goldenorb_main.phase_modify_state
-local ACTOR_ON_UPDATE = goldenorb_main.ACTOR_ON_UPDATE
 
 --- Weapon
 local inject_weapon_hud = goldenorb_weapon.inject_weapon_hud
@@ -37,7 +38,6 @@ local OFFSET = vector():set(0, 0, EPSILON)
 --- Offset fire point slightly to prevent bullet spawn failure
 offset_fire_point = system("offset_fire_point")
    :runs_after(phase_build_state, inject_weapon_hud)
-   :runs_before(phase_modify_state)
    :inputs({
       hud = {
          fire_point = I_READ,
@@ -51,8 +51,6 @@ offset_fire_point = system("offset_fire_point")
       }
    })
    :via(function(state)
-      log:trace("offset_fire_point(%s)", state)
-
       return {
          hud = {
             fire_point = vector():set(state.hud.fire_point):add(OFFSET),

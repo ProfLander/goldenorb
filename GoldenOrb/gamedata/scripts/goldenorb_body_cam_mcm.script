@@ -6,10 +6,12 @@
 
 -- Imports
 
---- HUD offset rotation
+--- Schedule
+local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
+
+--- Main
 local phase_modify_state = goldenorb_main.phase_modify_state
 local phase_apply_state = goldenorb_main.phase_apply_state
-local ACTOR_ON_UPDATE = goldenorb_main.ACTOR_ON_UPDATE
 
 --- Math
 local deg = lander_math.deg
@@ -172,8 +174,6 @@ body_cam = system("body_cam")
       return enabled:get()
    end)
    :via(function(state)
-      log:trace("body_cam(%s)", state)
-
       local root_pos = state.actor:bone_position(BONE_ROOT)
       log:debug("root_pos: %s", root_pos)
 
@@ -237,5 +237,5 @@ body_cam = system("body_cam")
 
       return out
    end)
-   :during(ACTOR_ON_UPDATE)
+   :during(LEVEL_CALL)
 
