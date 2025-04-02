@@ -36,6 +36,7 @@ local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
 local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
 
 --- Main
+local goldenorb_after_build_state = goldenorb_main.goldenorb_after_build_state
 local goldenorb_after_apply_state = goldenorb_main.goldenorb_after_apply_state
 
 --- Function
@@ -121,15 +122,36 @@ function vert(v, cond, r)
       or out
 end
 
-draw = system("draw")
-   :reads("wpn", "dev", "hands")
-   :runs_after(goldenorb_after_apply_state)
+cache_data = nil
+
+cache = system("cache")
+   :reads("wpn")
+   :runs_after(goldenorb_after_build_state)
    :via(function(state)
+      cache_data = {
+         hands = {
+            aim = get_hands_aim_point(),
+            rot = get_hands_rotation(),
+         },
+         weapon = {
+            aim = get_weapon_aim_point(state.wpn),
+            rot = get_fire_bone_rotation(state.wpn),
+         },
+         camera = {
+            aim = get_camera_aim_point(),
+            rot = get_camera_rotation(),
+         }
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+draw = system("draw")
+   :reads("wpn", "dev")
+   :runs_after(goldenorb_after_apply_state)
+   :via(function()
       local size_cross = cross_size:get()
       local size_ring = ring_size:get()
       local segs_ring = ring_segs:get()
-
-      local cam_roll = get_camera_rotation(state).z
 
       -- Camera
       if draw_camera:get() then
@@ -138,7 +160,7 @@ draw = system("draw")
             size_ring,
             segs_ring,
             COLOR_CAMERA,
-            ui_2d(get_camera_aim_point(state), true)
+            ui_2d(cache_data.camera.aim, true)
          )
       end
 
@@ -150,9 +172,9 @@ draw = system("draw")
             segs_ring,
             COLOR_HANDS,
             vert(
-               state.hands.aim,
+               cache_data.hands.aim,
                rotate_hands:get(),
-               -(state.hands.rot.z - cam_roll)
+               -(cache_data.hands.rot.z - cache_data.camera.rot.z)
             )
          )
       end
@@ -165,9 +187,9 @@ draw = system("draw")
             segs_ring,
             COLOR_WEAPON,
             vert(
-               get_weapon_aim_point(state.wpn),
+               cache_data.weapon.aim,
                rotate_weapon:get(),
-               -(get_fire_bone_rotation(state.wpn).z - cam_roll)
+               -(cache_data.weapon.rot.z - cache_data.camera.rot.z)
             )
          )
       end

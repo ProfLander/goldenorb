@@ -114,7 +114,7 @@ function get_actor_rotation(state)
 
    log:debug("  actor: %s", state.actor)
 
-   local cam_aim = get_camera_aim_point(state)
+   local cam_aim = get_camera_aim_point()
    log:debug("  cam_aim: %s", cam_aim)
 
    local actor_pos = state.actor:position()

@@ -11,6 +11,7 @@ local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
 local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
 
 --- Main
+local goldenorb_after_build_state = goldenorb_main.goldenorb_after_build_state
 local goldenorb_before_apply_state = goldenorb_main.goldenorb_before_apply_state
 local goldenorb_after_apply_state = goldenorb_main.goldenorb_after_apply_state
 
@@ -269,6 +270,7 @@ end
 --- Inject the actor's active weapon into the state
 inject_weapon = system("inject_weapon")
    :runs_after(inject_actor)
+   :runs_before(goldenorb_after_build_state)
    :reads("actor")
    :writes("wpn")
    :via(function(state)
@@ -281,6 +283,7 @@ inject_weapon = system("inject_weapon")
 --- Inject the weapon's HUD parameters into the state
 inject_weapon_hud = system("inject_weapon_hud")
    :runs_after(inject_weapon)
+   :runs_before(goldenorb_after_build_state)
    :reads("wpn")
    :writes("hud")
    :via(function(state)

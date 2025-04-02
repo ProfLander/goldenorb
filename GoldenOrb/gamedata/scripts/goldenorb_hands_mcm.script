@@ -11,6 +11,7 @@ local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
 local LEVEL_CALL = goldenorb_schedule.ACTOR_ON_UPDATE
 
 --- Main
+local goldenorb_after_build_state = goldenorb_main.goldenorb_after_build_state
 local goldenorb_before_modify_state = goldenorb_main.goldenorb_before_modify_state
 
 --- Impure
@@ -95,6 +96,7 @@ end
 --- Inject hands data into the given state
 inject_hands = system("inject_hands")
    :runs_after(inject_actor)
+   :runs_before(goldenorb_after_build_state)
    :reads("actor")
    :writes("hands")
    :via(function(state)
@@ -113,12 +115,7 @@ inject_hands = system("inject_hands")
 
 ---- Consume the HUD hand transforms and store them in the state
 consume_hands_transform = system("consume_hands_transform")
-   :runs_after(
-      inject_actor,
-      inject_camera,
-      inject_weapon_hud
-   )
-   :runs_before(goldenorb_before_modify_state)
+   :runs_after(goldenorb_after_build_state)
    :reads("dev")
    :inputs({
       hud = {
@@ -204,7 +201,7 @@ apply_hud_offset_rot = system("apply_hud_offset_rot")
       -- Done
       return {
          hud = {
-            hands_orientation = vector():set(state.hud.hands_orientation)
+            hands_orientation = state.hud.hands_orientation
                :add(rot_ofs:mul(-(1 - zoom_fac)))
          }
       }

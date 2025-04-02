@@ -16,12 +16,21 @@ local parse_vector = goldenorb_string.parse_vector
 --- Camera
 local get_camera_aim_point = goldenorb_camera_mcm.get_camera_aim_point
 
---- Shapes
-local draw_line = robodolg_shapes.draw_line
-local ui_2d = robodolg_shapes.ui_2d
+--- Main
+local goldenorb_after_build_state = goldenorb_main.goldenorb_after_build_state
+local goldenorb_after_apply_state = goldenorb_main.goldenorb_after_apply_state
 
 --- RoboDolg
 local tree = robodolg_goldenorb_mcm.tree
+
+--- Schedule
+local system = goldenorb_schedule.system
+local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
+local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
+
+--- Shapes
+local draw_line = robodolg_shapes.draw_line
+local ui_2d = robodolg_shapes.ui_2d
 
 --- MCM Builder
 local ImageWithText = mcm_builder.ImageWithText
@@ -42,77 +51,75 @@ local should_draw = page:settings(
 
 -- Implementation
 
---- Offset fire point slightly to prevent self-intersection
----@param state table
-function draw(state)
-   log("draw_aim_spring(%s)", state)
+cam_aim = nil
 
-   if not should_draw:get() then
-       return
-   end
+cache = system("cache")
+   :runs_after(goldenorb_after_build_state)
+   :via(function()
+      cam_aim = get_camera_aim_point()
+   end)
+   :during(ACTOR_ON_UPDATE)
 
-   local length = parse_vector(state.spring_aim.length:get()):mul(DEG2RAD)
-   log("length: %s", length)
+draw = system("draw")
+   :runs_after(goldenorb_after_apply_state)
+   :reads("spring_aim")
+   :when(function()
+      return should_draw:get()
+   end)
+   :via(function(state)
+      local length = parse_vector(state.spring_aim.length:get()):mul(DEG2RAD)
+      log("length: %s", length)
 
-   --[[
-   local ty = spring_aim.type:get()
-   if ty == SP_LINEAR then
-      local a = hpb_to_direction(vector():set(-length.x, length.y, 0))
-      local b = hpb_to_direction(vector():set(length.x, length.y, 0))
-      local c = hpb_to_direction(vector():set(length.x, -length.y, 0))
-      local d = hpb_to_direction(vector():set(-length.x, -length.y, 0))
+      --[[
+      local ty = spring_aim.type:get()
+      if ty == SP_LINEAR then
+         local a = hpb_to_direction(vector():set(-length.x, length.y, 0))
+         local b = hpb_to_direction(vector():set(length.x, length.y, 0))
+         local c = hpb_to_direction(vector():set(length.x, -length.y, 0))
+         local d = hpb_to_direction(vector():set(-length.x, -length.y, 0))
 
-      draw_line_strip(
-         nil,
-         compose(billboard, camera_relative)
-      )(a, b, c, d, a)
-   elseif ty == SP_ANGULAR then
-      local d = hpb_to_direction(vector():set(length.x, length.y, 0))
-      draw_ngon(
-         1,
-         32,
-         nil,
-         compose(
-            function(v)
-               return v
-                  :mul(d)
-                  :add(vector():set(0, 0, 1))
-            end,
-            billboard,
-            camera_relative
+         draw_line_strip(
+            nil,
+            compose(billboard, camera_relative)
+         )(a, b, c, d, a)
+      elseif ty == SP_ANGULAR then
+         local d = hpb_to_direction(vector():set(length.x, length.y, 0))
+         draw_ngon(
+            1,
+            32,
+            nil,
+            compose(
+               function(v)
+                  return v
+                     :mul(d)
+                     :add(vector():set(0, 0, 1))
+               end,
+               billboard,
+               camera_relative
+            )
          )
-      )
-   else
-      assert(nil, string.format("Unrecognized string type %s", ty))
-   end
-   --]]
-
-   local acc = nil
-   local pos = get_camera_aim_point(state)
-   for i=1,32 do
-      local t = i / 31
-      local x = math.sin(t * TAU)
-      local y = math.cos(t * TAU)
-      local v = vector():set(
-         x * length.x,
-         y * length.y,
-         length.x * length.y
-      )
-      if acc then
-         draw_line(
-            ui_2d(pos, true)(acc),
-            ui_2d(pos, true)(v)
-         )
+      else
+         assert(nil, string.format("Unrecognized string type %s", ty))
       end
-      acc = vector():set(v)
-   end
-end
+      --]]
 
----@return nil
-function on_game_start()
-   log("robodolg_aim_spring.on_game_start")
-   RegisterScriptCallback(
-      "robodolg_on_draw",
-      draw
-   )
-end
+      local acc = nil
+      for i=1,32 do
+         local t = i / 31
+         local x = math.sin(t * TAU)
+         local y = math.cos(t * TAU)
+         local v = vector():set(
+            x * length.x,
+            y * length.y,
+            length.x * length.y
+         )
+         if acc then
+            draw_line(
+               ui_2d(cam_aim, true)(acc),
+               ui_2d(cam_aim, true)(v)
+            )
+         end
+         acc = vector():set(v)
+      end
+   end)
+   :during(LEVEL_CALL)

@@ -10,10 +10,21 @@
 local hpb_to_direction = lander_math.hpb_to_direction
 
 --- Weapon
+local get_camera_aim_point = goldenorb_camera_mcm.get_camera_aim_point
+local get_hands_position = goldenorb_hands_mcm.get_hands_position
 local get_hands_rotation = goldenorb_hands_mcm.get_hands_rotation
 local get_hands_aim_point = goldenorb_hands_mcm.get_hands_aim_point
 local get_weapon_aim_point = goldenorb_weapon.get_weapon_aim_point
 local get_fire_bone_position = goldenorb_weapon.get_fire_bone_position
+
+--- Main
+local goldenorb_after_build_state = goldenorb_main.goldenorb_after_build_state
+local goldenorb_after_apply_state = goldenorb_main.goldenorb_after_apply_state
+
+--- Schedule
+local system = goldenorb_schedule.system
+local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
+local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
 
 --- Camera
 local get_camera_aim_point = goldenorb_camera_mcm.get_camera_aim_point
@@ -48,66 +59,78 @@ local should_draw = page:settings(
 
 -- Implementation
 
---- Draw aim rig
----@param state table
-function draw(state)
-   log("draw_aim_rig(%s)", state)
+cache_data = {}
 
-   if not should_draw:get() then
-       return
-   end
+cache = system("cache")
+   :runs_after(goldenorb_after_build_state)
+   :with("actor")
+   :reads("wpn")
+   :via(function(state)
+      cache_data.hands = {
+         pos = get_hands_position(),
+         aim = get_hands_aim_point(),
+         rot = get_hands_rotation(),
+      }
 
-   local cam_aim = get_camera_aim_point(state)
+      if state.wpn then
+         cache_data.weapon = {
+            aim = get_weapon_aim_point(state.wpn),
+            fire_pos = get_fire_bone_position(state.wpn),
+         }
+      end
+   end)
+   :during(ACTOR_ON_UPDATE)
 
-   if state.wpn then
-      local hands_aim = ui_2d(get_hands_aim_point(), true)(vector())
-      local wpn_aim = ui_2d(get_weapon_aim_point(state.wpn), true)(vector())
-      local fire_pos = ui_2d(get_fire_bone_position(state.wpn), true)(vector())
+draw = system("draw")
+   :runs_after(goldenorb_after_apply_state)
+   :with("actor")
+   :when(function()
+      return should_draw:get()
+   end)
+   :via(function()
+      printf("draw")
+      if cache_data.weapon then
+         local hands_aim = ui_2d(cache_data.hands.aim, true)(vector())
+         local wpn_aim = ui_2d(cache_data.weapon.aim, true)(vector())
+         local fire_pos = ui_2d(cache_data.weapon.fire_pos, true)(vector())
 
-      draw_line(
-         cam_aim,
-         hands_aim,
-         CYAN
-      )
+         draw_line(
+            get_camera_aim_point(),
+            hands_aim,
+            CYAN
+         )
 
-      draw_line(
-         hands_aim,
-         wpn_aim,
-         YELLOW
-      )
+         draw_line(
+            hands_aim,
+            wpn_aim,
+            YELLOW
+         )
 
-      draw_line(
-         fire_pos,
-         wpn_aim,
-         RED
-      )
+         draw_line(
+            fire_pos,
+            wpn_aim,
+            RED
+         )
+      end
 
-   end
+      if cache_data.hands then
+         local dir = hpb_to_direction(cache_data.hands.rot)
+         draw_ngon(
+            0.02,
+            8,
+            vector():set(0, 1, 0),
+            ui_2d(cache_data.hands.pos, true)
+         )
 
-   if state.actor then
-      local pos = state.hands.pos
-      local rot = get_hands_rotation()
-      local dir = hpb_to_direction(rot)
-      draw_ngon(
-         0.02,
-         8,
-         vector():set(0, 1, 0),
-         ui_2d(pos, true)
-      )
-
-      draw_line(
-         ui_2d(pos, true)(vector()),
-         ui_2d(vector():set(pos):add(dir:mul(1000)), true)(vector()),
-         vector():set(0, 1, 0)
-      )
-   end
-end
-
----@return nil
-function on_game_start()
-   log("robodolg_weapon_ik.on_game_start")
-   RegisterScriptCallback(
-      "robodolg_on_draw",
-      draw
-   )
-end
+         draw_line(
+            ui_2d(cache_data.hands.pos, true)(vector()),
+            ui_2d(
+               vector():set(cache_data.hands.pos)
+                  :add(dir:mul(1000)),
+               true
+            )(vector()),
+            vector():set(0, 1, 0)
+         )
+      end
+   end)
+   :during(LEVEL_CALL)

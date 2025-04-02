@@ -67,18 +67,18 @@ local delta_rot = vector()
 
 --- Rotation getter
 ---@return vector
-function get_camera_position(state)
-   return vector():set(state.dev.cam_pos)
+function get_camera_position()
+   return device().cam_pos
 end
 
 ---@return vector
-function get_camera_direction(state)
-   return vector():set(state.dev.cam_dir)
+function get_camera_direction()
+   return device().cam_dir
 end
 
 ---@return vector
-function get_camera_rotation(state)
-   local dir = get_camera_direction(state)
+function get_camera_rotation()
+   local dir = get_camera_direction()
    return vector():set(
       math.atan2(dir.x, dir.z),
       math.sin(dir.y),
@@ -88,8 +88,8 @@ end
 
 --- Aim point getter
 ---@return vector
-function get_camera_aim_point(state)
-   log:trace("get_camera_aim_point(%s)", state)
+function get_camera_aim_point()
+   log:trace("get_camera_aim_point()")
    return device().cam_dir
       :mul(DIST)
       :add(device().cam_pos)
@@ -120,7 +120,7 @@ inject_device = system("inject_device")
    :runs_after(goldenorb_before_build_state)
    :runs_before(goldenorb_after_build_state)
    :writes("dev")
-   :via(function(state)
+   :via(function()
       local dev = device()
       return {
          dev = {
@@ -144,9 +144,10 @@ inject_device = system("inject_device")
 --- Inject default camera parameters into the state
 inject_camera = system("inject_camera")
    :runs_after(inject_device)
+   :runs_before(goldenorb_after_build_state)
    :reads("dev")
    :writes("cam")
-   :via(function(state)
+   :via(function()
       return {
          cam = {
             enable = false,
@@ -163,10 +164,11 @@ inject_camera = system("inject_camera")
 --- Cache camera parameters into module variables
 read_camera = system("read_camera")
    :runs_after(inject_device, inject_camera)
+   :runs_before(goldenorb_after_build_state)
    :reads("dev")
-   :via(function(state)
-      local cam_pos = get_camera_position(state)
-      local cam_rot = get_camera_rotation(state)
+   :via(function()
+      local cam_pos = get_camera_position()
+      local cam_rot = get_camera_rotation()
 
       if prev_pos then
          delta_pos = vector():set(cam_pos):sub(prev_pos)

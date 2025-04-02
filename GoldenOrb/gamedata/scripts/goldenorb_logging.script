@@ -21,7 +21,7 @@ INFO = 3
 DEBUG = 4
 TRACE = 5
 
-local LEVEL = WARNING
+local LEVEL = DEBUG
 
 -- Implementation
 

@@ -232,7 +232,7 @@ end
 function System:with(...)
    local args = {...}
    for i=1,#args do
-      self.sys_inputs[args[i]] = I_NOT_EXIST
+      self.sys_inputs[args[i]] = I_EXIST
    end
    return self
 end

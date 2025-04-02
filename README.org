@@ -242,13 +242,14 @@ https://www.moddb.com/mods/stalker-anomaly/addons/position-and-view-v21-release
   - [X] Address RoboDolg
     - Currently using hacky state caching methodology w/3-arg insert
       - Should probably do this outside of the schedule if anything
-  - [ ] Fix stutter
+  - [-] Fix stutter
     - Need to rework existing systems to ensure all elements are stutter-free
       - Should be possible given that the HUD bones are now fixed
+    - [X] Crosshair
+    - [X] Aim Spring
     - [ ] Aim Rig
-    - [ ] Crosshair
-    - [ ] Aim Spring
     - [ ] Custom Camera
+  - [ ] Assert that schedule rules only mention registered calls
 - [X] Implement Logger:assert
   - Thunk string concatenation for better performance
   - Use ~val_to_string~ for more informative assertion messages

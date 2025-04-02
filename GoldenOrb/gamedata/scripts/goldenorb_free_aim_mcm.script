@@ -13,6 +13,10 @@ local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
 local goldenorb_before_modify_state = goldenorb_main.goldenorb_before_modify_state
 local goldenorb_after_modify_state = goldenorb_main.goldenorb_after_modify_state
 
+--- Hands
+local get_hands_position = goldenorb_hands_mcm.get_hands_position
+local get_hands_rotation = goldenorb_hands_mcm.get_hands_rotation
+
 --- Aim
 local aim_type = goldenorb_aim_mcm.aim_type
 local AIM_FREE = goldenorb_aim_mcm.AIM_FREE
@@ -48,7 +52,7 @@ free_aim = system("free_aim")
       return aim_type:get() == AIM_FREE
    end)
    :via(function(state)
-      local ofs = state.hands.rot:sub(state.joint_aim.vec):mul(-1)
+      local ofs = get_hands_rotation():sub(state.joint_aim.vec):mul(-1)
       log:trace("  ofs: %s", ofs)
 
       local force = state.spring_aim.spring(ofs)
@@ -62,8 +66,8 @@ free_aim = system("free_aim")
          cam = {
             enable = true,
             affect_hud = false,
-            pos = vector():set(state.cam.pos):add(state.hands.pos),
-            rot = vector():set(state.cam.rot):add(joint_aim.vec),
+            pos = state.cam.pos:add(get_hands_position()),
+            rot = state.cam.rot:add(joint_aim.vec),
          }
       }
    end)
