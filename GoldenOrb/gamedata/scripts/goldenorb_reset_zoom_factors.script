@@ -30,7 +30,7 @@ local log = goldenorb_logging.logger(
 reset_zoom_factors = system("reset_zoom_factors")
    :runs_after(phase_build_state, inject_weapon_hud)
    :runs_before(phase_modify_state)
-   :exist("hud")
+   :with("hud")
    :outputs({
       hud = {
          scope_zoom_factor = O_WRITE,

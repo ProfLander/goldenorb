@@ -19,13 +19,12 @@ local Checkbox = mcm_builder.Checkbox
 local reset = robodolg_shapes.reset
 
 --- GoldenOrb Schedule
+local system = goldenorb_schedule.system
 local I_READ = goldenorb_schedule.I_READ
 
 --- GoldenOrb Main
-local phase_apply_state = goldenorb_main.phase_apply_state
+local ACTOR_ON_UPDATE = goldenorb_main.ACTOR_ON_UPDATE
 local phase_done = goldenorb_main.phase_done
-local apply_camera = goldenorb_camera_mcm.apply_camera
-local apply_weapon_hud = goldenorb_weapon.apply_weapon_hud
 
 --- Logging
 local log = robodolg_logging.log
@@ -55,28 +54,23 @@ function handle_error(e)
 end
 
 --- Use the cached state to draw robodolg modules
----@return nil
-function draw_robodolg_impl(state)
-   log("draw_robodolg_impl(%s)", state)
+system("draw_robodolg")
+   :runs_after(phase_done)
+   :inputs(I_READ)
+   :via(function(state)
+      log("draw_robodolg_impl(%s)", state)
 
-   reset()
+      reset()
 
-   if not enabled:get() then
-      log("  not enabled, returning")
-      return
-   end
+      if not enabled:get() then
+         log("  not enabled, returning")
+         return
+      end
 
-   SendScriptCallback("robodolg_on_draw", state)
-end
-
-function draw_robodolg(state)
-   log("draw_robodolg(%s)", state)
-   local res, err = pcall(draw_robodolg_impl, state)
-   if not res then
-      ---@cast err string
-      handle_error(err)
-   end
-end
+      SendScriptCallback("robodolg_on_draw", state)
+      return {}
+   end)
+   :during(ACTOR_ON_UPDATE)
 
 --- Entrypoint
 ---@return nil
@@ -85,14 +79,6 @@ function on_game_start()
 
    -- Declare our draw callback
    AddScriptCallback("robodolg_on_draw")
-
-   -- Register with GoldenOrb's update callback
-   goldenorb_main.ACTOR_ON_UPDATE:insert(
-      draw_robodolg,
-      {phase_done},
-      {},
-      I_READ
-   )
 end
 
 --- Build the MCM tree on load

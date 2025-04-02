@@ -29,7 +29,7 @@ local log = goldenorb_logging.logger(
 inject_actor = system("inject_actor")
    :runs_after(phase_build_state)
    :runs_before(phase_apply_state)
-   :not_exist("actor")
+   :without("actor")
    :writes("actor")
    :via(function(state)
       log:trace("inject_actor(%s)", state)
@@ -48,3 +48,4 @@ hud_adjust_enable = system("hud_adjust_enable")
       hud_adjust.enabled(true)
       return {}
    end)
+   :during(ACTOR_ON_UPDATE)

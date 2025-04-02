@@ -21,7 +21,7 @@ local const = goldenorb_function.const
 --- Logging
 local log = goldenorb_logging.logger(
    "GoldenOrb/Schedule",
-    goldenorb_logging.WARNING
+    goldenorb_logging.DEBUG
 )
 
 -- Constants
@@ -48,7 +48,7 @@ O_WRITE_MAYBE = 1
 ---@class schedule
 ---@field start fun(any: any): any
 ---@field finish fun(any: any): any
----@field calls (fun(any: any): any)[]
+---@field calls table[]
 ---@field rules [fun(any: any): any, fun(any: any): any]
 ---@field schedule (fun(any: any): any)[]
 local Schedule = {}
@@ -71,8 +71,24 @@ function schedule(name)
          start = start,
          finish = finish,
          calls = {
-            {start, {}, {}, const(true)},
-            {finish, {}, {}, const(true)}
+            {
+               name = "start",
+               after = {},
+               before = {},
+               inputs = {},
+               outputs = {},
+               precondition = const(true),
+               body = start
+            },
+            {
+               name = "finish",
+               after = {start},
+               before = {},
+               inputs = {},
+               outputs = {},
+               precondition = const(true),
+               body = finish
+            },
          },
          rules = {
             {start, finish}
@@ -89,14 +105,16 @@ function Schedule:invalidate()
    self.schedule = nil
 end
 
----@param f fun(...: any): any
+---@param name string
 ---@param inputs number|table<string, number|table>
 ---@param outputs table<string, any>
+---@param precondition fun(...: any): boolean
+---@param body fun(...: any): any
 ---@return schedule
-function Schedule:add_call(f, inputs, outputs, precondition)
-   log:trace("Schedule:add_call(%s)", f)
-   if type(f) ~= "function" then
-      assert(nil, string.format("Invalid call: %s", f))
+function Schedule:add_call(name, inputs, outputs, precondition, body)
+   log:trace("Schedule:add_call(%s)", body)
+   if type(body) ~= "function" then
+      assert(nil, string.format("Invalid call: %s", body))
    end
    if type(inputs) ~= "number" and type(inputs) ~= "table" then
       assert(nil, string.format("Invalid inputs: %s", inputs))
@@ -108,7 +126,16 @@ function Schedule:add_call(f, inputs, outputs, precondition)
       assert(nil, string.format("Invalid precondition: %s", precondition))
    end
    self:invalidate()
-   table.insert(self.calls, {f, inputs, outputs, precondition})
+   table.insert(
+      self.calls,
+      {
+         name = name,
+         inputs = inputs,
+         outputs = outputs,
+         precondition = precondition,
+         body = body
+      }
+   )
    return self
 end
 
@@ -186,7 +213,11 @@ function System:runs_before(...)
 end
 
 function System:inputs(inputs)
-   copy_table(self.sys_inputs, inputs)
+   if type(inputs) == "table" then
+      copy_table(self.sys_inputs, inputs)
+   elseif type(inputs) == "number" then
+      self.sys_inputs = inputs
+   end
    return self
 end
 
@@ -197,14 +228,14 @@ end
 
 ---@param input string
 ---@return system
-function System:exist(input)
+function System:with(input)
    self.sys_inputs[input] = I_EXIST
    return self
 end
 
 ---@param input string
 ---@return system
-function System:not_exist(input)
+function System:without(input)
    self.sys_inputs[input] = I_NOT_EXIST
    return self
 end
@@ -263,36 +294,48 @@ function System:during(schedule)
    assert(self.sys_body ~= nil, "Systems must have a body")
 
    schedule:insert(
-      self.sys_body,
+      self.sys_name,
       self.sys_after,
       self.sys_before,
       self.sys_inputs,
       self.sys_outputs,
-      self.sys_precondition
+      self.sys_precondition,
+      self.sys_body
    )
 
    return self.sys_body
 end
 
----@param call fun(any: any): any
----@param after? (fun(any: any): any)[]
----@param before? (fun(any: any): any)[]
----@param inputs? number|table
----@param outputs? table
----@param precondition? function(state: table): boolean
-function Schedule:insert(call, after, before, inputs, outputs, precondition)
-   log:trace(
-      "Schedule:insert(%s, %s, %s, %s, %s)",
-      call,
+---@param name string
+---@param after (fun(any: any): any)[]
+---@param before (fun(any: any): any)[]
+---@param inputs number|table
+---@param outputs table
+---@param precondition function(state: table): boolean
+---@param body fun(any: any): any
+function Schedule:insert(
+      name,
       after,
       before,
       inputs,
-      outputs
+      outputs,
+      precondition,
+      body
+)
+   log:trace(
+      "Schedule:insert(%s, %s, %s, %s, %s, %s, %s)",
+      name,
+      after,
+      before,
+      inputs,
+      outputs,
+      precondition,
+      body
    )
 
    -- Typecheck inputs
-   if type(call) ~= "function" then
-      assert(nil, string.format("Invalid call: %s", call))
+   if type(body) ~= "function" then
+      assert(nil, string.format("Invalid body: %s", body))
    end
 
    after = after or {}
@@ -302,13 +345,13 @@ function Schedule:insert(call, after, before, inputs, outputs, precondition)
    precondition = precondition or const(true)
 
    assert(
-      count(after, eq(call)) == 0,
-      "After rules must not mention their associated call"
+      count(after, eq(body)) == 0,
+      "After rules must not mention their associated system"
    )
 
    assert(
-      count(before, eq(call)) == 0,
-      "Before rules must not mention their associated call"
+      count(before, eq(body)) == 0,
+      "Before rules must not mention their associated system"
    )
 
    if #after == 0 then
@@ -319,12 +362,12 @@ function Schedule:insert(call, after, before, inputs, outputs, precondition)
       table.insert(before, self.finish)
    end
 
-   self:add_call(call, inputs, outputs, precondition)
+   self:add_call(name, inputs, outputs, precondition, body)
    for i=1,#after do
-      self:add_rule(after[i], call)
+      self:add_rule(after[i], body)
    end
    for i=1,#before do
-      self:add_rule(call, before[i])
+      self:add_rule(body, before[i])
    end
    return self
 end
@@ -335,47 +378,46 @@ function Schedule:build()
 
    self.schedule = {}
 
-   log:debug("  calls: %s", #self.calls)
-   log:debug("  rules: %s", #self.rules)
+   log:trace("  calls: %s", #self.calls)
+   log:trace("  rules: %s", #self.rules)
 
    local called = {}
    local count = 0
    while count < #self.calls do
       log:trace("  count: %s", count)
-      for _,tup in ipairs(self.calls) do
-         local call = tup[1]
-         log:trace("  call: %s", call)
-         if called[call] then
+      for _,sys in ipairs(self.calls) do
+         log:trace("  body: %s", sys.body)
+         if called[sys.body] then
             log:trace("    already called")
             goto next_call
          end
 
          for _,rule in ipairs(self.rules) do
-            log:debug("    rule: %s -> %s", rule[1], rule[2])
+            log:trace("    rule: %s -> %s", rule[1], rule[2])
 
             -- If the rule doen't mention the call, skip it
-            if rule[2] ~= call then
-               log:debug("      not relevant")
+            if rule[2] ~= sys.body then
+               log:trace("      not relevant")
                goto next_rule
             end
 
             -- If the call is the target of the rule
             -- and its dependency is not met, skip it
             if not called[rule[1]] then
-               log:debug("      not satisfied")
+               log:trace("      not satisfied")
                goto next_call
             end
 
-            log:debug("      pass")
+            log:trace("      pass")
 
             ::next_rule::
          end
 
-         log:debug("  pass")
+         log:trace("  pass")
 
          -- If all rules pass, call the function
-         table.insert(self.schedule, tup)
-         called[call] = true
+         table.insert(self.schedule, sys)
+         called[sys.body] = true
          count = count + 1
          goto next_iter
 
@@ -475,8 +517,8 @@ function merge(tbl, vals, paths)
       function(acc, k, path)
          local v = vals[k]
 
-         log:debug("  path: %s", path)
-         log:debug("  v: %s", v)
+         log:trace("  path: %s", path)
+         log:trace("  v: %s", v)
 
          if path == nil then
             -- If there is no path, do nothing
@@ -525,30 +567,30 @@ function Schedule:run(p)
    return fold_list(
       self.schedule,
       p,
-      function(acc, tup)
-         local f = tup[1]
-         local inputs = tup[2]
-         local outputs = tup[3]
-         local precondition = tup[4]
+      function(acc, sys)
+         log:debug("%s", sys.name)
 
-         if not precondition(acc) then
+         local prec = sys.precondition(acc)
+         log:trace("  precondition: %s", prec)
+
+         if not prec then
             -- If the precondition fails, don't run
             return acc
          end
 
-         local res = slice(acc, inputs)
-         if res == nil then
+         local input = slice(acc, sys.inputs)
+         log:trace("  input: %s", input)
+         if input == nil then
             -- If the slice failed, don't invoke the function
             return acc
          end
 
+         local output = sys.body(input)
+         log:trace("  output: %s", output)
+
          -- If the slice succeeded,
          -- invoke the function and merge its results with the state
-         return merge(
-            acc,
-            f(res),
-            outputs
-         )
+         return merge(acc, output, sys.outputs)
       end
    )
 end
