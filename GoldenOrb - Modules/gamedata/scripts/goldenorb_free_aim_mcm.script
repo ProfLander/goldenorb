@@ -25,6 +25,9 @@ local get_hands_rotation = goldenorb_hands_mcm.get_hands_rotation
 local aim_type = goldenorb_aim_mcm.aim_type
 local AIM_FREE = goldenorb_aim_mcm.AIM_FREE
 
+--- Math
+local PI = lander_math.PI
+
 --- Schedule
 local system = goldenorb_schedule.system
 local I_READ = goldenorb_schedule.I_READ
@@ -62,7 +65,7 @@ free_aim = system("free_aim")
       return {
          actor_mat = matrix():setHPB(
             state.joint_aim.vec.x,
-            state.joint_aim.vec.y,
+            clamp(state.joint_aim.vec.y, -PI / 2, PI / 2),
             state.joint_aim.vec.z
          ),
          cam_custom = matrix():mul(
