@@ -93,30 +93,9 @@ function get_hands_aim_point()
       )
 end
 
---- Inject hands data into the given state
-inject_hands = system("inject_hands")
-   :runs_after(inject_actor)
-   :runs_before(goldenorb_after_build_state)
-   :reads("actor")
-   :writes("hands")
-   :via(function(state)
-      log:trace("inject_hands(%s)", state)
-
-      return {
-         hands = {
-            pos = get_hands_position(),
-            rot = get_hands_rotation(),
-            dir = get_hands_direction(),
-            aim = get_hands_aim_point()
-         }
-      }
-   end)
-   :during(ACTOR_ON_UPDATE)
-
 ---- Consume the HUD hand transforms and store them in the state
 consume_hands_transform = system("consume_hands_transform")
    :runs_after(goldenorb_after_build_state)
-   :reads("dev")
    :inputs({
       hud = {
          hands_position = I_READ,
@@ -139,7 +118,7 @@ consume_hands_transform = system("consume_hands_transform")
    :via(function(state)
       local pos = state.hud.hands_position
       local rot = state.hud.hands_orientation
-
+      local dev = device()
       return {
          hud = {
             hands_position = vector(),
@@ -147,19 +126,19 @@ consume_hands_transform = system("consume_hands_transform")
          },
          cam = {
             pos = vector()
-               :add(vector():set(state.dev.cam_right):mul(-pos.x))
-               :add(vector():set(state.dev.cam_top):mul(-pos.y))
-               :add(vector():set(state.dev.cam_dir):mul(-pos.z)),
+               :add(vector():set(dev.cam_right):mul(-pos.x))
+               :add(vector():set(dev.cam_top):mul(-pos.y))
+               :add(vector():set(dev.cam_dir):mul(-pos.z)),
             rot = vector(),
          }
       }
    end)
-   :during(ACTOR_ON_UPDATE)
+   --:during(ACTOR_ON_UPDATE)
 
 --- Apply HUD aim offset rotation with a lerp to counteract ADS animation
 apply_hud_offset_rot = system("apply_hud_offset_rot")
    :runs_before(goldenorb_before_modify_state)
-   :reads("dev", "wpn")
+   :reads("wpn")
    :inputs({
       hud = {
          aim_hud_offset_rot = I_READ,
@@ -187,7 +166,7 @@ apply_hud_offset_rot = system("apply_hud_offset_rot")
          deg(state.hud.aim_hud_offset_rot.z)
       )
 
-      local dt = (state.dev.time_delta / 1000) / zoom_duration
+      local dt = (device().time_delta / 1000) / zoom_duration
       log:debug("  dt: %s", dt)
       if not axr_main.weapon_is_zoomed then
          dt = -dt

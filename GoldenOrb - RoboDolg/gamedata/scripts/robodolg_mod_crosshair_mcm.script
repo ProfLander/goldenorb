@@ -146,7 +146,7 @@ cache = system("cache")
    :during(ACTOR_ON_UPDATE)
 
 draw = system("draw")
-   :reads("wpn", "dev")
+   :reads("wpn")
    :runs_after(goldenorb_after_apply_state)
    :via(function()
       local size_cross = cross_size:get()

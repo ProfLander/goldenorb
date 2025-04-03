@@ -18,9 +18,6 @@ local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
 local goldenorb_after_modify_state = goldenorb_main.goldenorb_after_modify_state
 local goldenorb_before_apply_state = goldenorb_main.goldenorb_before_apply_state
 
---- Joint
-local joint = goldenorb_joint.joint
-
 --- Weapon
 local inject_weapon = goldenorb_weapon.inject_weapon
 
@@ -128,21 +125,22 @@ local kick_multiplier, control_strength = page:settings(
       :increment(0.01)
 )
 
-local spring_recoil = goldenorb_spring.mcm_spring(
-   page,
-   SP_ANGULAR,
-   "0,0",
-   "0.05,0.05"
-)
-
 --- Weapon data cache
 local wpn_cache = {}
 
 --- How under-control the weapon is
 local control_fac = 0
 
---- Recoil joint
-local joint_recoil = joint()
+--- Recoil matrix
+local recoil_mat = matrix():identity()
+
+--- Recoil spring
+local recoil_spring = goldenorb_spring.mcm_spring(
+   page,
+   SP_ANGULAR,
+   "0,0",
+   "0.05,0.05"
+)
 
 -- Implementation
 
@@ -153,7 +151,7 @@ consume_weapon = system("consume_weapon")
    :via(function(state)
       -- Fetch the weapon's section
       local sec = state.wpn:section()
-      log:debug("  section(%s)", sec)
+      log("  section(%s)", sec)
 
       -- Return with a warning if it's not valid
       if not sec then
@@ -196,10 +194,10 @@ recoil_weapon = system("recoil_weapon")
       control_fac = control_fac + kick_multiplier:get()
 
       local id = state.wpn:id()
-      log:debug("  id: %s", id)
+      log("  id: %s", id)
 
       local sec = state.wpn:section()
-      log:debug("  sec: %s", sec)
+      log("  sec: %s", sec)
 
       local cache = wpn_cache[sec]
       if not cache then
@@ -243,7 +241,7 @@ recoil_weapon = system("recoil_weapon")
       -- Fetch silencer recoil stats
       ---@diagnostic disable-next-line: undefined-field
       local silencer = ini_sys:r_string_ex(sec, "silencer_name")
-      log:debug("  silencer: %s", silencer)
+      log("  silencer: %s", silencer)
 
       local silencer_disp = silencer
          ---@diagnostic disable-next-line: undefined-field
@@ -252,8 +250,8 @@ recoil_weapon = system("recoil_weapon")
          ---@diagnostic disable-next-line: undefined-field
          and ini_sys:r_string_ex(silencer, "cam_dispersion_inc_k") or 1
 
-      log:debug("  silencer_disp: %s", silencer_disp)
-      log:debug("  silencer_inc: %s", silencer_inc)
+      log("  silencer_disp: %s", silencer_disp)
+      log("  silencer_inc: %s", silencer_inc)
 
       local disp = wpn_disp * silencer_disp * ammo_disp
       local inc = wpn_inc * silencer_inc * (control_fac + 1)
@@ -262,14 +260,17 @@ recoil_weapon = system("recoil_weapon")
 
       local rnd = (math.random() - 1) * 2
       local recoil_y = ang * (wpn_frac + rnd * (1 - wpn_frac))
-      log:debug("  recoil_y: %s", recoil_y)
+      log("  recoil_y: %s", recoil_y)
 
       rnd = (math.random() - 1) * 2
-      local recoil_x = (joint_recoil.vec.y / wpn_max_vert) * rnd * wpn_step_horz
-      log:debug("  recoil_x: %s", recoil_x)
+      local recoil_x = (recoil_mat.c.y / wpn_max_vert) * rnd * wpn_step_horz
+      log("  recoil_x: %s", recoil_x)
 
-      joint_recoil:impulse(vector():set(recoil_x, recoil_y, 0))
-      log:debug("  joint: %s", joint_recoil.vec)
+      recoil_mat = matrix():mul(
+         recoil_mat,
+         matrix():setHPB(recoil_x, recoil_y, 0)
+      )
+      log("  recoil_mat: %s", recoil_mat)
    end)
    :during(ACTOR_ON_WEAPON_FIRED)
 
@@ -293,18 +294,30 @@ integrate_recoil = system("integrate_recoil")
          control_strength:get(),
          control_fac
       )
-      log:debug("  control_fac: %s", control_fac)
+      log("  control_fac: %s", control_fac)
 
-      joint_recoil:impulse_with(spring_recoil.spring)
-      log:debug("  joint_recoil.vec: %s", joint_recoil.vec)
+      local hpb = recoil_mat:getHPB()
+      log("  hpb: %s", hpb)
+
+      hpb = recoil_spring.spring(hpb)
+      log("  spring hpb: %s", hpb)
+
+      recoil_mat = matrix():mul(
+         recoil_mat,
+         matrix():setHPB(hpb.x, hpb.y, hpb.z)
+      )
+      log("  recoil_mat: %s", recoil_mat)
+
+      hpb = recoil_mat:getHPB()
+      log("  hpb: %s", hpb)
 
       return {
          hud = {
             hands_orientation = state.hud.hands_orientation:add(
                vector():set(
-                  deg(joint_recoil.vec.x),
-                  deg(joint_recoil.vec.y),
-                  deg(joint_recoil.vec.z)
+                  deg(hpb.x),
+                  deg(hpb.y),
+                  deg(hpb.z)
                )
             )
          }

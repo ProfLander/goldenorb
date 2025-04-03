@@ -1,0 +1,61 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Actor State
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+-- Imports
+
+--- Schedule
+local system = goldenorb_schedule.system
+local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
+local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
+
+--- Main
+local goldenorb_before_build_state = goldenorb_main.goldenorb_before_build_state
+local goldenorb_after_build_state = goldenorb_main.goldenorb_after_build_state
+local goldenorb_before_apply_state = goldenorb_main.goldenorb_before_apply_state
+local goldenorb_after_apply_state = goldenorb_main.goldenorb_after_apply_state
+
+--- Aim
+local aim_type = goldenorb_aim_mcm.aim_type
+local AIM_FREE = goldenorb_aim_mcm.AIM_FREE
+
+-- Implementation
+
+--- Inject the player actor into the state
+inject_actor = system("inject_actor")
+   :runs_after(goldenorb_before_build_state)
+   :runs_before(goldenorb_after_build_state)
+   :writes("actor")
+   :via(function()
+      return {
+         actor = db.actor
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+--- Inject the actor matrix
+inject_actor_matrix = system("inject_actor_matrix")
+   :runs_after(goldenorb_before_build_state)
+   :runs_before(goldenorb_after_build_state)
+   :writes("actor_mat")
+   :when(function()
+      return aim_type:get() == AIM_FREE
+   end)
+   :via(function()
+      return {
+         actor_mat = matrix():identity()
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+--- Apply the actor matrix
+apply_actor = system("apply_actor")
+   :runs_after(goldenorb_before_apply_state)
+   :runs_before(goldenorb_after_apply_state)
+   :reads("actor", "actor_mat")
+   :via(function(state)
+      state.actor:set_actor_direction(state.actor_mat:getHPB())
+   end)
+   :during(LEVEL_CALL)

@@ -22,7 +22,7 @@ local protected = goldenorb_function.protected
 --- Logging
 local log = goldenorb_logging.logger(
    "GoldenOrb/Schedule",
-    goldenorb_logging.DEBUG
+    goldenorb_logging.TRACE
 )
 
 -- Constants
@@ -58,12 +58,12 @@ local Schedule = {}
 ---@return schedule
 function schedule(name)
    local function start(...)
-      log:trace("%s: Start", name)
+      log("%s: Start", name)
       return ...
    end
 
    local function finish(...)
-      log:trace("%s: Finish", name)
+      log("%s: Finish", name)
       return ...
    end
 
@@ -537,14 +537,21 @@ function merge(tbl, vals, paths)
             return acc
          end
 
+         -- Ensure the destination exists
+         if not acc then
+            acc = {}
+         end
+
+         -- If the path is composite
          if type(path) == "table" then
+            -- Ensure the value is a table
             if v == nil then
                assert(
                   nil,
                   string.format("Expected a table for key %s", k)
                )
             end
-            -- If the path is composite, recurse
+
             acc[k] = merge(acc[k], v, path)
          else
             -- If the path represents a write, emplace
@@ -560,7 +567,7 @@ end
 ---@param p any
 ---@return any
 function Schedule:run(p)
-   log:trace("Schedule:run(%s)", p)
+   log("Schedule:run(%s)", p)
 
    if not self.schedule then
       self:build()
@@ -570,7 +577,7 @@ function Schedule:run(p)
       self.schedule,
       p,
       function(acc, sys)
-         log:debug("%s", sys.name)
+         log("%s", sys.name)
 
          local prec = sys.precondition(acc)
          log:trace("  precondition: %s", prec)
@@ -587,12 +594,13 @@ function Schedule:run(p)
             return acc
          end
 
+         log("  running...")
          local output = sys.body(input)
-         log:trace("  output: %s", output)
+         log("  output: %s", output)
 
+         -- If the function returned nothing, behave as if an empty table
          if output == nil then
-            -- Early-out if the function returned nothing
-            return acc
+            output = {}
          end
 
          -- If the slice succeeded,
@@ -639,7 +647,9 @@ function Schedule:prun_deferred(e, pf)
 end
 
 ACTOR_ON_UPDATE = schedule("Actor Update")
+ACTOR_ON_FIRST_UPDATE = schedule("Actor First Update")
 ACTOR_ON_WEAPON_FIRED = schedule("Actor Weapon Fired")
+ON_BEFORE_MOUSE_MOVE = schedule("Before Mouse Move")
 LEVEL_CALL = schedule("Level Call")
 
 --- Error handler
@@ -666,9 +676,31 @@ on_game_start = protected(
       )
 
       RegisterScriptCallback(
+         "actor_on_first_update",
+         function()
+            ACTOR_ON_FIRST_UPDATE:prun(handle_error, state)
+         end
+      )
+
+      RegisterScriptCallback(
          "actor_on_weapon_fired",
          function()
             ACTOR_ON_WEAPON_FIRED:prun(handle_error, state)
+         end
+      )
+
+      RegisterScriptCallback(
+         "on_before_mouse_move",
+         function(x, y, disabled, flags)
+            state.mouse = {
+               x = x,
+               y = y,
+               disabled = disabled,
+               override = flags.ret_value,
+            }
+            ON_BEFORE_MOUSE_MOVE:prun(handle_error, state)
+            flags.ret_value = state.mouse.override
+            state.mouse = nil
          end
       )
 

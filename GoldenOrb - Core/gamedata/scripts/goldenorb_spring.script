@@ -57,7 +57,7 @@ end
 ---@return fun(vec: vector): vector
 function spring_3d_linear(length, strength)
    return function(vec)
-      log:trace("spring_3d_linear(%s, %s)(%s)", length, strength, vec)
+      log("spring_3d_linear(%s, %s)(%s)", length, strength, vec)
 
       return vector():set(
          spring_1d(length.x, strength.x, vec.x),
@@ -72,12 +72,14 @@ end
 ---@return fun(vec: vector): vector
 function spring_3d_angular(length, strength)
    return function(vec)
-      log:trace("spring_3d_angular(%s, %s, %s)", length, strength, vec)
-      local axis, angle = vector_axis_angle(vec, vector():set(0, 0, 1))
+      log("spring_3d_angular(%s, %s, %s)", length, strength, vec)
+      local axis, angle = vector_axis_angle(vector():set(vec), vector():set(0, 0, 1))
       if not axis or not angle then
          printf("invalid rotation")
          return vector()
       end
+      log("  axis: %s", axis)
+      log("  angle: %s", angle)
 
       local ofs = math.max(length.x, length.y, length.z)
       local fac = 1

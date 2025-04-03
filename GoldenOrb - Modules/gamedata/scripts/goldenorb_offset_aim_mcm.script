@@ -15,9 +15,6 @@ local page = goldenorb_aim_mcm.page
 local aim_type = goldenorb_aim_mcm.aim_type
 local AIM_OFFSET = goldenorb_aim_mcm.AIM_OFFSET
 
---- Data
-local get_camera_delta_rotation = goldenorb_camera_mcm.get_camera_delta_rotation
-
 --- String
 local parse_vector = goldenorb_string.parse_vector
 
@@ -33,12 +30,13 @@ local Title = mcm_builder.Title
 local InputField = mcm_builder.InputField
 
 --- Math
+local PI = lander_math.PI
 local RAD2DEG = lander_math.RAD2DEG
 
 --- Logging
 local log = goldenorb_logging.logger(
    "GoldenOrb/Offset Aim",
-   goldenorb_logging.TRACE
+   goldenorb_logging.WARNING
 )
 
 -- State
@@ -60,8 +58,11 @@ local sensitivity = page:settings(
 offset_aim = system("offset_aim")
    :runs_after(goldenorb_before_modify_state)
    :runs_before(goldenorb_after_modify_state)
-   :reads("joint_aim", "spring_aim")
+   :reads("joint_aim", "spring_aim", "cam")
    :inputs({
+      cam = {
+         matrix_delta = I_READ,
+      },
       hud = {
          hands_orientation = I_READ,
       }
@@ -76,12 +77,16 @@ offset_aim = system("offset_aim")
       return aim_type:get() == AIM_OFFSET
    end)
    :via(function(state)
+      local delta_rot = state.cam.matrix_delta:getHPB()
+      log("  delta_rot: %s", delta_rot)
+
       local joint_aim = state.joint_aim
          :impulse(
-            get_camera_delta_rotation()
+            delta_rot
             :mul(parse_vector(sensitivity:get()))
-            :mul(vector():set(-1, 1, 1))
          )
+
+      joint_aim
          :impulse_with(state.spring_aim.spring)
 
       return {

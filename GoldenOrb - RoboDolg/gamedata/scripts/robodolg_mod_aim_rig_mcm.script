@@ -88,7 +88,6 @@ draw = system("draw")
       return should_draw:get()
    end)
    :via(function()
-      printf("draw")
       if cache_data.weapon then
          local hands_aim = ui_2d(cache_data.hands.aim, true)(vector())
          local wpn_aim = ui_2d(cache_data.weapon.aim, true)(vector())

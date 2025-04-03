@@ -1,0 +1,235 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Camera State
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+-- Imports
+
+--- Goldenorb
+local tree = goldenorb_mcm.tree
+
+--- Schedule
+local I_READ = goldenorb_schedule.I_READ
+local O_WRITE = goldenorb_schedule.O_WRITE
+local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
+local ACTOR_ON_FIRST_UPDATE = goldenorb_schedule.ACTOR_ON_FIRST_UPDATE
+local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
+
+--- Main
+local goldenorb_before_build_state = goldenorb_main.goldenorb_before_build_state
+local goldenorb_after_build_state = goldenorb_main.goldenorb_after_build_state
+local goldenorb_before_apply_state = goldenorb_main.goldenorb_before_apply_state
+local goldenorb_after_apply_state = goldenorb_main.goldenorb_after_apply_state
+
+--- Schedule
+local system = goldenorb_schedule.system
+
+--- Level
+local set_cam_custom_position_direction = level.set_cam_custom_position_direction
+local remove_cam_custom_position_direction = level.remove_cam_custom_position_direction
+
+--- MCM Builder
+local ImageWithText = mcm_builder.ImageWithText
+local Trackbar = mcm_builder.Trackbar
+
+--- Logging
+local log = goldenorb_logging.logger(
+   "GoldenOrb/Camera",
+    goldenorb_logging.TRACE
+)
+
+-- Constants
+
+local DIST = 1000
+
+-- State
+
+local page = tree:pages("camera")
+
+page:settings(
+   ImageWithText.new("camera_title"):text("camera")
+)
+
+local smoothing = page:settings(
+   Trackbar.new("smoothing")
+      :default(-1)
+      :minmax(-1, 60)
+      :increment(1)
+)
+
+-- Implementation
+
+--- Rotation getter
+---@return vector
+function get_camera_position()
+   return device().cam_pos
+end
+
+---@return vector
+function get_camera_direction()
+   return device().cam_dir
+end
+
+---@return vector
+function get_camera_rotation()
+   local dir = get_camera_direction()
+   return vector():set(
+      math.atan2(dir.x, dir.z),
+      math.sin(dir.y),
+      0
+   )
+end
+
+
+--- Aim point getter
+---@return vector
+function get_camera_aim_point()
+   log:trace("get_camera_aim_point()")
+   return device().cam_dir
+      :mul(DIST)
+      :add(device().cam_pos)
+end
+
+---@class state_cam
+---@field enable boolean
+---@field pos vector
+---@field rot vector
+---@field smoothing number
+---@field show_hud boolean
+---@field affect_hud boolean
+
+--- Inject default camera parameters into the state
+inject_camera = system("inject_camera")
+   :runs_after(goldenorb_before_build_state)
+   :runs_before(goldenorb_after_build_state)
+   :writes("cam")
+   :via(function()
+      return {
+         cam = {
+            matrix_next = matrix():identity(),
+            matrix_prev = matrix():identity(),
+            matrix_delta = matrix():identity(),
+         }
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+function camera_matrix()
+   local dev = device()
+   return matrix():set(
+      dev.cam_right,
+      dev.cam_top,
+      dev.cam_dir,
+      dev.cam_pos
+   )
+end
+
+read_camera_prev = system("read_camera_prev")
+   :runs_after(goldenorb_after_build_state)
+   :outputs({
+      cam = {
+         matrix_prev = O_WRITE
+      }
+   })
+   :via(function()
+      return {
+         cam = {
+            matrix_prev = camera_matrix()
+         }
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+function matrix_transpose(mat)
+   return matrix():set(
+      vector():set(mat.i.x, mat.j.x, mat.k.x),
+      vector():set(mat.i.y, mat.j.y, mat.k.y),
+      vector():set(mat.i.z, mat.j.z, mat.k.z),
+      vector()
+   )
+end
+
+read_camera_next = system("read_camera_next")
+   :runs_before(goldenorb_before_modify_state)
+   :inputs({
+         cam = {
+            matrix_prev = I_READ,
+         }
+   })
+   :outputs({
+      cam = {
+         matrix_next = O_WRITE,
+         matrix_delta = O_WRITE,
+      }
+   })
+   :via(function(state)
+      local camera_mat = camera_matrix()
+
+      local pos_delta = vector():sub(camera_mat.c, state.cam.matrix_prev.c)
+      log("pos_delta: %s", pos_delta)
+
+      local inv_mat = matrix_transpose(state.cam.matrix_prev)
+      local cam_rot = matrix():set(
+         camera_mat.i,
+         camera_mat.j,
+         camera_mat.k,
+         vector()
+      )
+
+      local rot_delta = matrix():mul(
+         inv_mat,
+         cam_rot
+      )
+      log("rot_delta: %s", rot_delta:getHPB())
+
+      return {
+         cam = {
+            matrix_next = camera_mat,
+            matrix_delta = matrix():set(
+               rot_delta.i,
+               rot_delta.j,
+               rot_delta.k,
+               pos_delta
+            )
+         }
+      }
+
+   end)
+   :during(LEVEL_CALL)
+
+--- Apply camera parameters to the game state
+apply_custom_camera = system("apply_custom_camera")
+   :runs_after(goldenorb_before_apply_state)
+   :runs_before(goldenorb_after_apply_state)
+   :reads("cam_custom")
+   :writes("_cam_custom_active")
+   :via(function(state)
+      set_cam_custom_position_direction(
+         state.cam_custom.c,
+         state.cam_custom:getHPB(),
+         -1,
+         true,
+         true
+      )
+      return {
+         _cam_custom_active = true
+      }
+   end)
+   :during(LEVEL_CALL)
+
+--- Apply camera parameters to the game state
+reset_custom_camera = system("reset_custom_camera")
+   :runs_after(goldenorb_before_apply_state)
+   :runs_before(goldenorb_after_apply_state)
+   :with("_cam_custom_active")
+   :without("cam_custom")
+   :writes("_cam_custom_active")
+   :via(function()
+      printf("Removing custom camera setting")
+      remove_cam_custom_position_direction()
+      return {
+         _cam_custom_active = nil
+      }
+   end)
+   :during(LEVEL_CALL)

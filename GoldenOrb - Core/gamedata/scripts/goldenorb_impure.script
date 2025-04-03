@@ -9,12 +9,9 @@
 -- Imports
 
 --- Schedule
-local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
 local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
 
 --- Main
-local goldenorb_before_build_state = goldenorb_main.goldenorb_before_build_state
-local goldenorb_after_build_state = goldenorb_main.goldenorb_after_build_state
 local goldenorb_before_apply_state = goldenorb_main.goldenorb_before_apply_state
 local goldenorb_after_apply_state = goldenorb_main.goldenorb_after_apply_state
 
@@ -28,18 +25,6 @@ local log = goldenorb_logging.logger(
 )
 
 -- Implementation
-
---- Inject the player actor into the state
-inject_actor = system("inject_actor")
-   :runs_after(goldenorb_before_build_state)
-   :runs_before(goldenorb_after_build_state)
-   :writes("actor")
-   :via(function()
-      return {
-         actor = db.actor
-      }
-   end)
-   :during(ACTOR_ON_UPDATE)
 
 --- Enable HUD adjust mode
 hud_adjust_enable = system("hud_adjust_enable")

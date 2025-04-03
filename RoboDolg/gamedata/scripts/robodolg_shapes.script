@@ -20,7 +20,6 @@ foreach_table = goldenorb_table.foreach
 
 --- Math
 local TAU = lander_math.TAU
-local vector_lerp = lander_math.vector_lerp
 local hpb_to_direction = lander_math.hpb_to_direction
 
 --- Logging
@@ -328,7 +327,7 @@ function draw_arrayed(f, start, finish, steps)
    foreach_list(
       range(1, steps),
       function(i)
-         f(vector_lerp(start, finish, i / steps))
+         f(vector():lerp(start, finish, i / steps))
       end
    )
 end

@@ -21,7 +21,7 @@ INFO = 3
 DEBUG = 4
 TRACE = 5
 
-local LEVEL = DEBUG
+local LEVEL = WARNING
 
 -- Implementation
 
@@ -45,7 +45,14 @@ function logger(mod, level)
    )
    return setmetatable(
       { mod = mod, level = level },
-      { __index = Logger }
+      {
+         __index = Logger,
+         __call = function(self, ...)
+            if LEVEL >= self.level then
+               return self:log_impl(...)
+            end
+         end
+      }
    )
 end
 
@@ -63,7 +70,15 @@ function val_to_string(t)
          end
       ) .. "\n}"
    elseif type(t) == "userdata" then
-      if t.x and t.y and t.z then
+      if t.i and t.j and t.k and t.c then
+         return "[" .. string.format(
+            "\n%s\n%s\n%s\n%s",
+            val_to_string(t.i),
+            val_to_string(t.j),
+            val_to_string(t.k),
+            val_to_string(t.c)
+         ):gsub("\n", "\n   ") .. "\n]"
+      elseif t.x and t.y and t.z then
          return string.format("[\n   %s,\n   %s, \n   %s  \n]", t.x, t.y, t.z)
       elseif t.x and t.y then
          return string.format("[%s, %s]", t.x, t.y)
@@ -84,7 +99,7 @@ end
 ---@return fun(self: logger, s: string, ...: any): nil
 function make_log(level)
    return function(self, s, ...)
-      if self.level >= level and LEVEL >= level then
+      if LEVEL >= level then
          return self:log_impl(s, ...)
       end
    end
