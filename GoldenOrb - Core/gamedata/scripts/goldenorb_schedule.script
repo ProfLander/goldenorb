@@ -227,65 +227,44 @@ function System:outputs(outputs)
    return self
 end
 
----@param ... string
----@return system
-function System:with(...)
-   local args = {...}
-   for i=1,#args do
-      self.sys_inputs[args[i]] = I_EXIST
+---@param semantic number
+---@return fun(self: system, ...: string|string[]): system
+function state_lens(member, semantic)
+   return function(self, ...)
+      local args = {...}
+      for i=1,#args do
+         local arg = args[i]
+         if type(arg) == "table" then
+            local j = 1
+            fold_list(
+               arg,
+               self[member],
+               function(acc, next)
+                  if j == #arg then
+                     acc[next] = semantic
+                  else
+                     if not acc[next] then
+                        acc[next] = {}
+                     end
+                  end
+                  j = j + 1
+                  return acc[next]
+               end
+            )
+         else
+            self[member][arg] = semantic
+         end
+      end
+      return self
    end
-   return self
 end
 
----@param ... string
----@return system
-function System:without(...)
-   local args = {...}
-   for i=1,#args do
-      self.sys_inputs[args[i]] = I_NOT_EXIST
-   end
-   return self
-end
-
----@param ... string
----@return system
-function System:reads(...)
-   local args = {...}
-   for i=1,#args do
-      self.sys_inputs[args[i]] = I_READ
-   end
-   return self
-end
-
----@param ... string
----@return system
-function System:maybe_reads(...)
-   local args = {...}
-   for i=1,#args do
-      self.sys_inputs[args[i]] = I_READ_MAYBE
-   end
-   return self
-end
-
----@param ... string
----@return system
-function System:writes(...)
-   local args = {...}
-   for i=1,#args do
-      self.sys_outputs[args[i]] = O_WRITE
-   end
-   return self
-end
-
----@param ... string
----@return system
-function System:maybe_writes(...)
-   local args = {...}
-   for i=1,#args do
-      self.sys_outputs[args[i]] = O_WRITE_MAYBE
-   end
-   return self
-end
+System.with = state_lens("sys_inputs", I_EXIST)
+System.without = state_lens("sys_inputs", I_NOT_EXIST)
+System.reads = state_lens("sys_inputs", I_READ)
+System.maybe_reads = state_lens("sys_inputs", I_READ_MAYBE)
+System.writes = state_lens("sys_outputs", O_WRITE)
+System.maybe_writes = state_lens("sys_outputs", O_WRITE_MAYBE)
 
 function System:when(f)
    self.sys_precondition = f
@@ -649,6 +628,7 @@ end
 ACTOR_ON_UPDATE = schedule("Actor Update")
 ACTOR_ON_FIRST_UPDATE = schedule("Actor First Update")
 ACTOR_ON_WEAPON_FIRED = schedule("Actor Weapon Fired")
+ON_KEY_PRESS = schedule("Key Press")
 ON_BEFORE_MOUSE_MOVE = schedule("Before Mouse Move")
 LEVEL_CALL = schedule("Level Call")
 
@@ -686,6 +666,17 @@ on_game_start = protected(
          "actor_on_weapon_fired",
          function()
             ACTOR_ON_WEAPON_FIRED:prun(handle_error, state)
+         end
+      )
+
+      RegisterScriptCallback(
+         "on_key_press",
+         function(key)
+            state.keyboard = {
+               key = key
+            }
+            ON_KEY_PRESS:prun(handle_error, state)
+            state.keyboard = nil
          end
       )
 

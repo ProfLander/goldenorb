@@ -10,17 +10,25 @@
 local tree = goldenorb_mcm.tree
 
 --- Schedule
-local I_READ = goldenorb_schedule.I_READ
-local O_WRITE = goldenorb_schedule.O_WRITE
 local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
-local ACTOR_ON_FIRST_UPDATE = goldenorb_schedule.ACTOR_ON_FIRST_UPDATE
 local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
 
 --- Main
 local goldenorb_before_build_state = goldenorb_main.goldenorb_before_build_state
 local goldenorb_after_build_state = goldenorb_main.goldenorb_after_build_state
+local goldenorb_before_modify_state = goldenorb_main.goldenorb_before_modify_state
+local goldenorb_after_modify_state = goldenorb_main.goldenorb_after_modify_state
 local goldenorb_before_apply_state = goldenorb_main.goldenorb_before_apply_state
 local goldenorb_after_apply_state = goldenorb_main.goldenorb_after_apply_state
+
+--- Gimbals
+local C_GIMBALS = goldenorb_gimbals.C_GIMBALS
+
+--- Matrices
+local C_MATRICES = goldenorb_matrices.C_MATRICES
+
+--- Matrices
+local C_ACTOR = goldenorb_actor.C_ACTOR
 
 --- Schedule
 local system = goldenorb_schedule.system
@@ -99,22 +107,6 @@ end
 ---@field show_hud boolean
 ---@field affect_hud boolean
 
---- Inject default camera parameters into the state
-inject_camera = system("inject_camera")
-   :runs_after(goldenorb_before_build_state)
-   :runs_before(goldenorb_after_build_state)
-   :writes("cam")
-   :via(function()
-      return {
-         cam = {
-            matrix_next = matrix():identity(),
-            matrix_prev = matrix():identity(),
-            matrix_delta = matrix():identity(),
-         }
-      }
-   end)
-   :during(ACTOR_ON_UPDATE)
-
 function camera_matrix()
    local dev = device()
    return matrix():set(
@@ -125,22 +117,6 @@ function camera_matrix()
    )
 end
 
-read_camera_prev = system("read_camera_prev")
-   :runs_after(goldenorb_after_build_state)
-   :outputs({
-      cam = {
-         matrix_prev = O_WRITE
-      }
-   })
-   :via(function()
-      return {
-         cam = {
-            matrix_prev = camera_matrix()
-         }
-      }
-   end)
-   :during(ACTOR_ON_UPDATE)
-
 function matrix_transpose(mat)
    return matrix():set(
       vector():set(mat.i.x, mat.j.x, mat.k.x),
@@ -150,86 +126,108 @@ function matrix_transpose(mat)
    )
 end
 
-read_camera_next = system("read_camera_next")
-   :runs_before(goldenorb_before_modify_state)
-   :inputs({
-         cam = {
-            matrix_prev = I_READ,
-         }
-   })
-   :outputs({
-      cam = {
-         matrix_next = O_WRITE,
-         matrix_delta = O_WRITE,
-      }
-   })
-   :via(function(state)
-      local camera_mat = camera_matrix()
+C_CAMERA = "camera"
+C_CAM_FLAG = "_cam_custom_position_direction"
 
-      local pos_delta = vector():sub(camera_mat.c, state.cam.matrix_prev.c)
-      log("pos_delta: %s", pos_delta)
-
-      local inv_mat = matrix_transpose(state.cam.matrix_prev)
-      local cam_rot = matrix():set(
-         camera_mat.i,
-         camera_mat.j,
-         camera_mat.k,
-         vector()
-      )
-
-      local rot_delta = matrix():mul(
-         inv_mat,
-         cam_rot
-      )
-      log("rot_delta: %s", rot_delta:getHPB())
-
+--- Inject the camera gimbal into the state
+inject_camera_gimbal = system("inject_camera_gimbal")
+   :runs_after(goldenorb_before_build_state)
+   :runs_before(goldenorb_after_build_state)
+   :without({C_GIMBALS, C_CAMERA})
+   :writes({C_GIMBALS, C_CAMERA})
+   :via(function()
       return {
-         cam = {
-            matrix_next = camera_mat,
-            matrix_delta = matrix():set(
-               rot_delta.i,
-               rot_delta.j,
-               rot_delta.k,
-               pos_delta
+         [C_GIMBALS] = {
+            [C_CAMERA] = vector()
+         }
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+--- Derive the camera matrix from the camera gimbal
+derive_camera_matrix = system("derive_camera_matrix")
+   :runs_after(inject_camera_gimbal)
+   :runs_before(goldenorb_after_build_state)
+   :reads({C_GIMBALS, C_CAMERA})
+   :writes({C_MATRICES, C_CAMERA})
+   :via(function(state)
+      return {
+         [C_MATRICES] = {
+            [C_CAMERA] = matrix():setHPB(state[C_GIMBALS][C_CAMERA])
+         }
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+actor_relative_camera = system("actor_relative_camera")
+   :runs_before(goldenorb_before_apply_state)
+   :reads({C_MATRICES, C_ACTOR}, {C_MATRICES, C_CAMERA})
+   :writes({C_MATRICES, C_CAMERA})
+   :via(function(state)
+      return {
+         [C_MATRICES] = {
+            [C_CAMERA] = matrix():mul(
+               state[C_MATRICES][C_ACTOR],
+               state[C_MATRICES][C_CAMERA]
             )
          }
       }
-
    end)
    :during(LEVEL_CALL)
 
---- Apply camera parameters to the game state
-apply_custom_camera = system("apply_custom_camera")
+camera_arm = system("camera_arm")
+   :runs_after(actor_relative_camera)
+   :runs_before(goldenorb_before_apply_state)
+   :reads({C_MATRICES, C_ACTOR}, {C_MATRICES, C_CAMERA})
+   :writes({C_MATRICES, C_CAMERA})
+   :via(function(state)
+      return {
+         [C_MATRICES] = {
+            [C_CAMERA] = matrix():mul(
+               matrix():identity():translate(0, 1.656, 0),
+               matrix():mul(
+                  state[C_MATRICES][C_CAMERA],
+                  matrix():identity():translate(0, 0, 0)
+               )
+            )
+         }
+      }
+   end)
+   :during(LEVEL_CALL)
+
+--- Apply custom camera state if a matrix is present
+apply_camera_matrix = system("apply_camera_matrix")
    :runs_after(goldenorb_before_apply_state)
    :runs_before(goldenorb_after_apply_state)
-   :reads("cam_custom")
-   :writes("_cam_custom_active")
+   :reads({C_MATRICES, C_CAMERA})
+   :writes(C_CAM_FLAG)
    :via(function(state)
+      local mat = state[C_MATRICES][C_CAMERA]
       set_cam_custom_position_direction(
-         state.cam_custom.c,
-         state.cam_custom:getHPB(),
+         mat.c,
+         mat:getHPB(),
          -1,
          true,
          true
       )
       return {
-         _cam_custom_active = true
+         [C_CAM_FLAG] = true
       }
    end)
    :during(LEVEL_CALL)
 
---- Apply camera parameters to the game state
-reset_custom_camera = system("reset_custom_camera")
+--- Reset custom camera state if no matrix is present
+reset_camera_matrix = system("reset_camera_matrix")
    :runs_after(goldenorb_before_apply_state)
    :runs_before(goldenorb_after_apply_state)
-   :with("_cam_custom_active")
-   :without("cam_custom")
-   :writes("_cam_custom_active")
+   :with(C_CAM_FLAG)
+   :without({C_MATRICES, C_CAMERA})
+   :writes(C_CAM_FLAG)
    :via(function()
       printf("Removing custom camera setting")
       remove_cam_custom_position_direction()
       return {
-         _cam_custom_active = nil
+         [C_CAM_FLAG] = nil
       }
    end)
    :during(LEVEL_CALL)

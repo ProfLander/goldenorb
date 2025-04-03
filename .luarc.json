@@ -80,5 +80,6 @@
         "utils_item",
         "goldenorb_table",
         "goldenorb_camera_mcm",
+        "news_manager",
     ],
 }

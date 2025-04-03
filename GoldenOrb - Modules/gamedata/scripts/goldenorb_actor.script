@@ -17,9 +17,15 @@ local goldenorb_after_build_state = goldenorb_main.goldenorb_after_build_state
 local goldenorb_before_apply_state = goldenorb_main.goldenorb_before_apply_state
 local goldenorb_after_apply_state = goldenorb_main.goldenorb_after_apply_state
 
---- Aim
-local aim_type = goldenorb_aim_mcm.aim_type
-local AIM_FREE = goldenorb_aim_mcm.AIM_FREE
+--- Gimbals
+local C_GIMBALS = goldenorb_gimbals.C_GIMBALS
+
+--- Matrices
+local C_MATRICES = goldenorb_matrices.C_MATRICES
+
+-- Constants
+
+C_ACTOR = "actor"
 
 -- Implementation
 
@@ -27,7 +33,7 @@ local AIM_FREE = goldenorb_aim_mcm.AIM_FREE
 inject_actor = system("inject_actor")
    :runs_after(goldenorb_before_build_state)
    :runs_before(goldenorb_after_build_state)
-   :writes("actor")
+   :writes(C_ACTOR)
    :via(function()
       return {
          actor = db.actor
@@ -35,27 +41,47 @@ inject_actor = system("inject_actor")
    end)
    :during(ACTOR_ON_UPDATE)
 
---- Inject the actor matrix
-inject_actor_matrix = system("inject_actor_matrix")
+--- Inject the actor gimbal
+inject_actor_gimbal = system("inject_actor_gimbal")
    :runs_after(goldenorb_before_build_state)
    :runs_before(goldenorb_after_build_state)
-   :writes("actor_mat")
-   :when(function()
-      return aim_type:get() == AIM_FREE
-   end)
+   :without({C_GIMBALS, C_ACTOR})
+   :writes({C_GIMBALS, C_ACTOR})
    :via(function()
       return {
-         actor_mat = matrix():identity()
+         [C_GIMBALS] = {
+            [C_ACTOR] = vector()
+         }
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+--- Derive the actor matrix from the actor gimbal
+derive_actor_matrix = system("derive_actor_matrix")
+   :runs_after(inject_actor_gimbal)
+   :runs_before(goldenorb_after_build_state)
+   :reads(C_ACTOR, {C_GIMBALS, C_ACTOR})
+   :writes({C_MATRICES, C_ACTOR})
+   :via(function(state)
+      return {
+         [C_MATRICES] = {
+            [C_ACTOR] = matrix():mul(
+               matrix():identity():translate(state[C_ACTOR]:position()),
+               matrix():setHPB(state[C_GIMBALS][C_ACTOR])
+            )
+         }
       }
    end)
    :during(ACTOR_ON_UPDATE)
 
 --- Apply the actor matrix
-apply_actor = system("apply_actor")
+apply_actor_matrix = system("apply_actor_matrix")
    :runs_after(goldenorb_before_apply_state)
    :runs_before(goldenorb_after_apply_state)
-   :reads("actor", "actor_mat")
+   :reads(C_ACTOR, {C_MATRICES, C_ACTOR})
    :via(function(state)
-      state.actor:set_actor_direction(state.actor_mat:getHPB())
+      state[C_ACTOR]:set_actor_direction(
+         state[C_MATRICES][C_ACTOR]:getHPB():mul(-1)
+      )
    end)
    :during(LEVEL_CALL)

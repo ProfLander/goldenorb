@@ -1,0 +1,137 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Input Handling
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+-- Imports
+
+--- Schedule
+local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
+local ON_BEFORE_MOUSE_MOVE = goldenorb_schedule.ON_BEFORE_MOUSE_MOVE
+local ON_KEY_PRESS = goldenorb_schedule.ON_KEY_PRESS
+
+--- Main
+local goldenorb_before_build_state = goldenorb_main.goldenorb_before_build_state
+local goldenorb_after_build_state = goldenorb_main.goldenorb_after_build_state
+
+--- Gimbal
+local C_GIMBALS = goldenorb_gimbals.C_GIMBALS
+
+--- Actor
+local C_ACTOR = goldenorb_actor.C_ACTOR
+
+--- Camera
+local C_CAMERA = goldenorb_camera_mcm.C_CAMERA
+
+--- Weapon
+local C_HUD = goldenorb_weapon.C_HUD
+
+--- Aim
+local aim_type = goldenorb_aim_mcm.aim_type
+local AIM_FREE = goldenorb_aim_mcm.AIM_FREE
+
+--- Schedule
+local system = goldenorb_schedule.system
+
+--- GoldenOrb
+local tree = goldenorb_mcm.tree
+
+--- MCM Builder
+local KeybindBox = mcm_builder.KeybindBox
+
+--- Logging
+local log = goldenorb_logging.logger(
+   "GoldenOrb/Input",
+   goldenorb_logging.TRACE
+)
+
+-- State
+
+local page = tree:pages("input")
+
+local cycle_gimbal = page:settings(
+   KeybindBox.new("cycle_gimbal")
+      :default(DIK_keys.DIK_SLASH)
+)
+
+-- Implementation
+
+C_GIMBAL_TARGET = "gimbal_target"
+
+inject_gimbal_target = system("inject_gimbal_target")
+   :runs_after(goldenorb_before_build_state)
+   :runs_before(goldenorb_after_build_state)
+   :without(C_GIMBAL_TARGET)
+   :writes(C_GIMBAL_TARGET)
+   :via(function()
+      return {
+         [C_GIMBAL_TARGET] = C_ACTOR
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+cycle_gimbal_target = system("cycle_gimbal_target")
+   :reads(C_GIMBAL_TARGET, {"keyboard", "key"})
+   :maybe_writes(C_GIMBAL_TARGET)
+   :via(function(state)
+      printf("cycle_gimbal_target")
+
+      local key = state.keyboard.key
+      printf("  key: %s", state.keyboard.key)
+
+      local bind = cycle_gimbal:get()
+      printf("  bind: %s", bind)
+      if key ~= bind then
+         return
+      end
+
+      local target = state[C_GIMBAL_TARGET]
+      target = (target == C_ACTOR and C_CAMERA)
+            or (target == C_CAMERA and C_HUD)
+            or (target == C_HUD and C_ACTOR)
+      printf("  target: %s", target)
+
+
+      news_manager.send_tip(
+         db.actor,
+         "Mouse targeting " .. target,
+         nil,
+         nil,
+         1000
+      )
+
+      return {
+         [C_GIMBAL_TARGET] = target
+      }
+   end)
+   :during(ON_KEY_PRESS)
+
+handle_mouse = system("handle_mouse")
+   :reads("mouse", C_GIMBALS, C_GIMBAL_TARGET)
+   :writes(C_GIMBALS, {"mouse", "override"})
+   :when(function()
+      return aim_type:get() == AIM_FREE
+   end)
+   :via(function(state)
+      log("on_before_mouse_move: %s", state.mouse)
+
+      local target = state[C_GIMBAL_TARGET]
+
+      local gimbals = state[C_GIMBALS]
+      local mouse_sens = get_console():get_float("mouse_sens")
+      gimbals[target] = vector():add(
+         state[C_GIMBALS][target],
+         vector():set(-state.mouse.x, -state.mouse.y, 0)
+            :mul(mouse_sens)
+            :mul(0.02)
+      )
+
+      return {
+         [C_GIMBALS] = gimbals,
+         mouse = {
+            override = true
+         }
+      }
+   end)
+   :during(ON_BEFORE_MOUSE_MOVE)

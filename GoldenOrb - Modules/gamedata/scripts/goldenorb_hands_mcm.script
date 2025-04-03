@@ -7,35 +7,19 @@
 -- Imports
 
 --- Schedule
-local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
 local LEVEL_CALL = goldenorb_schedule.ACTOR_ON_UPDATE
 
 --- Main
-local goldenorb_after_build_state = goldenorb_main.goldenorb_after_build_state
 local goldenorb_before_modify_state = goldenorb_main.goldenorb_before_modify_state
-
---- Impure
-local inject_actor = goldenorb_impure.inject_actor
-
---- Aim
-local aim_type = goldenorb_aim_mcm.aim_type
-local AIM_FREE = goldenorb_aim_mcm.AIM_FREE
-
---- Camera
-local inject_camera = goldenorb_camera_mcm.inject_camera
 
 --- Weapon
 local get_hud_number = goldenorb_weapon.get_hud_number
-local inject_weapon_hud = goldenorb_weapon.inject_weapon_hud
 
 --- Math
-local deg = lander_math.deg
 local hpb_to_direction = lander_math.hpb_to_direction
 
 --- Schedule
 local system = goldenorb_schedule.system
-local I_READ = goldenorb_schedule.I_READ
-local O_WRITE = goldenorb_schedule.O_WRITE
 
 --- Logging
 local log = goldenorb_logging.logger(
@@ -93,63 +77,11 @@ function get_hands_aim_point()
       )
 end
 
----- Consume the HUD hand transforms and store them in the state
-consume_hands_transform = system("consume_hands_transform")
-   :runs_after(goldenorb_after_build_state)
-   :inputs({
-      hud = {
-         hands_position = I_READ,
-         hands_orientation = I_READ,
-      },
-   })
-   :outputs({
-      hud = {
-         hands_position = O_WRITE,
-         hands_orientation = O_WRITE,
-      },
-      cam = {
-         pos = O_WRITE,
-         rot = O_WRITE,
-      }
-   })
-   :when(function()
-      return aim_type:get() == AIM_FREE
-   end)
-   :via(function(state)
-      local pos = state.hud.hands_position
-      local rot = state.hud.hands_orientation
-      local dev = device()
-      return {
-         hud = {
-            hands_position = vector(),
-            hands_orientation = vector(),
-         },
-         cam = {
-            pos = vector()
-               :add(vector():set(dev.cam_right):mul(-pos.x))
-               :add(vector():set(dev.cam_top):mul(-pos.y))
-               :add(vector():set(dev.cam_dir):mul(-pos.z)),
-            rot = vector(),
-         }
-      }
-   end)
-   --:during(ACTOR_ON_UPDATE)
-
---- Apply HUD aim offset rotation with a lerp to counteract ADS animation
+--- Counteract ADS rotation offset to keep the weapon centered
 apply_hud_offset_rot = system("apply_hud_offset_rot")
    :runs_before(goldenorb_before_modify_state)
-   :reads("wpn")
-   :inputs({
-      hud = {
-         aim_hud_offset_rot = I_READ,
-         hands_orientation = I_READ,
-      }
-   })
-   :outputs({
-      hud = {
-         hands_orientation = O_WRITE,
-      }
-   })
+   :reads("wpn", {"hud", "aim_hud_offset_rot"}, {"matrices", "hud"})
+   :writes({"matrices", "hud"})
    :via(function(state)
       local zoom_duration = get_hud_number(state.wpn, "zoom_rotate_time")
       if zoom_duration == nil or
@@ -161,9 +93,9 @@ apply_hud_offset_rot = system("apply_hud_offset_rot")
 
       -- Apply HUD offset rotation based on zoom state
       local rot_ofs = vector():set(
-         deg(state.hud.aim_hud_offset_rot.y),
-         deg(state.hud.aim_hud_offset_rot.x),
-         deg(state.hud.aim_hud_offset_rot.z)
+         state.hud.aim_hud_offset_rot.y,
+         state.hud.aim_hud_offset_rot.x,
+         state.hud.aim_hud_offset_rot.z
       )
 
       local dt = (device().time_delta / 1000) / zoom_duration
@@ -179,9 +111,11 @@ apply_hud_offset_rot = system("apply_hud_offset_rot")
 
       -- Done
       return {
-         hud = {
-            hands_orientation = state.hud.hands_orientation
-               :add(rot_ofs:mul(-(1 - zoom_fac)))
+         matrices = {
+            hud = matrix():mul(
+               state.matrices.hud,
+               matrix():setHPB(rot_ofs:mul(-(1 - zoom_fac)))
+            )
          }
       }
    end)

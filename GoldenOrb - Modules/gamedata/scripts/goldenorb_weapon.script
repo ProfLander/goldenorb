@@ -15,8 +15,22 @@ local goldenorb_after_build_state = goldenorb_main.goldenorb_after_build_state
 local goldenorb_before_apply_state = goldenorb_main.goldenorb_before_apply_state
 local goldenorb_after_apply_state = goldenorb_main.goldenorb_after_apply_state
 
---- Impure
-local inject_actor = goldenorb_impure.inject_actor
+--- Actor
+local C_ACTOR = goldenorb_actor.C_ACTOR
+
+--- Gimbals
+local C_GIMBALS = goldenorb_gimbals.C_GIMBALS
+local inject_gimbals = goldenorb_gimbals.inject_gimbals
+
+--- Matrices
+local C_MATRICES = goldenorb_matrices.C_MATRICES
+
+--- Math
+local RAD2DEG = lander_math.RAD2DEG
+local DEG2RAD = lander_math.DEG2RAD
+
+--- Actor
+local inject_actor = goldenorb_actor.inject_actor
 
 --- Table
 map = goldenorb_table.map
@@ -267,25 +281,28 @@ function set_hud_params(hud)
    foreach(hud, set_hud_value)
 end
 
+C_WEAPON = "wpn"
+C_HUD = "hud"
+
 --- Inject the actor's active weapon into the state
 inject_weapon = system("inject_weapon")
    :runs_after(inject_actor)
    :runs_before(goldenorb_after_build_state)
-   :reads("actor")
-   :writes("wpn")
+   :maybe_reads(C_ACTOR)
+   :writes(C_WEAPON)
    :via(function(state)
       return {
-         wpn = state.actor:active_item()
+         wpn = state.actor and state.actor:active_item()
       }
    end)
    :during(ACTOR_ON_UPDATE)
 
 --- Inject the weapon's HUD parameters into the state
-inject_weapon_hud = system("inject_weapon_hud")
+inject_hud = system("inject_hud")
    :runs_after(inject_weapon)
    :runs_before(goldenorb_after_build_state)
-   :reads("wpn")
-   :writes("hud")
+   :reads(C_WEAPON)
+   :writes(C_HUD)
    :via(function(state)
       return {
          hud = get_hud_params(state.wpn)
@@ -293,12 +310,83 @@ inject_weapon_hud = system("inject_weapon_hud")
    end)
    :during(ACTOR_ON_UPDATE)
 
---- Apply aggregated state values to the HUD adjuster
-apply_weapon_hud = system("apply_weapon_hud")
-   :runs_after(goldenorb_before_apply_state)
-   :runs_before(goldenorb_after_apply_state)
-   :reads("hud")
+inject_hud_gimbal = system("inject_hud_gimbal")
+   :runs_after(inject_gimbals, inject_hud)
+   :runs_before(goldenorb_after_build_state)
+   :reads(C_HUD)
+   :without({C_GIMBALS, C_HUD})
+   :writes({C_GIMBALS, C_HUD})
+   :via(function()
+      return {
+         [C_GIMBALS] = {
+            [C_HUD] = vector()
+         }
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+derive_hud_matrix = system("derive_hud_matrix")
+   :runs_after(inject_matrices, inject_hud, inject_hud_gimbal)
+   :runs_before(goldenorb_after_build_state)
+   :maybe_reads(C_HUD, {C_GIMBALS, C_HUD})
+   :with(C_MATRICES)
+   :writes({C_MATRICES, C_HUD})
    :via(function(state)
-      set_hud_params(state.hud)
+      local mat = matrix():mul(
+         matrix():identity():translate(state[C_HUD].hands_position),
+         matrix():setHPB(vector():mul(
+            state[C_HUD].hands_orientation,
+            DEG2RAD
+         ))
+      )
+
+      if state[C_GIMBALS][C_HUD] then
+         mat = matrix():mul(
+            mat,
+            matrix():setHPB(state[C_GIMBALS][C_HUD])
+         )
+      end
+
+      return {
+         [C_MATRICES] = {
+            [C_HUD] = mat
+         }
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+apply_hud_matrix = system("apply_hud_matrix")
+   :runs_after(goldenorb_before_apply_state)
+   :runs_before(apply_hud)
+   :reads({C_MATRICES, C_HUD})
+   :writes(
+      {C_HUD, "hands_position"},
+      {C_HUD, "hands_orientation"}
+   )
+   :via(function(state)
+      local mat = state[C_MATRICES][C_HUD]
+      return {
+         [C_HUD] = {
+            hands_position = mat.c,
+            hands_orientation = mat:getHPB():mul(RAD2DEG),
+         }
+      }
    end)
    :during(LEVEL_CALL)
+
+--- Apply aggregated state values to the HUD adjuster
+apply_hud = system("apply_weapon_hud")
+   :runs_after(goldenorb_before_apply_state)
+   :runs_before(goldenorb_after_apply_state)
+   :maybe_reads(C_HUD)
+   :via(function(state)
+      local hud = state[C_HUD]
+      if hud then
+         hud_adjust.enabled(true)
+         set_hud_params(hud)
+      else
+         hud_adjust.enabled(false)
+      end
+   end)
+   :during(LEVEL_CALL)
+
