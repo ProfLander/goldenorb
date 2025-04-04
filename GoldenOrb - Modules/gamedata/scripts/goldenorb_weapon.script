@@ -295,7 +295,7 @@ inject_weapon = system("inject_weapon")
          wpn = state.actor and state.actor:active_item()
       }
    end)
-   :during(ACTOR_ON_UPDATE)
+   :during(LEVEL_CALL)
 
 --- Inject the weapon's HUD parameters into the state
 inject_hud = system("inject_hud")
@@ -308,7 +308,7 @@ inject_hud = system("inject_hud")
          hud = get_hud_params(state.wpn)
       }
    end)
-   :during(ACTOR_ON_UPDATE)
+   :during(LEVEL_CALL)
 
 inject_hud_gimbal = system("inject_hud_gimbal")
    :runs_after(inject_gimbals, inject_hud)
@@ -323,7 +323,7 @@ inject_hud_gimbal = system("inject_hud_gimbal")
          }
       }
    end)
-   :during(ACTOR_ON_UPDATE)
+   :during(LEVEL_CALL)
 
 derive_hud_matrix = system("derive_hud_matrix")
    :runs_after(inject_matrices, inject_hud, inject_hud_gimbal)
@@ -332,19 +332,25 @@ derive_hud_matrix = system("derive_hud_matrix")
    :with(C_MATRICES)
    :writes({C_MATRICES, C_HUD})
    :via(function(state)
-      local mat = matrix():mul(
-         matrix():identity():translate(state[C_HUD].hands_position),
-         matrix():setHPB(vector():mul(
-            state[C_HUD].hands_orientation,
-            DEG2RAD
-         ))
-      )
+      local mat = nil
 
-      if state[C_GIMBALS][C_HUD] then
+      if state[C_HUD] then
          mat = matrix():mul(
-            mat,
-            matrix():setHPB(state[C_GIMBALS][C_HUD])
+            matrix():identity():translate(
+               state[C_HUD].hands_position
+            ),
+            matrix():setHPB(vector():mul(
+               state[C_HUD].hands_orientation,
+               DEG2RAD
+            ))
          )
+
+         if state[C_GIMBALS][C_HUD] then
+            mat = matrix():mul(
+               mat,
+               matrix():setHPB(state[C_GIMBALS][C_HUD])
+            )
+         end
       end
 
       return {
@@ -353,7 +359,7 @@ derive_hud_matrix = system("derive_hud_matrix")
          }
       }
    end)
-   :during(ACTOR_ON_UPDATE)
+   :during(LEVEL_CALL)
 
 apply_hud_matrix = system("apply_hud_matrix")
    :runs_after(goldenorb_before_apply_state)
@@ -372,7 +378,7 @@ apply_hud_matrix = system("apply_hud_matrix")
          }
       }
    end)
-   :during(LEVEL_CALL)
+   :during(ACTOR_ON_UPDATE)
 
 --- Apply aggregated state values to the HUD adjuster
 apply_hud = system("apply_weapon_hud")
@@ -388,5 +394,5 @@ apply_hud = system("apply_weapon_hud")
          hud_adjust.enabled(false)
       end
    end)
-   :during(LEVEL_CALL)
+   :during(ACTOR_ON_UPDATE)
 

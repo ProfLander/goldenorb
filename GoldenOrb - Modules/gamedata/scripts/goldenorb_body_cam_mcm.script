@@ -7,7 +7,7 @@
 -- Imports
 
 --- Schedule
-local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
+local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
 
 --- Main
 local goldenorb_before_modify_state = goldenorb_main.goldenorb_before_modify_state
@@ -237,5 +237,5 @@ body_cam = system("body_cam")
 
       return out
    end)
-   :during(LEVEL_CALL)
+   :during(ACTOR_ON_UPDATE)
 

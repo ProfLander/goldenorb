@@ -1,0 +1,173 @@
+----------------------------------------------------------------------------
+-- RoboDolg: Weapon IK Rig
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+-- Imports
+
+--- Math
+local hpb_to_direction = lander_math.hpb_to_direction
+
+--- Weapon
+local get_camera_aim_point = goldenorb_camera_mcm.get_camera_aim_point
+local get_hands_position = goldenorb_hands_mcm.get_hands_position
+local get_hands_rotation = goldenorb_hands_mcm.get_hands_rotation
+local get_hands_aim_point = goldenorb_hands_mcm.get_hands_aim_point
+local get_weapon_aim_point = goldenorb_weapon.get_weapon_aim_point
+local get_fire_bone_position = goldenorb_weapon.get_fire_bone_position
+
+--- Main
+local goldenorb_before_build_state = goldenorb_main.goldenorb_before_build_state
+local goldenorb_after_build_state = goldenorb_main.goldenorb_after_build_state
+local goldenorb_before_modify_state = goldenorb_main.goldenorb_before_modify_state
+local goldenorb_after_modify_state = goldenorb_main.goldenorb_after_modify_state
+local goldenorb_before_apply_state = goldenorb_main.goldenorb_before_apply_state
+local goldenorb_after_apply_state = goldenorb_main.goldenorb_after_apply_state
+
+--- Schedule
+local system = goldenorb_schedule.system
+local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
+local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
+
+--- Camera
+local get_camera_aim_point = goldenorb_camera_mcm.get_camera_aim_point
+
+--- Shapes
+local RED = robodolg_shapes.RED
+local GREEN = robodolg_shapes.GREEN
+local CYAN = robodolg_shapes.CYAN
+local YELLOW = robodolg_shapes.YELLOW
+local WHITE = robodolg_shapes.WHITE
+local draw_line = robodolg_shapes.draw_line
+local draw_ngon = robodolg_shapes.draw_ngon
+
+--- Camera
+local ui_2d = robodolg_camera.ui_2d
+
+--- RoboDolg
+local tree = goldenorb_robodolg_mcm.tree
+
+--- MCM Builder
+local ImageWithText = mcm_builder.ImageWithText
+local Checkbox = mcm_builder.Checkbox
+
+--- Log
+local log = robodolg_logging.log
+
+-- State
+
+local page = tree:pages("aim_rig")
+
+page:settings(ImageWithText.new("aim_rig_title"):text("aim_rig"))
+
+local should_draw = page:settings(
+   Checkbox.new("draw_aim_rig"):default(true)
+)
+
+-- Implementation
+
+draw = system("draw")
+   :runs_after(goldenorb_after_apply_state)
+   :maybe_reads(
+      {"robodolg_cache", "actor"},
+      {"robodolg_cache", "camera"},
+      {"robodolg_cache", "hands"},
+      {"robodolg_cache", "weapon"}
+   )
+   :when(function()
+      return should_draw:get()
+   end)
+   :via(function(state)
+      printf("draw aim rig")
+
+      local actor = state.robodolg_cache.actor
+      local camera = state.robodolg_cache.camera
+      local hands = state.robodolg_cache.hands
+      local weapon = state.robodolg_cache.weapon
+
+      printf("  actor: %s", actor)
+      printf("  camera: %s", camera)
+      printf("  hands: %s", hands)
+      printf("  weapon: %s", weapon)
+
+      local actor_aim = actor and ui_2d(actor.aim, true)(vector())
+      local hands_aim = hands and ui_2d(hands.aim, true)(vector())
+      local weapon_aim = weapon
+         and ui_2d(state.robodolg_cache.weapon.aim, true)(vector())
+      local weapon_fire_pos = weapon
+         and ui_2d(state.robodolg_cache.weapon.fire_pos, true)(vector())
+
+
+      if actor then
+         draw_line(
+            actor.pos,
+            actor_aim,
+            WHITE
+         )
+      end
+
+
+
+      if camera and actor then
+         draw_line(
+            camera.aim,
+            actor_aim,
+            CYAN
+         )
+      end
+
+      if weapon then
+         draw_line(
+            weapon_fire_pos,
+            weapon_aim,
+            RED
+         )
+      end
+
+      if hands then
+         draw_ngon(
+            0.02,
+            8,
+            GREEN,
+            ui_2d(hands.pos, true)
+         )
+
+         draw_line(
+            ui_2d(hands.pos, true)(vector()),
+            ui_2d(hands_aim, true)(vector()),
+            GREEN
+         )
+      end
+
+      if hands and weapon then
+         draw_line(
+            ui_2d(hands.pos, true)(vector()),
+            ui_2d(weapon_fire_pos, true)(vector()),
+            GREEN
+         )
+
+         draw_line(
+            ui_2d(hands_aim, true)(vector()),
+            ui_2d(weapon_fire_pos, true)(vector()),
+            GREEN
+         )
+      end
+
+      if camera and hands then
+         draw_line(
+            camera.aim,
+            hands_aim,
+            YELLOW
+         )
+      end
+
+      if hands and weapon then
+         draw_line(
+            hands_aim,
+            weapon_aim,
+            CYAN
+         )
+      end
+   end)
+   :during(ACTOR_ON_UPDATE)

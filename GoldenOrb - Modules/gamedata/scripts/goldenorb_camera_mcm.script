@@ -16,8 +16,10 @@ local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
 --- Main
 local goldenorb_before_build_state = goldenorb_main.goldenorb_before_build_state
 local goldenorb_after_build_state = goldenorb_main.goldenorb_after_build_state
+
 local goldenorb_before_modify_state = goldenorb_main.goldenorb_before_modify_state
 local goldenorb_after_modify_state = goldenorb_main.goldenorb_after_modify_state
+
 local goldenorb_before_apply_state = goldenorb_main.goldenorb_before_apply_state
 local goldenorb_after_apply_state = goldenorb_main.goldenorb_after_apply_state
 
@@ -117,15 +119,6 @@ function camera_matrix()
    )
 end
 
-function matrix_transpose(mat)
-   return matrix():set(
-      vector():set(mat.i.x, mat.j.x, mat.k.x),
-      vector():set(mat.i.y, mat.j.y, mat.k.y),
-      vector():set(mat.i.z, mat.j.z, mat.k.z),
-      vector()
-   )
-end
-
 C_CAMERA = "camera"
 C_CAM_FLAG = "_cam_custom_position_direction"
 
@@ -142,7 +135,7 @@ inject_camera_gimbal = system("inject_camera_gimbal")
          }
       }
    end)
-   :during(ACTOR_ON_UPDATE)
+   :during(LEVEL_CALL)
 
 --- Derive the camera matrix from the camera gimbal
 derive_camera_matrix = system("derive_camera_matrix")
@@ -157,7 +150,7 @@ derive_camera_matrix = system("derive_camera_matrix")
          }
       }
    end)
-   :during(ACTOR_ON_UPDATE)
+   :during(LEVEL_CALL)
 
 actor_relative_camera = system("actor_relative_camera")
    :runs_before(goldenorb_before_apply_state)
@@ -173,12 +166,12 @@ actor_relative_camera = system("actor_relative_camera")
          }
       }
    end)
-   :during(LEVEL_CALL)
+   :during(ACTOR_ON_UPDATE)
 
 camera_arm = system("camera_arm")
    :runs_after(actor_relative_camera)
    :runs_before(goldenorb_before_apply_state)
-   :reads({C_MATRICES, C_ACTOR}, {C_MATRICES, C_CAMERA})
+   :reads({C_MATRICES, C_CAMERA})
    :writes({C_MATRICES, C_CAMERA})
    :via(function(state)
       return {
@@ -193,7 +186,7 @@ camera_arm = system("camera_arm")
          }
       }
    end)
-   :during(LEVEL_CALL)
+   :during(ACTOR_ON_UPDATE)
 
 --- Apply custom camera state if a matrix is present
 apply_camera_matrix = system("apply_camera_matrix")
@@ -214,7 +207,7 @@ apply_camera_matrix = system("apply_camera_matrix")
          [C_CAM_FLAG] = true
       }
    end)
-   :during(LEVEL_CALL)
+   :during(ACTOR_ON_UPDATE)
 
 --- Reset custom camera state if no matrix is present
 reset_camera_matrix = system("reset_camera_matrix")
@@ -230,4 +223,4 @@ reset_camera_matrix = system("reset_camera_matrix")
          [C_CAM_FLAG] = nil
       }
    end)
-   :during(LEVEL_CALL)
+   :during(ACTOR_ON_UPDATE)

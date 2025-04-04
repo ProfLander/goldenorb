@@ -7,7 +7,7 @@
 -- Imports
 
 --- Schedule
-local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
+local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
 
 --- Main
 local phase_build_state = goldenorb_main.phase_build_state
@@ -77,4 +77,4 @@ inject_joint_aim = system("inject_joint_aim")
          spring_aim = spring_aim,
       }
    end)
-   :during(ACTOR_ON_UPDATE)
+   :during(LEVEL_CALL)

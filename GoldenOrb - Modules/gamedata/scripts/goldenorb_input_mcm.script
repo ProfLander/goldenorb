@@ -7,7 +7,7 @@
 -- Imports
 
 --- Schedule
-local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
+local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
 local ON_BEFORE_MOUSE_MOVE = goldenorb_schedule.ON_BEFORE_MOUSE_MOVE
 local ON_KEY_PRESS = goldenorb_schedule.ON_KEY_PRESS
 
@@ -59,6 +59,11 @@ local cycle_gimbal = page:settings(
 
 C_GIMBAL_TARGET = "gimbal_target"
 
+GT_ACTOR = 0
+GT_CAMERA = 1
+GT_HUD = 2
+GT_MAX = 3
+
 inject_gimbal_target = system("inject_gimbal_target")
    :runs_after(goldenorb_before_build_state)
    :runs_before(goldenorb_after_build_state)
@@ -66,36 +71,36 @@ inject_gimbal_target = system("inject_gimbal_target")
    :writes(C_GIMBAL_TARGET)
    :via(function()
       return {
-         [C_GIMBAL_TARGET] = C_ACTOR
+         [C_GIMBAL_TARGET] = GT_ACTOR
       }
    end)
-   :during(ACTOR_ON_UPDATE)
+   :during(LEVEL_CALL)
 
 cycle_gimbal_target = system("cycle_gimbal_target")
    :reads(C_GIMBAL_TARGET, {"keyboard", "key"})
    :maybe_writes(C_GIMBAL_TARGET)
    :via(function(state)
-      printf("cycle_gimbal_target")
-
       local key = state.keyboard.key
-      printf("  key: %s", state.keyboard.key)
+      log("  key: %s", state.keyboard.key)
 
       local bind = cycle_gimbal:get()
-      printf("  bind: %s", bind)
+      log("  bind: %s", bind)
       if key ~= bind then
          return
       end
 
       local target = state[C_GIMBAL_TARGET]
-      target = (target == C_ACTOR and C_CAMERA)
-            or (target == C_CAMERA and C_HUD)
-            or (target == C_HUD and C_ACTOR)
-      printf("  target: %s", target)
+      target = math.fmod(target + 1, GT_MAX)
+      log("  target: %s", target)
+
+      local msg = target == GT_ACTOR and "Actor"
+               or target == GT_CAMERA and "Camera"
+               or target == GT_HUD and "HUD"
 
 
       news_manager.send_tip(
          db.actor,
-         "Mouse targeting " .. target,
+         "Mouse targeting " .. msg,
          nil,
          nil,
          1000
@@ -114,18 +119,28 @@ handle_mouse = system("handle_mouse")
       return aim_type:get() == AIM_FREE
    end)
    :via(function(state)
-      log("on_before_mouse_move: %s", state.mouse)
-
       local target = state[C_GIMBAL_TARGET]
 
       local gimbals = state[C_GIMBALS]
       local mouse_sens = get_console():get_float("mouse_sens")
-      gimbals[target] = vector():add(
-         state[C_GIMBALS][target],
-         vector():set(-state.mouse.x, -state.mouse.y, 0)
-            :mul(mouse_sens)
-            :mul(0.02)
-      )
+      local disp = vector():set(-state.mouse.x, -state.mouse.y, 0)
+         :mul(mouse_sens)
+         :mul(0.02)
+
+      if target == GT_ACTOR then
+         gimbals[C_ACTOR] = vector():add(
+            state[C_GIMBALS][C_ACTOR],
+            vector():set(disp.x, 0, 0)
+         )
+         gimbals[C_CAMERA] = vector():add(
+            state[C_GIMBALS][C_CAMERA],
+            vector():set(0, disp.y, disp.z)
+         )
+      elseif target == GT_CAMERA then
+         gimbals[C_CAMERA] = vector():add(state[C_GIMBALS][C_CAMERA], disp)
+      elseif target == GT_HUD then
+         gimbals[C_HUD] = vector():add(state[C_GIMBALS][C_HUD], disp)
+      end
 
       return {
          [C_GIMBALS] = gimbals,

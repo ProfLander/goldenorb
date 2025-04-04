@@ -7,7 +7,7 @@
 -- Imports
 
 --- Schedule
-local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
+local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
 
 --- Main
 local goldenorb_before_build_state = goldenorb_main.goldenorb_before_build_state
@@ -33,4 +33,4 @@ inject_matrices = system("inject_matrices")
          [C_MATRICES] = {}
       }
    end)
-   :during(ACTOR_ON_UPDATE)
+   :during(LEVEL_CALL)

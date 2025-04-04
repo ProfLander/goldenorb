@@ -7,7 +7,7 @@
 -- Imports
 
 --- Schedule
-local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
+local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
 
 --- Weapon
 local inject_weapon_hud = goldenorb_weapon.inject_weapon_hud
@@ -55,4 +55,4 @@ offset_fire_point = system("offset_fire_point")
          }
       }
    end)
-   :during(ACTOR_ON_UPDATE)
+   :during(LEVEL_CALL)

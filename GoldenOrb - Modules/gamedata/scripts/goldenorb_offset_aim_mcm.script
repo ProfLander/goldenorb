@@ -19,7 +19,7 @@ local AIM_OFFSET = goldenorb_aim_mcm.AIM_OFFSET
 local parse_vector = goldenorb_string.parse_vector
 
 --- Schedule
-local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
+local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
 local system = goldenorb_schedule.system
 local I_READ = goldenorb_schedule.I_READ
 local O_WRITE = goldenorb_schedule.O_WRITE
@@ -97,4 +97,4 @@ offset_aim = system("offset_aim")
          }
       }
    end)
-   :during(LEVEL_CALL)
+   :during(ACTOR_ON_UPDATE)

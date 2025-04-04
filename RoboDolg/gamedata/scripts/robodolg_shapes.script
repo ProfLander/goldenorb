@@ -7,20 +7,19 @@
 -- Imports
 
 --- List
-range = goldenorb_list.range
-map = goldenorb_list.map
-fold = goldenorb_list.fold
-foreach_list = goldenorb_list.foreach
+local range = goldenorb_list.range
+local map = goldenorb_list.map
+local fold = goldenorb_list.fold
+local foreach_list = goldenorb_list.foreach
 
 --- Function
-id = goldenorb_function.id
+local id = goldenorb_function.id
 
 --- Table
-foreach_table = goldenorb_table.foreach
+local foreach_table = goldenorb_table.foreach
 
 --- Math
 local TAU = lander_math.TAU
-local hpb_to_direction = lander_math.hpb_to_direction
 
 --- Logging
 local log = robodolg_logging.log
@@ -35,13 +34,13 @@ CYAN = vector():set(0, 1, 1)
 MAGENTA = vector():set(1, 0, 1)
 YELLOW = vector():set(1, 1, 0)
 
-local CORRECTION = 0.09
-local CORRECTION_HUD = 0.13
-
 -- State
 
 local next_id = 1
+
+---@type table<number, any[]>
 local shapes_pool = {}
+
 ---@type table<number, any[]>
 local shapes_used = {}
 
@@ -167,61 +166,6 @@ function draw_sphere(pos, scale, color)
       color.z,
       1
    )
-end
-
-function project(vec, hud, allow_offscreen)
-   log("project(%s, %s, %s, %s)", vec, hud, allow_offscreen)
-   local ui = game.world2ui(vec, hud, allow_offscreen)
-   local dev = device()
-   local aspect = dev.width / dev.height
-   return vector():set(
-      ((ui.x / 1024) - 0.5) * 2 * aspect,
-      ((ui.y / 768) - 0.5) * -2,
-      0
-   )
-end
-
----@param vec vector
----@return vector
-function billboard(vec)
-   log("billboard(%s)", vec)
-   local dev = device()
-   return vector()
-      :set(dev.cam_right)
-      :mul(vec.x)
-      :add(
-         vector()
-         :set(dev.cam_top)
-         :mul(vec.y)
-      ):add(
-         vector()
-         :set(dev.cam_dir)
-         :mul(vec.z)
-      )
-end
-
----@param vec vector
----@return vector
-function camera_relative(vec)
-   log("camera_relative(%s, %s)", vec)
-   return vec:add(device().cam_pos)
-end
-
-function ui_2d(pos, hud, allow_offscreen)
-   allow_offscreen = allow_offscreen ~= nil and allow_offscreen or true
-
-   local correction = hud and CORRECTION_HUD or CORRECTION
-   return function(v)
-      return camera_relative(
-         billboard(
-            project(
-               pos,
-               hud,
-               allow_offscreen
-            ):add(v):add(vector():set(0, 0, 1 + correction))
-         )
-      )
-   end
 end
 
 ---@param color? vector

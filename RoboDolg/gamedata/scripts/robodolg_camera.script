@@ -1,0 +1,89 @@
+----------------------------------------------------------------------------
+-- RoboDolg: Camera Functions
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+-- Imports
+
+--- Logging
+local log = robodolg_logging.log
+
+-- Constants
+
+local CORRECTION = 0.09
+local CORRECTION_HUD = 0.13
+
+-- State
+
+camera_matrix = matrix()
+
+-- Implementation 
+
+function project(vec, hud, allow_offscreen)
+   log("project(%s, %s, %s, %s)", vec, hud, allow_offscreen)
+   local ui = game.world2ui(vec, hud, allow_offscreen)
+   local dev = device()
+   local aspect = dev.width / dev.height
+   return vector():set(
+      ((ui.x / 1024) - 0.5) * 2 * aspect,
+      ((ui.y / 768) - 0.5) * -2,
+      0
+   )
+end
+
+---@param vec vector
+---@return vector
+function billboard(vec)
+   log("billboard(%s)", vec)
+   return vector()
+      :set(camera_matrix.i)
+      :mul(vec.x)
+      :add(
+         vector()
+         :set(camera_matrix.j)
+         :mul(vec.y)
+      ):add(
+         vector()
+         :set(camera_matrix.k)
+         :mul(vec.z)
+      )
+end
+
+---@param vec vector
+---@return vector
+function camera_relative(vec)
+   log("camera_relative(%s, %s)", vec)
+   return vec:add(camera_matrix.c)
+end
+
+function ui_2d(pos, hud, allow_offscreen)
+   allow_offscreen = allow_offscreen ~= nil and allow_offscreen or true
+
+   local correction = hud and CORRECTION_HUD or CORRECTION
+   return function(v)
+      return camera_relative(
+         billboard(
+            project(
+               pos,
+               hud,
+               allow_offscreen
+            ):add(v):add(vector():set(0, 0, 1 + correction))
+         )
+      )
+   end
+end
+
+function update_camera_matrix()
+   local dev = device()
+   camera_matrix = matrix():set(
+      dev.cam_right,
+      dev.cam_top,
+      dev.cam_dir,
+      dev.cam_pos
+   )
+end
+
+function on_game_start()
+   RegisterScriptCallback("actor_on_update", update_camera_matrix)
+end

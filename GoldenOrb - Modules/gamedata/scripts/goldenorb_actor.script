@@ -39,7 +39,7 @@ inject_actor = system("inject_actor")
          actor = db.actor
       }
    end)
-   :during(ACTOR_ON_UPDATE)
+   :during(LEVEL_CALL)
 
 --- Inject the actor gimbal
 inject_actor_gimbal = system("inject_actor_gimbal")
@@ -54,7 +54,7 @@ inject_actor_gimbal = system("inject_actor_gimbal")
          }
       }
    end)
-   :during(ACTOR_ON_UPDATE)
+   :during(LEVEL_CALL)
 
 --- Derive the actor matrix from the actor gimbal
 derive_actor_matrix = system("derive_actor_matrix")
@@ -72,16 +72,22 @@ derive_actor_matrix = system("derive_actor_matrix")
          }
       }
    end)
-   :during(ACTOR_ON_UPDATE)
+   :during(LEVEL_CALL)
 
 --- Apply the actor matrix
 apply_actor_matrix = system("apply_actor_matrix")
    :runs_after(goldenorb_before_apply_state)
    :runs_before(goldenorb_after_apply_state)
-   :reads(C_ACTOR, {C_MATRICES, C_ACTOR})
+   :reads(C_ACTOR, {C_MATRICES, C_ACTOR}, {C_MATRICES, "camera"})
    :via(function(state)
+      local actor_hpb = state[C_MATRICES][C_ACTOR]:getHPB()
+      local camera_hpb = state[C_MATRICES]["camera"]:getHPB()
       state[C_ACTOR]:set_actor_direction(
-         state[C_MATRICES][C_ACTOR]:getHPB():mul(-1)
+         vector():set(
+            actor_hpb.x,
+            camera_hpb.y,
+            camera_hpb.z
+         ):mul(-1)
       )
    end)
-   :during(LEVEL_CALL)
+   :during(ACTOR_ON_UPDATE)

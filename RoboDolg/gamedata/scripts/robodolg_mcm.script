@@ -33,41 +33,18 @@ local log = robodolg_logging.log
 
 tree = Tree.new("robodolg")
 
-local page = tree:pages("core")
-
-page:settings(
-   ImageWithText.new("robodolg_title"):text("robodolg")
-)
-local enabled = page:settings(
-   Checkbox.new("enabled"):default(true)
-)
-
 -- Implementation
 
---- Use the cached state to draw robodolg modules
-system("draw_robodolg")
-   :runs_after(phase_done)
-   :inputs(I_READ)
-   :via(function(state)
-      reset()
-
-      if not enabled:get() then
-         log("  not enabled, returning")
-         return
-      end
-
-      SendScriptCallback("robodolg_on_draw", state)
-      return {}
-   end)
-   :during(LEVEL_CALL)
+function reset_pool()
+   reset()
+end
 
 --- Entrypoint
 ---@return nil
 function on_game_start()
    log("robodolg.on_game_start")
 
-   -- Declare our draw callback
-   AddScriptCallback("robodolg_on_draw")
+   RegisterScriptCallback("actor_on_update", reset_pool)
 end
 
 --- Build the MCM tree on load

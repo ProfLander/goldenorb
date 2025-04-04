@@ -81,5 +81,7 @@
         "goldenorb_table",
         "goldenorb_camera_mcm",
         "news_manager",
+        "robodolg_camera",
+        "goldenorb_hands_mcm",
     ],
 }

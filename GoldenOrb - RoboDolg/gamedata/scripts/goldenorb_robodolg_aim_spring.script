@@ -13,24 +13,21 @@ local TAU = lander_math.TAU
 --- String
 local parse_vector = goldenorb_string.parse_vector
 
---- Camera
-local get_camera_aim_point = goldenorb_camera_mcm.get_camera_aim_point
-
 --- Main
-local goldenorb_after_build_state = goldenorb_main.goldenorb_after_build_state
 local goldenorb_after_apply_state = goldenorb_main.goldenorb_after_apply_state
 
 --- RoboDolg
-local tree = robodolg_goldenorb_mcm.tree
+local tree = goldenorb_robodolg_mcm.tree
 
 --- Schedule
 local system = goldenorb_schedule.system
 local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
-local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
 
 --- Shapes
 local draw_line = robodolg_shapes.draw_line
-local ui_2d = robodolg_shapes.ui_2d
+
+--- Camera
+local ui_2d = robodolg_camera.ui_2d
 
 --- MCM Builder
 local ImageWithText = mcm_builder.ImageWithText
@@ -51,22 +48,15 @@ local should_draw = page:settings(
 
 -- Implementation
 
-cam_aim = nil
-
-cache = system("cache")
-   :runs_after(goldenorb_after_build_state)
-   :via(function()
-      cam_aim = get_camera_aim_point()
-   end)
-   :during(ACTOR_ON_UPDATE)
-
 draw = system("draw")
    :runs_after(goldenorb_after_apply_state)
-   :reads("spring_aim")
+   :reads("spring_aim", {"robodolg_cache", "camera"})
    :when(function()
       return should_draw:get()
    end)
    :via(function(state)
+      printf("draw aim spring")
+
       local length = parse_vector(state.spring_aim.length:get()):mul(DEG2RAD)
       log("length: %s", length)
 
@@ -103,6 +93,7 @@ draw = system("draw")
       end
       --]]
 
+      local cam_aim = state.robodolg_cache.camera.aim
       local acc = nil
       for i=1,32 do
          local t = i / 31
@@ -122,4 +113,4 @@ draw = system("draw")
          acc = vector():set(v)
       end
    end)
-   :during(LEVEL_CALL)
+   :during(ACTOR_ON_UPDATE)

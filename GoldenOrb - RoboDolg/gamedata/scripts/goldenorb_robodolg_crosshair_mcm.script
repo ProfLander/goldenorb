@@ -18,8 +18,11 @@ local get_fire_bone_rotation = goldenorb_weapon.get_fire_bone_rotation
 local RED = robodolg_shapes.RED
 local GREEN = robodolg_shapes.GREEN
 local BLUE = robodolg_shapes.BLUE
-local ui_2d = robodolg_shapes.ui_2d
+local WHITE = robodolg_shapes.WHITE
 local draw_crosshair = robodolg_shapes.draw_crosshair
+
+--- Camera
+local ui_2d = robodolg_camera.ui_2d
 
 --- MCM Builder
 local ImageWithText = mcm_builder.ImageWithText
@@ -28,7 +31,7 @@ local Checkbox = mcm_builder.Checkbox
 local Trackbar = mcm_builder.Trackbar
 
 --- Robodolg
-local tree = robodolg_goldenorb_mcm.tree
+local tree = goldenorb_robodolg_mcm.tree
 
 --- Schedule
 local system = goldenorb_schedule.system
@@ -36,8 +39,10 @@ local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
 local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
 
 --- Main
+local goldenorb_before_build_state = goldenorb_main.goldenorb_before_build_state
 local goldenorb_after_build_state = goldenorb_main.goldenorb_after_build_state
 local goldenorb_after_apply_state = goldenorb_main.goldenorb_after_apply_state
+local goldenorb_after_modify_state = goldenorb_main.goldenorb_after_modify_state
 
 --- Function
 local advise_before = goldenorb_function.advise_before
@@ -51,6 +56,7 @@ local log = robodolg_logging.log
 
 -- Constants
 
+COLOR_ACTOR = WHITE
 COLOR_CAMERA = BLUE
 COLOR_HANDS = GREEN
 COLOR_WEAPON = RED
@@ -83,6 +89,13 @@ local
          :default(8)
          :minmax(3, 64)
    )
+
+--- Actor section
+page:settings(Title.new("actor_title"):text("actor"))
+local draw_actor = page:settings(
+   Checkbox.new("draw_actor")
+      :default(true)
+)
 
 --- Camera section
 page:settings(Title.new("camera_title"):text("camera"))
@@ -122,76 +135,70 @@ function vert(v, cond, r)
       or out
 end
 
-cache_data = nil
-
-cache = system("cache")
-   :reads("wpn")
-   :runs_after(goldenorb_after_build_state)
-   :via(function(state)
-      cache_data = {
-         hands = {
-            aim = get_hands_aim_point(),
-            rot = get_hands_rotation(),
-         },
-         weapon = {
-            aim = get_weapon_aim_point(state.wpn),
-            rot = get_fire_bone_rotation(state.wpn),
-         },
-         camera = {
-            aim = get_camera_aim_point(),
-            rot = get_camera_rotation(),
-         }
-      }
-   end)
-   :during(ACTOR_ON_UPDATE)
-
 draw = system("draw")
-   :reads("wpn")
+   :maybe_reads(
+      {"robodolg_cache", "actor"},
+      {"robodolg_cache", "camera"},
+      {"robodolg_cache", "hands"},
+      {"robodolg_cache", "weapon"}
+   )
    :runs_after(goldenorb_after_apply_state)
-   :via(function()
+   :via(function(state)
+      printf("draw crosshair")
       local size_cross = cross_size:get()
       local size_ring = ring_size:get()
       local segs_ring = ring_segs:get()
 
-      -- Camera
-      if draw_camera:get() then
-         draw_crosshair(
-            size_cross,
-            size_ring,
-            segs_ring,
-            COLOR_CAMERA,
-            ui_2d(cache_data.camera.aim, true)
-         )
-      end
-
-      -- Hands
-      if draw_hands:get() then
-         draw_crosshair(
-            size_cross,
-            size_ring,
-            segs_ring,
-            COLOR_HANDS,
-            vert(
-               cache_data.hands.aim,
-               rotate_hands:get(),
-               -(cache_data.hands.rot.z - cache_data.camera.rot.z)
-            )
-         )
-      end
-
       -- Weapon
-      if draw_weapon:get() then
+      if draw_weapon:get() and state.robodolg_cache.weapon then
          draw_crosshair(
             size_cross,
             size_ring,
             segs_ring,
             COLOR_WEAPON,
             vert(
-               cache_data.weapon.aim,
+               state.robodolg_cache.weapon.aim,
                rotate_weapon:get(),
-               -(cache_data.weapon.rot.z - cache_data.camera.rot.z)
+               -(state.robodolg_cache.weapon.rot.z - state.robodolg_cache.camera.rot.z)
             )
          )
       end
+
+      -- Hands
+      if draw_hands:get() and state.robodolg_cache.hands then
+         draw_crosshair(
+            size_cross,
+            size_ring,
+            segs_ring,
+            COLOR_HANDS,
+            vert(
+               state.robodolg_cache.hands.aim,
+               rotate_hands:get(),
+               -(state.robodolg_cache.hands.rot.z - state.robodolg_cache.camera.rot.z)
+            )
+         )
+      end
+
+      -- Camera
+      if draw_camera:get() and state.robodolg_cache.camera then
+         draw_crosshair(
+            size_cross,
+            size_ring,
+            segs_ring,
+            COLOR_CAMERA,
+            ui_2d(state.robodolg_cache.camera.aim, true)
+         )
+      end
+
+      -- Actor
+      if draw_actor:get() and state.robodolg_cache.actor then
+         draw_crosshair(
+            size_cross,
+            size_ring,
+            segs_ring,
+            COLOR_ACTOR,
+            ui_2d(state.robodolg_cache.actor.aim, true)
+         )
+      end
    end)
-   :during(LEVEL_CALL)
+   :during(ACTOR_ON_UPDATE)

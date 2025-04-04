@@ -7,7 +7,7 @@
 -- Imports
 
 --- Schedule
-local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
+local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
 
 --- Weapon
 local inject_weapon_hud = goldenorb_weapon.inject_weapon_hud
@@ -29,7 +29,7 @@ reset_zoom_factors = system("reset_zoom_factors")
    :runs_after(inject_weapon_hud)
    :with("hud")
    :outputs({
-      hud = {
+     hud = {
          scope_zoom_factor = O_WRITE,
          gl_zoom_factor = O_WRITE,
          scope_zoom_factor_alt = O_WRITE,
@@ -44,5 +44,5 @@ reset_zoom_factors = system("reset_zoom_factors")
          }
       }
    end)
-   :during(ACTOR_ON_UPDATE)
+   :during(LEVEL_CALL)
 

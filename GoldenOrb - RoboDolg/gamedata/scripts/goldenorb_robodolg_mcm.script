@@ -1,0 +1,42 @@
+----------------------------------------------------------------------------
+-- RoboDolg: GoldenOrb
+----------------------------------------------------------------------------
+-- 
+-- GoldenOrb modules for RoboDolg.
+-- 
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+-- Imports
+
+--- Schedule
+local system = goldenorb_schedule.system
+local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
+
+--- Main
+local goldenorb_before_modify_state = goldenorb_main.goldenorb_before_modify_state
+local goldenorb_after_apply_state = goldenorb_main.goldenorb_after_apply_state
+
+--- Robodolg
+local mcm_tree = robodolg_mcm.tree
+
+-- State
+
+tree = mcm_tree:subtrees("goldenorb")
+
+function robodolg_mcm.reset_pool() end
+function robodolg_camera.update_camera_matrix() end
+
+reset_shapes = system("reset_shapes")
+   :runs_before(goldenorb_before_modify_state)
+   :via(robodolg_shapes.reset)
+   :during(ACTOR_ON_UPDATE)
+
+update_camera_matrix = system("update_camera_matrix")
+   :runs_after(goldenorb_after_apply_state)
+   :reads({"matrices", "camera"})
+   :via(function(state)
+      robodolg_camera.camera_matrix = state.matrices.camera
+   end)
+   :during(ACTOR_ON_UPDATE)

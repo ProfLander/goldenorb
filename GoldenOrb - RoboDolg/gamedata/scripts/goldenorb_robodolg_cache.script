@@ -1,0 +1,116 @@
+-- Imports
+
+--- Schedule
+local system = goldenorb_schedule.system
+local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
+local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
+
+--- Main 
+local goldenorb_before_build_state = goldenorb_main.goldenorb_before_build_state
+local goldenorb_after_build_state = goldenorb_main.goldenorb_after_build_state
+local goldenorb_after_modify_state = goldenorb_main.goldenorb_after_modify_state
+local goldenorb_before_apply_state = goldenorb_main.goldenorb_before_apply_state
+
+--- Weapon
+local get_weapon_aim_point = goldenorb_weapon.get_weapon_aim_point
+local get_fire_bone_position = goldenorb_weapon.get_fire_bone_position
+local get_fire_bone_rotation = goldenorb_weapon.get_fire_bone_rotation
+
+cache_camera = system("cache_camera")
+   :runs_after(goldenorb_after_modify_state)
+   :runs_before(goldenorb_before_apply_state)
+   :reads({"matrices", "camera"})
+   :writes({"robodolg_cache", "camera"})
+   :via(function(state)
+      local mat_cam = state.matrices.camera
+      return {
+         robodolg_cache = {
+            camera = {
+               pos = mat_cam.c,
+               aim = vector():add(
+                  mat_cam.c,
+                  vector():mul(mat_cam.k, 1000)
+               ),
+               rot = mat_cam:getHPB()
+            },
+         },
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+cache_actor = system("cache_actor")
+   :reads({"matrices", "actor"})
+   :writes({"robodolg_cache", "actor"})
+   :runs_before(goldenorb_before_build_state)
+   :via(function(state)
+
+      return {
+         robodolg_cache = {
+            actor = {
+               pos = state.matrices.actor.c,
+               aim = vector():add(
+                  state.matrices.actor.c,
+                  vector():mul(
+                     state.matrices.actor.k,
+                     1000
+                  )
+               ),
+               rot = state.matrices.actor:getHPB(),
+            },
+         }
+      }
+   end)
+   :during(LEVEL_CALL)
+
+cache_hands = system("cache_hands")
+   :reads(
+      {"matrices", "actor"},
+      {"matrices", "camera"},
+      {"matrices", "hud"}
+   )
+   :writes({"robodolg_cache", "hands"})
+   :runs_after(goldenorb_after_modify_state)
+   :runs_after(goldenorb_before_apply_state)
+   :via(function(state)
+
+      local mat_hands = matrix():mul(
+         state.matrices.camera,
+         state.matrices.hud
+      )
+
+      return {
+         robodolg_cache = {
+            hands = {
+               pos = mat_hands.c,
+               aim = vector():add(
+                  mat_hands.c,
+                  vector():mul(mat_hands.k, 1000)
+               ),
+               rot = mat_hands:getHPB(),
+            },
+         }
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+
+cache_weapon = system("cache_weapon")
+   :reads(
+      "wpn"
+   )
+   :writes(
+      {"robodolg_cache", "weapon"}
+   )
+   :runs_before(goldenorb_before_build_state)
+   :via(function(state)
+      return {
+         robodolg_cache = {
+            weapon = {
+               aim = get_weapon_aim_point(state.wpn),
+               rot = get_fire_bone_rotation(state.wpn),
+               fire_pos = get_fire_bone_position(state.wpn),
+            }
+         }
+      }
+   end)
+   :during(LEVEL_CALL)

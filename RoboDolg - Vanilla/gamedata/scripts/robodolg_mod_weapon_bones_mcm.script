@@ -10,7 +10,7 @@
 local CYAN = robodolg_shapes.CYAN
 local draw_ngon = robodolg_shapes.draw_ngon
 local draw_line = robodolg_shapes.draw_line
-local ui_2d = robodolg_shapes.ui_2d
+local ui_2d = robodolg_camera.ui_2d
 
 --- Math
 local hpb_to_direction = lander_math.hpb_to_direction
@@ -127,10 +127,10 @@ function on_game_start()
 
    RegisterScriptCallback(
       "actor_on_update",
-      cache_bones
+      draw_bones
    )
 
    AddUniqueCall(
-      draw_bones
+      cache_bones
    )
 end

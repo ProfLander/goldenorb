@@ -185,7 +185,7 @@ consume_weapon = system("consume_weapon")
          end
       )
    end)
-   :during(ACTOR_ON_UPDATE)
+   :during(LEVEL_CALL)
 
 --- Apply recoil forces on weapon discharge
 recoil_weapon = system("recoil_weapon")
@@ -323,4 +323,4 @@ integrate_recoil = system("integrate_recoil")
          }
       }
    end)
-   :during(LEVEL_CALL)
+   :during(ACTOR_ON_UPDATE)
