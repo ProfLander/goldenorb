@@ -6,32 +6,12 @@
 
 -- Imports
 
---- Math
-local hpb_to_direction = lander_math.hpb_to_direction
-
---- Weapon
-local get_camera_aim_point = goldenorb_camera_mcm.get_camera_aim_point
-local get_hands_position = goldenorb_hands_mcm.get_hands_position
-local get_hands_rotation = goldenorb_hands_mcm.get_hands_rotation
-local get_hands_aim_point = goldenorb_hands_mcm.get_hands_aim_point
-local get_weapon_aim_point = goldenorb_weapon.get_weapon_aim_point
-local get_fire_bone_position = goldenorb_weapon.get_fire_bone_position
-
 --- Main
-local goldenorb_before_build_state = goldenorb_main.goldenorb_before_build_state
-local goldenorb_after_build_state = goldenorb_main.goldenorb_after_build_state
-local goldenorb_before_modify_state = goldenorb_main.goldenorb_before_modify_state
-local goldenorb_after_modify_state = goldenorb_main.goldenorb_after_modify_state
-local goldenorb_before_apply_state = goldenorb_main.goldenorb_before_apply_state
 local goldenorb_after_apply_state = goldenorb_main.goldenorb_after_apply_state
 
 --- Schedule
 local system = goldenorb_schedule.system
 local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
-local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
-
---- Camera
-local get_camera_aim_point = goldenorb_camera_mcm.get_camera_aim_point
 
 --- Shapes
 local RED = robodolg_shapes.RED
@@ -52,9 +32,6 @@ local tree = goldenorb_robodolg_mcm.tree
 local ImageWithText = mcm_builder.ImageWithText
 local Checkbox = mcm_builder.Checkbox
 
---- Log
-local log = robodolg_logging.log
-
 -- State
 
 local page = tree:pages("aim_rig")
@@ -67,11 +44,117 @@ local should_draw = page:settings(
 
 -- Implementation
 
-draw = system("draw")
+--- Line from actor to its aim point
+draw_actor_aim = system("draw_actor_aim")
    :runs_after(goldenorb_after_apply_state)
-   :maybe_reads(
+   :reads({"robodolg_cache", "actor"})
+   :when(function()
+      return should_draw:get()
+   end)
+   :via(function(state)
+      local actor = state.robodolg_cache.actor
+      draw_line(
+         actor.pos,
+         ui_2d(actor.aim, true)(vector()),
+         WHITE
+      )
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+--- Circle around hands origin
+draw_hands_origin = system("draw_hands_origin")
+   :runs_after(goldenorb_after_apply_state)
+   :reads({"robodolg_cache", "hands"})
+   :when(function()
+      return should_draw:get()
+   end)
+   :via(function(state)
+      draw_ngon(
+         0.02,
+         8,
+         GREEN,
+         ui_2d(state.robodolg_cache.hands.pos, true)
+      )
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+--- Line from hands origin to hands aim point
+draw_hands_aim = system("draw_hands_aim")
+   :runs_after(goldenorb_after_apply_state)
+   :reads({"robodolg_cache", "hands"})
+   :when(function()
+      return should_draw:get()
+   end)
+   :via(function(state)
+      local hands = state.robodolg_cache.hands
+      local hands_aim = hands and ui_2d(hands.aim, true)(vector())
+      draw_line(
+         ui_2d(hands.pos, true)(vector()),
+         hands_aim,
+         GREEN
+      )
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+--- Line from weapon barrel to weapon aim point
+draw_weapon_aim = system("draw_weapon_aim")
+   :runs_after(goldenorb_after_apply_state)
+   :reads({"robodolg_cache", "weapon"})
+   :when(function()
+      return should_draw:get()
+   end)
+   :via(function(state)
+      local weapon = state.robodolg_cache.weapon
+      draw_line(
+         ui_2d(weapon.fire_pos, true)(vector()),
+         ui_2d(weapon.aim, true)(vector()),
+         RED
+      )
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+--- Line from actor aim point to camera aim point
+draw_actor_camera_aim = system("draw_actor_camera_aim")
+   :runs_after(goldenorb_after_apply_state)
+   :reads(
       {"robodolg_cache", "actor"},
+      {"robodolg_cache", "camera"}
+   )
+   :when(function()
+      return should_draw:get()
+   end)
+   :via(function(state)
+      draw_line(
+         ui_2d(state.robodolg_cache.actor.aim, true)(vector()),
+         ui_2d(state.robodolg_cache.camera.aim, true)(vector()),
+         CYAN
+      )
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+--- Line from camera aim point to hands aim point
+draw_camera_hands_aim = system("draw_camera_hands_aim")
+   :runs_after(goldenorb_after_apply_state)
+   :reads(
       {"robodolg_cache", "camera"},
+      {"robodolg_cache", "hands"}
+   )
+   :when(function()
+      return should_draw:get()
+   end)
+   :via(function(state)
+      draw_line(
+         ui_2d(state.robodolg_cache.camera.aim, true)(vector()),
+         ui_2d(state.robodolg_cache.hands.aim, true)(vector()),
+         YELLOW
+      )
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+--- Triangle comprised of hands origin, hands aim, and weapon barrel
+draw_hands_weapon_aim = system("draw_hands_weapon_aim")
+   :runs_after(goldenorb_after_apply_state)
+   :reads(
       {"robodolg_cache", "hands"},
       {"robodolg_cache", "weapon"}
    )
@@ -79,91 +162,31 @@ draw = system("draw")
       return should_draw:get()
    end)
    :via(function(state)
-      local actor = state.robodolg_cache.actor
-      local camera = state.robodolg_cache.camera
       local hands = state.robodolg_cache.hands
       local weapon = state.robodolg_cache.weapon
 
-      printf("  actor: %s", actor)
-      printf("  camera: %s", camera)
-      printf("  hands: %s", hands)
-      printf("  weapon: %s", weapon)
-
-      local camera_aim = camera and ui_2d(camera.aim, true)(vector())
-      local actor_aim = actor and ui_2d(actor.aim, true)(vector())
       local hands_aim = hands and ui_2d(hands.aim, true)(vector())
       local weapon_aim = weapon
          and ui_2d(state.robodolg_cache.weapon.aim, true)(vector())
       local weapon_fire_pos = weapon
          and ui_2d(state.robodolg_cache.weapon.fire_pos, true)(vector())
 
-      if actor then
-         draw_line(
-            actor.pos,
-            actor_aim,
-            WHITE
-         )
-      end
+      draw_line(
+         ui_2d(hands.pos, true)(vector()),
+         weapon_fire_pos,
+         GREEN
+      )
 
-      if camera and actor then
-         draw_line(
-            camera_aim,
-            actor_aim,
-            CYAN
-         )
-      end
+      draw_line(
+         hands_aim,
+         weapon_fire_pos,
+         GREEN
+      )
 
-      if weapon then
-         draw_line(
-            weapon_fire_pos,
-            weapon_aim,
-            RED
-         )
-      end
-
-      if hands then
-         draw_ngon(
-            0.02,
-            8,
-            GREEN,
-            ui_2d(hands.pos, true)
-         )
-
-         draw_line(
-            ui_2d(hands.pos, true)(vector()),
-            hands_aim,
-            GREEN
-         )
-      end
-
-      if hands and weapon then
-         draw_line(
-            ui_2d(hands.pos, true)(vector()),
-            weapon_fire_pos,
-            GREEN
-         )
-
-         draw_line(
-            hands_aim,
-            weapon_fire_pos,
-            GREEN
-         )
-      end
-
-      if camera and hands then
-         draw_line(
-            camera_aim,
-            hands_aim,
-            YELLOW
-         )
-      end
-
-      if hands and weapon then
-         draw_line(
-            hands_aim,
-            weapon_aim,
-            CYAN
-         )
-      end
+      draw_line(
+         hands_aim,
+         weapon_aim,
+         CYAN
+      )
    end)
    :during(ACTOR_ON_UPDATE)
