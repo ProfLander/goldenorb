@@ -22,7 +22,7 @@ local protected = goldenorb_function.protected
 --- Logging
 local log = goldenorb_logging.logger(
    "GoldenOrb/Schedule",
-    goldenorb_logging.WARNING
+    goldenorb_logging.TRACE
 )
 
 -- Constants

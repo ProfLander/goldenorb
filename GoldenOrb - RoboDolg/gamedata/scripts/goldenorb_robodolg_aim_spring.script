@@ -55,8 +55,6 @@ draw = system("draw")
       return should_draw:get()
    end)
    :via(function(state)
-      printf("draw aim spring")
-
       local length = parse_vector(state.spring_aim.length:get()):mul(DEG2RAD)
       log("length: %s", length)
 

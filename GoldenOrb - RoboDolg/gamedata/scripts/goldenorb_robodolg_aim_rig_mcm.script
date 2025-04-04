@@ -79,8 +79,6 @@ draw = system("draw")
       return should_draw:get()
    end)
    :via(function(state)
-      printf("draw aim rig")
-
       local actor = state.robodolg_cache.actor
       local camera = state.robodolg_cache.camera
       local hands = state.robodolg_cache.hands
@@ -91,13 +89,13 @@ draw = system("draw")
       printf("  hands: %s", hands)
       printf("  weapon: %s", weapon)
 
+      local camera_aim = camera and ui_2d(camera.aim, true)(vector())
       local actor_aim = actor and ui_2d(actor.aim, true)(vector())
       local hands_aim = hands and ui_2d(hands.aim, true)(vector())
       local weapon_aim = weapon
          and ui_2d(state.robodolg_cache.weapon.aim, true)(vector())
       local weapon_fire_pos = weapon
          and ui_2d(state.robodolg_cache.weapon.fire_pos, true)(vector())
-
 
       if actor then
          draw_line(
@@ -107,11 +105,9 @@ draw = system("draw")
          )
       end
 
-
-
       if camera and actor then
          draw_line(
-            camera.aim,
+            camera_aim,
             actor_aim,
             CYAN
          )
@@ -135,7 +131,7 @@ draw = system("draw")
 
          draw_line(
             ui_2d(hands.pos, true)(vector()),
-            ui_2d(hands_aim, true)(vector()),
+            hands_aim,
             GREEN
          )
       end
@@ -143,20 +139,20 @@ draw = system("draw")
       if hands and weapon then
          draw_line(
             ui_2d(hands.pos, true)(vector()),
-            ui_2d(weapon_fire_pos, true)(vector()),
+            weapon_fire_pos,
             GREEN
          )
 
          draw_line(
-            ui_2d(hands_aim, true)(vector()),
-            ui_2d(weapon_fire_pos, true)(vector()),
+            hands_aim,
+            weapon_fire_pos,
             GREEN
          )
       end
 
       if camera and hands then
          draw_line(
-            camera.aim,
+            camera_aim,
             hands_aim,
             YELLOW
          )
