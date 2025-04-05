@@ -11,8 +11,8 @@
 -- Imports
 
 --- Schedule
-local system = goldenorb_schedule.system
-local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
+local system = cl_schedule.system
+local ACTOR_ON_UPDATE = cl_schedule.ACTOR_ON_UPDATE
 
 --- Main
 local goldenorb_before_modify_state = goldenorb_main.goldenorb_before_modify_state

@@ -12,9 +12,9 @@
 local deg = cl_math.deg
 
 --- Logging
-local log = goldenorb_logging.logger(
+local log = cl_logging.logger(
    "GoldenOrb/Joint",
-   goldenorb_logging.TRACE
+   cl_logging.TRACE
 )
 
 -- Implementation

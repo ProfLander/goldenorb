@@ -7,7 +7,7 @@
 -- Imports
 
 --- Schedule
-local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
+local ACTOR_ON_UPDATE = cl_schedule.ACTOR_ON_UPDATE
 
 --- Main
 local goldenorb_before_modify_state = goldenorb_main.goldenorb_before_modify_state
@@ -17,27 +17,27 @@ local goldenorb_after_modify_state = goldenorb_main.goldenorb_after_modify_state
 local deg = cl_math.deg
 
 --- List
-local map = goldenorb_list.map
-local fold = goldenorb_list.fold
+local map = cl_list.map
+local fold = cl_list.fold
 
 --- Table
 local foreach = goldenorb_table.foreach
 
 --- Function
-local compose = goldenorb_function.compose
+local compose = cl_function.compose
 
 --- Schedule
-local system = goldenorb_schedule.system
-local I_READ_MAYBE = goldenorb_schedule.I_READ_MAYBE
-local O_WRITE_MAYBE = goldenorb_schedule.O_WRITE_MAYBE
+local system = cl_schedule.system
+local I_READ_MAYBE = cl_schedule.I_READ_MAYBE
+local O_WRITE_MAYBE = cl_schedule.O_WRITE_MAYBE
 
 --- Camera
 local get_camera_aim_point = goldenorb_camera_mcm.get_camera_aim_point
 
 --- String
-local parse_vector = goldenorb_string.parse_vector
-local parse_call = goldenorb_string.parse_call
-local trim_ws = goldenorb_string.trim_ws
+local parse_vector = cl_string.parse_vector
+local parse_call = cl_string.parse_call
+local trim_ws = cl_string.trim_ws
 
 --- MCM Builder
 local ImageWithText = mcm_builder.ImageWithText
@@ -45,9 +45,9 @@ local Checkbox = mcm_builder.Checkbox
 local InputField = mcm_builder.InputField
 
 --- Logging
-local log = goldenorb_logging.logger(
+local log = cl_logging.logger(
    "GoldenOrb/Bodycam",
-   goldenorb_logging.TRACE
+   cl_logging.TRACE
 )
 
 -- Constants

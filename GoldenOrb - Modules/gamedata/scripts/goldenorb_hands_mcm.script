@@ -7,7 +7,7 @@
 -- Imports
 
 --- Schedule
-local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
+local ACTOR_ON_UPDATE = cl_schedule.ACTOR_ON_UPDATE
 
 --- Main
 local goldenorb_before_modify_state = goldenorb_main.goldenorb_before_modify_state
@@ -19,12 +19,12 @@ local get_hud_number = goldenorb_weapon.get_hud_number
 local hpb_to_direction = cl_math.hpb_to_direction
 
 --- Schedule
-local system = goldenorb_schedule.system
+local system = cl_schedule.system
 
 --- Logging
-local log = goldenorb_logging.logger(
+local log = cl_logging.logger(
    "GoldenOrb/Hands",
-   goldenorb_logging.TRACE
+   cl_logging.TRACE
 )
 
 -- Constants

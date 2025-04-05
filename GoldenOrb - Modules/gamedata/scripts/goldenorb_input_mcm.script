@@ -7,9 +7,10 @@
 -- Imports
 
 --- Schedule
-local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
-local ON_BEFORE_MOUSE_MOVE = goldenorb_schedule.ON_BEFORE_MOUSE_MOVE
-local ON_KEY_PRESS = goldenorb_schedule.ON_KEY_PRESS
+local system = cl_schedule.system
+local LEVEL_CALL = cl_schedule.LEVEL_CALL
+local ON_BEFORE_MOUSE_MOVE = cl_schedule.ON_BEFORE_MOUSE_MOVE
+local ON_KEY_PRESS = cl_schedule.ON_KEY_PRESS
 
 --- Main
 local goldenorb_before_build_state = goldenorb_main.goldenorb_before_build_state
@@ -31,9 +32,6 @@ local C_HUD = goldenorb_weapon.C_HUD
 local aim_type = goldenorb_aim_mcm.aim_type
 local AIM_FREE = goldenorb_aim_mcm.AIM_FREE
 
---- Schedule
-local system = goldenorb_schedule.system
-
 --- GoldenOrb
 local tree = goldenorb_mcm.tree
 
@@ -41,9 +39,9 @@ local tree = goldenorb_mcm.tree
 local KeybindBox = mcm_builder.KeybindBox
 
 --- Logging
-local log = goldenorb_logging.logger(
+local log = cl_logging.logger(
    "GoldenOrb/Input",
-   goldenorb_logging.TRACE
+   cl_logging.TRACE
 )
 
 -- State

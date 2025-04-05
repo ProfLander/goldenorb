@@ -7,19 +7,19 @@
 -- Imports
 
 --- Schedule
-local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
+local LEVEL_CALL = cl_schedule.LEVEL_CALL
 
 --- Weapon
 local inject_weapon_hud = goldenorb_weapon.inject_weapon_hud
 
 --- Schedule
-local system = goldenorb_schedule.system
-local O_WRITE = goldenorb_schedule.O_WRITE
+local system = cl_schedule.system
+local O_WRITE = cl_schedule.O_WRITE
 
 --- Logging
-local log = goldenorb_logging.logger(
+local log = cl_logging.logger(
    "GoldenOrb/Reset Zoom Factors",
-   goldenorb_logging.TRACE
+   cl_logging.TRACE
 )
 
 -- Implementation

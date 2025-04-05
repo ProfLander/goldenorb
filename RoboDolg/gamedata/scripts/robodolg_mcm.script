@@ -19,9 +19,9 @@ local Checkbox = mcm_builder.Checkbox
 local reset = robodolg_shapes.reset
 
 --- GoldenOrb Schedule
-local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
-local system = goldenorb_schedule.system
-local I_READ = goldenorb_schedule.I_READ
+local LEVEL_CALL = cl_schedule.LEVEL_CALL
+local system = cl_schedule.system
+local I_READ = cl_schedule.I_READ
 
 --- GoldenOrb Main
 local phase_done = goldenorb_main.phase_done

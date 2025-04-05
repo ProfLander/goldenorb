@@ -6,9 +6,6 @@
 
 -- Imports
 
---- Schedule
-local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
-
 --- Main
 local phase_build_state = goldenorb_main.phase_build_state
 
@@ -24,12 +21,14 @@ local mcm_spring = goldenorb_spring.mcm_spring
 local SP_LINEAR = goldenorb_spring.SP_LINEAR
 
 --- Schedule
-local system = goldenorb_schedule.system
+local system = cl_schedule.system
+local LEVEL_CALL = cl_schedule.LEVEL_CALL
+
 
 --- Log
-local log = goldenorb_logging.logger(
+local log = cl_logging.logger(
    "GoldenOrb/Aim",
-   goldenorb_logging.TRACE
+   cl_logging.TRACE
 )
 
 -- Constants

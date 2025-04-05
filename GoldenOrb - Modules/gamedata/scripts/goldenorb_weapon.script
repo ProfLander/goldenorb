@@ -7,8 +7,8 @@
 -- Imports
 
 --- Scheudle
-local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
-local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
+local ACTOR_ON_UPDATE = cl_schedule.ACTOR_ON_UPDATE
+local LEVEL_CALL = cl_schedule.LEVEL_CALL
 
 --- Main
 local goldenorb_after_build_state = goldenorb_main.goldenorb_after_build_state
@@ -40,12 +40,12 @@ foreach = goldenorb_table.foreach
 local hpb_to_direction = cl_math.hpb_to_direction
 
 --- Schedule
-local system = goldenorb_schedule.system
+local system = cl_schedule.system
 
 --- Logging
-local log = goldenorb_logging.logger(
+local log = cl_logging.logger(
    "GoldenOrb/Weapon",
-   goldenorb_logging.TRACE
+   cl_logging.TRACE
 )
 
 -- Constants

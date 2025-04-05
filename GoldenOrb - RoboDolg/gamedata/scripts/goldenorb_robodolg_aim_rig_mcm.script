@@ -10,8 +10,8 @@
 local goldenorb_after_apply_state = goldenorb_main.goldenorb_after_apply_state
 
 --- Schedule
-local system = goldenorb_schedule.system
-local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
+local system = cl_schedule.system
+local ACTOR_ON_UPDATE = cl_schedule.ACTOR_ON_UPDATE
 
 --- Shapes
 local RED = robodolg_shapes.RED

@@ -7,23 +7,23 @@
 -- Imports
 
 --- Schedule
-local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
+local LEVEL_CALL = cl_schedule.LEVEL_CALL
 
 --- Weapon
 local inject_weapon_hud = goldenorb_weapon.inject_weapon_hud
 
 --- Schedule
-local system = goldenorb_schedule.system
-local I_READ = goldenorb_schedule.I_READ
-local O_WRITE = goldenorb_schedule.O_WRITE
+local system = cl_schedule.system
+local I_READ = cl_schedule.I_READ
+local O_WRITE = cl_schedule.O_WRITE
 
 --- Math
 local EPSILON = cl_math.EPSILON
 
 --- Log
-local log = goldenorb_logging.logger(
+local log = cl_logging.logger(
    "GoldenOrb/Offset Fire Point",
-   goldenorb_logging.TRACE
+   cl_logging.TRACE
 )
 
 -- Constants

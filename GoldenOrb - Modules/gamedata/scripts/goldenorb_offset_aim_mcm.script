@@ -16,13 +16,13 @@ local aim_type = goldenorb_aim_mcm.aim_type
 local AIM_OFFSET = goldenorb_aim_mcm.AIM_OFFSET
 
 --- String
-local parse_vector = goldenorb_string.parse_vector
+local parse_vector = cl_string.parse_vector
 
 --- Schedule
-local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
-local system = goldenorb_schedule.system
-local I_READ = goldenorb_schedule.I_READ
-local O_WRITE = goldenorb_schedule.O_WRITE
+local system = cl_schedule.system
+local ACTOR_ON_UPDATE = cl_schedule.ACTOR_ON_UPDATE
+local I_READ = cl_schedule.I_READ
+local O_WRITE = cl_schedule.O_WRITE
 
 --- MCM Builder
 local Line = mcm_builder.Line
@@ -34,9 +34,9 @@ local PI = cl_math.PI
 local RAD2DEG = cl_math.RAD2DEG
 
 --- Logging
-local log = goldenorb_logging.logger(
+local log = cl_logging.logger(
    "GoldenOrb/Offset Aim",
-   goldenorb_logging.WARNING
+   cl_logging.WARNING
 )
 
 -- State

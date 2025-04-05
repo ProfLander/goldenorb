@@ -10,8 +10,8 @@
 local tree = goldenorb_mcm.tree
 
 --- Schedule
-local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
-local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
+local ACTOR_ON_UPDATE = cl_schedule.ACTOR_ON_UPDATE
+local LEVEL_CALL = cl_schedule.LEVEL_CALL
 
 --- Main
 local goldenorb_before_build_state = goldenorb_main.goldenorb_before_build_state
@@ -33,7 +33,7 @@ local C_MATRICES = goldenorb_matrices.C_MATRICES
 local C_ACTOR = goldenorb_actor.C_ACTOR
 
 --- Schedule
-local system = goldenorb_schedule.system
+local system = cl_schedule.system
 
 --- Level
 local set_cam_custom_position_direction = level.set_cam_custom_position_direction
@@ -44,9 +44,9 @@ local ImageWithText = mcm_builder.ImageWithText
 local Trackbar = mcm_builder.Trackbar
 
 --- Logging
-local log = goldenorb_logging.logger(
+local log = cl_logging.logger(
    "GoldenOrb/Camera",
-    goldenorb_logging.TRACE
+    cl_logging.TRACE
 )
 
 -- Constants

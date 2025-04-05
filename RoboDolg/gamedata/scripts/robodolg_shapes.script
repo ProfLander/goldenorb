@@ -7,13 +7,13 @@
 -- Imports
 
 --- List
-local range = goldenorb_list.range
-local map = goldenorb_list.map
-local fold = goldenorb_list.fold
-local foreach_list = goldenorb_list.foreach
+local range = cl_list.range
+local map = cl_list.map
+local fold = cl_list.fold
+local foreach_list = cl_list.foreach
 
 --- Function
-local id = goldenorb_function.id
+local id = cl_function.id
 
 --- Table
 local foreach_table = goldenorb_table.foreach

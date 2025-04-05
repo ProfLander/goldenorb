@@ -11,7 +11,7 @@ local DEG2RAD = cl_math.DEG2RAD
 local TAU = cl_math.TAU
 
 --- String
-local parse_vector = goldenorb_string.parse_vector
+local parse_vector = cl_string.parse_vector
 
 --- Main
 local goldenorb_after_apply_state = goldenorb_main.goldenorb_after_apply_state
@@ -20,8 +20,8 @@ local goldenorb_after_apply_state = goldenorb_main.goldenorb_after_apply_state
 local tree = goldenorb_robodolg_mcm.tree
 
 --- Schedule
-local system = goldenorb_schedule.system
-local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
+local system = cl_schedule.system
+local ACTOR_ON_UPDATE = cl_schedule.ACTOR_ON_UPDATE
 
 --- Shapes
 local draw_line = robodolg_shapes.draw_line
