@@ -15,8 +15,15 @@ local ACTOR_ON_WEAPON_FIRED = goldenorb_schedule.ACTOR_ON_WEAPON_FIRED
 local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
 
 --- Main
+local goldenorb_before_build_state = goldenorb_main.goldenorb_before_build_state
+local goldenorb_after_build_state = goldenorb_main.goldenorb_after_build_state
+
 local goldenorb_after_modify_state = goldenorb_main.goldenorb_after_modify_state
+
 local goldenorb_before_apply_state = goldenorb_main.goldenorb_before_apply_state
+
+--- Spring
+local mcm_spring = goldenorb_spring.mcm_spring
 
 --- Weapon
 local inject_weapon = goldenorb_weapon.inject_weapon
@@ -40,6 +47,7 @@ local I_READ = goldenorb_schedule.I_READ
 local O_WRITE = goldenorb_schedule.O_WRITE
 
 --- MCM Builder
+local Title = mcm_builder.Title
 local Trackbar = mcm_builder.Trackbar
 
 --- Logging
@@ -114,6 +122,8 @@ local lenses = {
 
 local page = tree:pages("recoil")
 
+page:settings(Title.new("title_kick"):text("kick"))
+
 local kick_multiplier, control_strength = page:settings(
    Trackbar.new("kick_multiplier")
       :default(8)
@@ -125,21 +135,53 @@ local kick_multiplier, control_strength = page:settings(
       :increment(0.01)
 )
 
+--- Recoil multipliers
+page:settings(Title.new("title_strength"):text("strength"))
+
+local recoil_actor, recoil_camera, recoil_hud = page:settings(
+   Trackbar.new("recoil_actor")
+      :default(0.9)
+      :minmax(0, 8)
+      :increment(0.1),
+   Trackbar.new("recoil_camera")
+      :default(0.6)
+      :minmax(0, 8)
+      :increment(0.1),
+   Trackbar.new("recoil_hud")
+      :default(1)
+      :minmax(0, 8)
+      :increment(0.1)
+)
+
 --- Weapon data cache
 local wpn_cache = {}
 
 --- How under-control the weapon is
 local control_fac = 0
 
---- Recoil matrix
-local recoil_mat = matrix():identity()
-
---- Recoil spring
-local recoil_spring = goldenorb_spring.mcm_spring(
+--- Recoil springs
+local spring_actor = mcm_spring(
    page,
    SP_ANGULAR,
    "0,0",
-   "0.05,0.05"
+   "0.025,0.025",
+   "actor_"
+)
+
+local spring_camera = mcm_spring(
+   page,
+   SP_ANGULAR,
+   "0,0",
+   "0.1,0.1",
+   "camera_"
+)
+
+local spring_hud = mcm_spring(
+   page,
+   SP_ANGULAR,
+   "0,0",
+   "0.05,0.05",
+   "hud_"
 )
 
 -- Implementation
@@ -151,7 +193,7 @@ consume_weapon = system("consume_weapon")
    :via(function(state)
       -- Fetch the weapon's section
       local sec = state.wpn:section()
-      log("  section(%s)", sec)
+      log:trace("  section(%s)", sec)
 
       -- Return with a warning if it's not valid
       if not sec then
@@ -187,17 +229,67 @@ consume_weapon = system("consume_weapon")
    end)
    :during(LEVEL_CALL)
 
+inject_recoil_spring = system("inject_recoil_spring")
+   :runs_after(goldenorb_before_build_state)
+   :runs_before(goldenorb_after_build_state)
+   :without({"springs", "recoil"})
+   :writes({"springs", "recoil"})
+   :via(function()
+      printf("inject recoil spring")
+      return {
+         springs = {
+            recoil = {
+               actor = spring_actor,
+               camera = spring_camera,
+               hud = spring_hud,
+            }
+         }
+      }
+   end)
+   :during(LEVEL_CALL)
+
+--- Inject the recoil matrix into the state
+inject_recoil_matrix = system("inject_recoil_matrix")
+   :runs_after(goldenorb_before_build_state)
+   :runs_before(goldenorb_after_build_state)
+   :without({"matrices", "recoil"})
+   :writes({"matrices", "recoil"})
+   :via(function()
+      printf("inject recoil matrix")
+      return {
+         matrices = {
+            recoil = {
+               actor = matrix():identity(),
+               camera = matrix():identity(),
+               hud = matrix():identity(),
+            }
+         }
+      }
+   end)
+   :during(LEVEL_CALL)
+
 --- Apply recoil forces on weapon discharge
 recoil_weapon = system("recoil_weapon")
-   :reads("wpn")
+   :reads(
+      "wpn",
+      {"matrices", "recoil", "actor"},
+      {"matrices", "recoil", "camera"},
+      {"matrices", "recoil", "hud"}
+   )
+   :writes(
+      {"matrices", "recoil", "actor"},
+      {"matrices", "recoil", "camera"},
+      {"matrices", "recoil", "hud"}
+   )
    :via(function(state)
+      printf("recoil weapon")
       control_fac = control_fac + kick_multiplier:get()
 
       local id = state.wpn:id()
-      log("  id: %s", id)
+      log:trace("  id: %s", id)
 
       local sec = state.wpn:section()
-      log("  sec: %s", sec)
+      log:trace("  sec: %s", sec)
 
       local cache = wpn_cache[sec]
       if not cache then
@@ -241,7 +333,7 @@ recoil_weapon = system("recoil_weapon")
       -- Fetch silencer recoil stats
       ---@diagnostic disable-next-line: undefined-field
       local silencer = ini_sys:r_string_ex(sec, "silencer_name")
-      log("  silencer: %s", silencer)
+      log:trace("  silencer: %s", silencer)
 
       local silencer_disp = silencer
          ---@diagnostic disable-next-line: undefined-field
@@ -250,8 +342,8 @@ recoil_weapon = system("recoil_weapon")
          ---@diagnostic disable-next-line: undefined-field
          and ini_sys:r_string_ex(silencer, "cam_dispersion_inc_k") or 1
 
-      log("  silencer_disp: %s", silencer_disp)
-      log("  silencer_inc: %s", silencer_inc)
+      log:trace("  silencer_disp: %s", silencer_disp)
+      log:trace("  silencer_inc: %s", silencer_inc)
 
       local disp = wpn_disp * silencer_disp * ammo_disp
       local inc = wpn_inc * silencer_inc * (control_fac + 1)
@@ -262,65 +354,179 @@ recoil_weapon = system("recoil_weapon")
       local recoil_y = ang * (wpn_frac + rnd * (1 - wpn_frac))
       log("  recoil_y: %s", recoil_y)
 
+      local hpb = state.matrices.recoil.hud:getHPB()
+
       rnd = (math.random() - 1) * 2
-      local recoil_x = (recoil_mat.c.y / wpn_max_vert) * rnd * wpn_step_horz
+      local recoil_x = ((hpb.y + recoil_y) / wpn_max_vert) * rnd * wpn_step_horz
       log("  recoil_x: %s", recoil_x)
 
-      recoil_mat = matrix():mul(
-         recoil_mat,
-         matrix():setHPB(recoil_x, recoil_y, 0)
-      )
-      log("  recoil_mat: %s", recoil_mat)
+      local actor_recoil = recoil_actor:get()
+      local camera_recoil = recoil_camera:get()
+      local hud_recoil = recoil_hud:get()
+      return {
+         matrices = {
+            recoil = {
+               actor = matrix():mul(
+                  state.matrices.recoil.actor,
+                  matrix():setHPB(
+                     recoil_x * actor_recoil,
+                     0,
+                     0
+                  )
+               ),
+               camera = matrix():mul(
+                  state.matrices.recoil.camera,
+                  matrix():setHPB(
+                     recoil_x * actor_recoil + recoil_x * camera_recoil,
+                     recoil_y * camera_recoil,
+                     0
+                  )
+               ),
+               hud = matrix():mul(
+                  state.matrices.recoil.hud,
+                  matrix():setHPB(
+                     recoil_x * hud_recoil,
+                     recoil_y * hud_recoil,
+                     0
+                  )
+               ),
+            }
+         }
+      }
    end)
    :during(ACTOR_ON_WEAPON_FIRED)
 
---- Integrate recoil forces and apply to the HUD
+--- Integrate recoil forces
 integrate_recoil = system("integrate_recoil")
-      :runs_after(goldenorb_after_modify_state)
+   :runs_after(goldenorb_after_modify_state)
    :runs_before(goldenorb_before_apply_state)
-   :inputs({
-      hud = {
-         hands_orientation = I_READ
-      }
-   })
-   :outputs({
-      hud = {
-         hands_orientation = O_WRITE
-      }
-   })
+   :reads(
+      {"springs", "recoil", "actor"},
+      {"springs", "recoil", "camera"},
+      {"springs", "recoil", "hud"},
+      {"matrices", "recoil", "actor"},
+      {"matrices", "recoil", "camera"},
+      {"matrices", "recoil", "hud"}
+   )
+   :writes(
+      {"matrices", "recoil", "actor"},
+      {"matrices", "recoil", "camera"},
+      {"matrices", "recoil", "hud"}
+   )
    :via(function(state)
+      printf("integrate recoil")
+
       control_fac = control_fac + spring_1d(
          0,
          control_strength:get(),
          control_fac
       )
-      log("  control_fac: %s", control_fac)
-
-      local hpb = recoil_mat:getHPB()
-      log("  hpb: %s", hpb)
-
-      hpb = recoil_spring.spring(hpb)
-      log("  spring hpb: %s", hpb)
-
-      recoil_mat = matrix():mul(
-         recoil_mat,
-         matrix():setHPB(hpb.x, hpb.y, hpb.z)
-      )
-      log("  recoil_mat: %s", recoil_mat)
-
-      hpb = recoil_mat:getHPB()
-      log("  hpb: %s", hpb)
+      log:trace("  control_fac: %s", control_fac)
 
       return {
-         hud = {
-            hands_orientation = state.hud.hands_orientation:add(
-               vector():set(
-                  deg(hpb.x),
-                  deg(hpb.y),
-                  deg(hpb.z)
-               )
+         matrices = {
+            recoil = {
+               actor = matrix():mul(
+                  state.matrices.recoil.actor,
+                  matrix():setHPB(
+                     state.springs.recoil.actor.spring(
+                        state.matrices.recoil.actor:getHPB()
+                     )
+                  )
+               ),
+               camera = matrix():mul(
+                  state.matrices.recoil.camera,
+                  matrix():setHPB(
+                     state.springs.recoil.camera.spring(
+                        state.matrices.recoil.camera:getHPB()
+                     )
+                  )
+               ),
+               hud = matrix():mul(
+                  state.matrices.recoil.hud,
+                  matrix():setHPB(
+                     state.springs.recoil.hud.spring(
+                        state.matrices.recoil.hud:getHPB()
+                     )
+                  )
+               ),
+            }
+         },
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+--- Apply recoil forces to the actor matrix
+apply_actor_recoil = system("apply_actor_recoil")
+   :runs_after(goldenorb_after_modify_state)
+   :runs_before(goldenorb_before_apply_state)
+   :reads(
+      {"matrices", "recoil", "actor"},
+      {"matrices", "actor"}
+   )
+   :writes(
+      {"matrices", "actor"}
+   )
+   :via(function(state)
+      printf("apply actor recoil")
+
+      return {
+         matrices = {
+            actor = matrix():mul(
+               state.matrices.actor,
+               state.matrices.recoil.actor
+            ),
+         },
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+--- Apply recoil forces to the camera matrix
+apply_camera_recoil = system("apply_camera_recoil")
+   :runs_after(goldenorb_after_modify_state)
+   :runs_before(goldenorb_before_apply_state)
+   :reads(
+      {"matrices", "recoil", "camera"},
+      {"matrices", "camera"}
+   )
+   :writes(
+      {"matrices", "camera"}
+   )
+   :via(function(state)
+      printf("apply camera recoil")
+
+      return {
+         matrices = {
+            camera = matrix():mul(
+               state.matrices.camera,
+               state.matrices.recoil.camera
+            ),
+         },
+      }
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+--- Apply recoil forces to the HUD matrix
+apply_hud_recoil = system("apply_hud_recoil")
+   :runs_after(goldenorb_after_modify_state)
+   :runs_before(goldenorb_before_apply_state)
+   :reads(
+      {"matrices", "recoil", "hud"},
+      {"matrices", "hud"}
+   )
+   :writes(
+      {"matrices", "hud"}
+   )
+   :via(function(state)
+      printf("apply hud recoil")
+
+      return {
+         matrices = {
+            hud = matrix():mul(
+               state.matrices.hud,
+               state.matrices.recoil.hud
             )
-         }
+         },
       }
    end)
    :during(ACTOR_ON_UPDATE)
