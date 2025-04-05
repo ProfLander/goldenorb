@@ -32,11 +32,6 @@ Future:
   - The three of primary interest at present are `offset_aim`, `free_aim`, and `body_cam`.
 
 ** Known Issues
-- Various weapons need their positions updated for correct scoping behaviour
-  - Current good test cases:
-    - MP5
-    - Mk14 EBR
-- 3D Shader Scopes has been modified for better accuracy, but deviation from crosshair will occur relative to view angle until eye-relative weapon orientation is implemented
 - ADS zoom is not correctly overridden until the second map load.
 
 ** Mod Compatibility
