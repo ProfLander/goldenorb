@@ -1,0 +1,36 @@
+----------------------------------------------------------------------------
+-- GoldenOrb: Springs
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+-- Imports
+
+--- Schedule
+local LEVEL_CALL = goldenorb_schedule.LEVEL_CALL
+
+--- Main
+local goldenorb_before_build_state = goldenorb_main.goldenorb_before_build_state
+local goldenorb_after_build_state = goldenorb_main.goldenorb_after_build_state
+
+--- Schedule
+local system = goldenorb_schedule.system
+
+-- Constants
+
+C_SPRINGS = "springs"
+
+-- Implementation
+
+--- Inject the matrix container into the state
+inject_springs = system("inject_springs")
+   :runs_after(goldenorb_before_build_state)
+   :runs_before(goldenorb_after_build_state)
+   :without(C_SPRINGS)
+   :writes(C_SPRINGS)
+   :via(function()
+      return {
+         [C_SPRINGS] = {}
+      }
+   end)
+   :during(LEVEL_CALL)
