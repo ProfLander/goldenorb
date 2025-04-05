@@ -17,6 +17,7 @@ local ACTOR_ON_UPDATE = goldenorb_schedule.ACTOR_ON_UPDATE
 local RED = robodolg_shapes.RED
 local GREEN = robodolg_shapes.GREEN
 local CYAN = robodolg_shapes.CYAN
+local MAGENTA = robodolg_shapes.MAGENTA
 local YELLOW = robodolg_shapes.YELLOW
 local WHITE = robodolg_shapes.WHITE
 local draw_line = robodolg_shapes.draw_line
@@ -147,6 +148,25 @@ draw_camera_hands_aim = system("draw_camera_hands_aim")
          ui_2d(state.robodolg_cache.camera.aim, true)(vector()),
          ui_2d(state.robodolg_cache.hands.aim, true)(vector()),
          YELLOW
+      )
+   end)
+   :during(ACTOR_ON_UPDATE)
+
+--- Line from camera aim point to weapon aim point
+draw_camera_weapon_aim = system("draw_camera_weapon_aim")
+   :runs_after(goldenorb_after_apply_state)
+   :reads(
+      {"robodolg_cache", "camera"},
+      {"robodolg_cache", "weapon"}
+   )
+   :when(function()
+      return should_draw:get()
+   end)
+   :via(function(state)
+      draw_line(
+         ui_2d(state.robodolg_cache.camera.aim, true)(vector()),
+         ui_2d(state.robodolg_cache.weapon.aim, true)(vector()),
+         MAGENTA
       )
    end)
    :during(ACTOR_ON_UPDATE)
