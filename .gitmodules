@@ -1,0 +1,3 @@
+[submodule "common-lander"]
+	path = Common Lander
+	url = git@github.com:ProfLander/common-lander.git
