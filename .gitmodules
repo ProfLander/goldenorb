@@ -4,3 +4,6 @@
 [submodule "mcm-builder"]
 	path = MCM Builder
 	url = git@github.com:ProfLander/mcm-builder.git
+[submodule "mcm-builder-ex"]
+	path = MCM Builder Ex
+	url = git@github.com:ProfLander/mcm-builder-ex.git
