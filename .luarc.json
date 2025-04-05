@@ -25,13 +25,21 @@
         "lowercase-global"
     ],
     "diagnostics.globals": [
+        "DBG_ScriptObject",
+
+        "axr_main",
+        "news_manager",
+        "debug_render",
+        "utils_xml",
+        "utils_item",
         "actor_menu",
 
-        "lander_math",
+        "cl_math",
 
         "ui_mcm",
+
         "mcm_builder",
-        "mcm_builder_objection",
+        "mcm_builder_ex",
 
         "goldenorb_main",
         "goldenorb_impure",
@@ -57,10 +65,16 @@
         "goldenorb_spring",
         "goldenorb_aim",
         "goldenorb_string",
-        "robodolg_logging",
         "goldenorb_list",
+        "goldenorb_table",
         "goldenorb_function",
+        "goldenorb_schedule",
+        "goldenorb_camera_mcm",
+        "goldenorb_hands_mcm",
+
+        "robodolg_logging",
         "robodolg_mcm",
+        "robodolg_camera",
         "robodolg_shapes",
         "robodolg_mod_aim_rig_mcm",
         "robodolg_mod_camera_aim",
@@ -71,17 +85,5 @@
         "robodolg_mod_weapon_bones",
         "robodolg_vanilla_mcm",
         "robodolg_goldenorb_mcm",
-        "goldenorb_schedule",
-        "axr_main",
-        "mcm_builder_ex",
-        "debug_render",
-        "DBG_ScriptObject",
-        "utils_xml",
-        "utils_item",
-        "goldenorb_table",
-        "goldenorb_camera_mcm",
-        "news_manager",
-        "robodolg_camera",
-        "goldenorb_hands_mcm",
     ],
 }
