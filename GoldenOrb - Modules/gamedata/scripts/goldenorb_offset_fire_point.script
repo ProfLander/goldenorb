@@ -18,7 +18,7 @@ local I_READ = goldenorb_schedule.I_READ
 local O_WRITE = goldenorb_schedule.O_WRITE
 
 --- Math
-local EPSILON = lander_math.EPSILON
+local EPSILON = cl_math.EPSILON
 
 --- Log
 local log = goldenorb_logging.logger(

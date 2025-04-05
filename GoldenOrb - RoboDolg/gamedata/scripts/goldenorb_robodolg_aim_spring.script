@@ -7,8 +7,8 @@
 -- Imports
 
 --- Math
-local DEG2RAD = lander_math.DEG2RAD
-local TAU = lander_math.TAU
+local DEG2RAD = cl_math.DEG2RAD
+local TAU = cl_math.TAU
 
 --- String
 local parse_vector = goldenorb_string.parse_vector

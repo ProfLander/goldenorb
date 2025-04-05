@@ -14,7 +14,7 @@ local goldenorb_before_modify_state = goldenorb_main.goldenorb_before_modify_sta
 local goldenorb_after_modify_state = goldenorb_main.goldenorb_after_modify_state
 
 --- Math
-local deg = lander_math.deg
+local deg = cl_math.deg
 
 --- List
 local map = goldenorb_list.map

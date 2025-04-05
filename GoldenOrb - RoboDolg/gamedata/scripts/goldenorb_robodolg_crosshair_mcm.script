@@ -37,7 +37,7 @@ local advise_before = goldenorb_function.advise_before
 local curry_r = goldenorb_function.curry_r
 
 --- Math
-local vector_rotate_z = lander_math.vector_rotate_z
+local vector_rotate_z = cl_math.vector_rotate_z
 
 --- Logging
 local log = robodolg_logging.log

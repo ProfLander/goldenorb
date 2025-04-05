@@ -16,7 +16,7 @@ local goldenorb_before_modify_state = goldenorb_main.goldenorb_before_modify_sta
 local get_hud_number = goldenorb_weapon.get_hud_number
 
 --- Math
-local hpb_to_direction = lander_math.hpb_to_direction
+local hpb_to_direction = cl_math.hpb_to_direction
 
 --- Schedule
 local system = goldenorb_schedule.system

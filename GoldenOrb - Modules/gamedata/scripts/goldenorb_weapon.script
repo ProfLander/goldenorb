@@ -26,8 +26,8 @@ local inject_gimbals = goldenorb_gimbals.inject_gimbals
 local C_MATRICES = goldenorb_matrices.C_MATRICES
 
 --- Math
-local RAD2DEG = lander_math.RAD2DEG
-local DEG2RAD = lander_math.DEG2RAD
+local RAD2DEG = cl_math.RAD2DEG
+local DEG2RAD = cl_math.DEG2RAD
 
 --- Actor
 local inject_actor = goldenorb_actor.inject_actor
@@ -37,7 +37,7 @@ map = goldenorb_table.map
 foreach = goldenorb_table.foreach
 
 --- Math
-local hpb_to_direction = lander_math.hpb_to_direction
+local hpb_to_direction = cl_math.hpb_to_direction
 
 --- Schedule
 local system = goldenorb_schedule.system

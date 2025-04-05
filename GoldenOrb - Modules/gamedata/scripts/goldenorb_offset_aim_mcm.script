@@ -30,8 +30,8 @@ local Title = mcm_builder.Title
 local InputField = mcm_builder.InputField
 
 --- Math
-local PI = lander_math.PI
-local RAD2DEG = lander_math.RAD2DEG
+local PI = cl_math.PI
+local RAD2DEG = cl_math.RAD2DEG
 
 --- Logging
 local log = goldenorb_logging.logger(

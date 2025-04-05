@@ -13,7 +13,7 @@ local draw_line = robodolg_shapes.draw_line
 local ui_2d = robodolg_camera.ui_2d
 
 --- Math
-local hpb_to_direction = lander_math.hpb_to_direction
+local hpb_to_direction = cl_math.hpb_to_direction
 
 --- RoboDolg
 local tree = robodolg_vanilla_mcm.tree

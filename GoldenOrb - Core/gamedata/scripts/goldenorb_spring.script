@@ -9,10 +9,10 @@
 -- Imports
 
 --- Math
-local DEG2RAD = lander_math.DEG2RAD
-local sign = lander_math.sign
-local vector_axis_angle = lander_math.vector_axis_angle
-local axis_angle_to_euler = lander_math.axis_angle_to_euler
+local DEG2RAD = cl_math.DEG2RAD
+local sign = cl_math.sign
+local vector_axis_angle = cl_math.vector_axis_angle
+local axis_angle_to_euler = cl_math.axis_angle_to_euler
 
 --- MCM Builder
 local Title = mcm_builder.Title

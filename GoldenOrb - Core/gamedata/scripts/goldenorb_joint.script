@@ -9,7 +9,7 @@
 -- Imports
 
 --- Math
-local deg = lander_math.deg
+local deg = cl_math.deg
 
 --- Logging
 local log = goldenorb_logging.logger(

@@ -19,7 +19,7 @@ local id = goldenorb_function.id
 local foreach_table = goldenorb_table.foreach
 
 --- Math
-local TAU = lander_math.TAU
+local TAU = cl_math.TAU
 
 --- Logging
 local log = robodolg_logging.log
