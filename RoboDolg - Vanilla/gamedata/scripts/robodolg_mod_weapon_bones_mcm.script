@@ -50,7 +50,7 @@ local should_draw = page:settings(
 local cache = {}
 
 function cache_bones()
-   log("cache_bones()")
+   log("cache_bones")
 
    if not should_draw:get() then
         return
@@ -85,12 +85,11 @@ function cache_bones()
 end
 
 function draw_bones()
-   log("draw_bones()")
+   log("draw_bones")
 
    foreach(
       cache,
       function(_, bone)
-         log("bone: %s", bone)
          draw_ngon(
             POLY_SIZE,
             POLY_SIDES,
@@ -127,10 +126,8 @@ function on_game_start()
 
    RegisterScriptCallback(
       "actor_on_update",
-      draw_bones
-   )
-
-   AddUniqueCall(
       cache_bones
    )
+
+   AddUniqueCall(draw_bones)
 end
